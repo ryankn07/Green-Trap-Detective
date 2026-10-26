@@ -59,5 +59,5 @@ const server=http.createServer(async(req,res)=>{
 });
 const clock=setInterval(()=>manager.tick(),500);clock.unref();
 const heartbeat=setInterval(()=>{for(const group of streams.values())for(const res of group.keys())if(!res.destroyed&&!res.writableEnded)res.write(': heartbeat\n\n');},15000);heartbeat.unref();
-if(require.main===module)server.listen(port,host,()=>console.log(\`GREEN IMPACT multiplayer listening on port \${port}\`));
+if(require.main===module)server.listen(port,host,()=>console.log('GREEN IMPACT multiplayer listening on port '+port));
 module.exports={server,manager};
