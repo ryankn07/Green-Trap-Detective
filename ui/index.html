@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#f6f7f2">
+<meta name="description" content="GREEN IMPACT — web game suy luận xã hội về môi trường. Tạo phòng và chơi cùng bạn bè trên trình duyệt.">
+<title>GREEN IMPACT — Chơi cùng bạn bè</title>
+<link rel="stylesheet" href="/style.css">
+<script defer src="/app.js"></script>
+</head>
+<body>
+<header class="top">
+  <div class="brand"><span class="mark" aria-hidden="true">✳</span><div><b>GREEN IMPACT</b><small>Trò chơi suy luận môi trường</small></div></div>
+  <div class="header-end"><span class="header-sub">Chơi online · Không cần đăng ký</span><span id="connection" class="status">Đang kết nối</span></div>
+</header>
+<main id="app">
+  <section class="card welcome">
+    <div class="welcome-head">
+      <div><span class="eyebrow"><i></i> SOCIAL DEDUCTION GAME</span>
+      <h1>Một dự án xanh.<br><em>Nhiều bí mật.</em></h1>
+      <p>Bạn sẽ tin ai? Cùng bạn bè phân tích dự án, tranh luận và ra quyết định — trong khi mỗi người đều có vai trò riêng.</p></div>
+      <div class="welcome-aside"><span class="welcome-orbit">◎</span><strong>10 lượt</strong><span>3–8 người chơi</span><span>2 phe đối đầu</span></div>
+    </div>
+    <div class="enter-grid">
+      <form id="form-create"><div class="form-heading"><span class="step-bubble">1</span><div><h2>Tạo phòng mới</h2><p>Bạn sẽ là chủ phòng.</p></div></div><label>Tên của bạn<input id="create-name" maxlength="24" placeholder="Nhập tên hiển thị" autocomplete="nickname" required></label><button type="submit" class="primary">Tạo phòng <span aria-hidden="true">→</span></button></form>
+      <form id="form-join"><div class="form-heading"><span class="step-bubble step-bubble--light">2</span><div><h2>Tham gia phòng</h2><p>Nhập mã do bạn bè gửi.</p></div></div><label>Mã phòng<input id="join-code" maxlength="6" placeholder="6 ký tự" autocomplete="off" required></label><label>Tên của bạn<input id="join-name" maxlength="24" placeholder="Nhập tên hiển thị" autocomplete="nickname" required></label><button type="submit" class="secondary">Vào phòng <span aria-hidden="true">→</span></button></form>
+    </div>
+    <div class="welcome-foot"><span>✓ Chơi ngay trên trình duyệt</span><span>✓ Vai trò được giữ bí mật</span><span>✓ Không cần cài đặt</span></div>
+  </section>
+</main>
+<div id="toast" role="status" aria-live="polite"></div>
+</body>
+</html>

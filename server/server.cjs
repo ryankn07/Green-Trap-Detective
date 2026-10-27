@@ -7,6 +7,7 @@ const port=Number(process.env.PORT||3000);
 const host='0.0.0.0';
 const streams=new Map();
 const publicDir=path.resolve(__dirname,'../public');
+const uiDir=path.resolve(__dirname,'../ui');
 const uiStylePath=path.resolve(__dirname,'../ui/style.css');
 function json(res,status,payload) {if(res.destroyed||res.writableEnded)return;res.writeHead(status,{'Content-Type':'application/json; charset=utf-8','Cache-Control':'no-store','X-Content-Type-Options':'nosniff'});res.end(JSON.stringify(payload));}
 function streamSend(res,type,data) {if(!res.destroyed&&!res.writableEnded) res.write('event: '+type+'\ndata: '+JSON.stringify(data)+'\n\n');}
@@ -23,7 +24,8 @@ const server=http.createServer(async(req,res)=>{
   try {
     if(req.method==='GET' && url.pathname==='/health')return json(res,200,{status:'ok',activeRooms:manager.rooms.size});
     if(req.method==='GET' && allowedPaths.has(url.pathname)) {
-      const filepath=url.pathname==='/style.css'?uiStylePath:path.join(publicDir,url.pathname==='/'?'index.html':url.pathname.slice(1));
+      const filename=url.pathname==='/'?'index.html':url.pathname.slice(1);
+      const filepath=(filename==='index.html'||filename==='style.css')?path.join(uiDir,filename):path.join(publicDir,filename);
       const data=await fs.promises.readFile(filepath);
       res.writeHead(200,{'Content-Type':MIME[path.extname(filepath)]||'application/octet-stream','Cache-Control':'no-store'});return res.end(data);
     }
