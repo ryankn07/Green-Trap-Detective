@@ -132,16 +132,16 @@
     const playerCards = Array.from(secondary.children).filter(node => node.classList?.contains("card") && node !== phaseHeading);
     const playersCard = playerCards[playerCards.length - 1];
     if (!playersCard) return;
+    const emptyBefore = phaseHeading.previousElementSibling;
+    if (emptyBefore && emptyBefore.tagName === "P" && emptyBefore.classList.contains("card") && !emptyBefore.textContent.trim()) emptyBefore.remove();
     const panel = document.createElement("section");
     panel.className = "card gi-phase-actions";
     let node = phaseHeading;
     while (node && node !== playersCard) {
-      const next = node.nextElementSibling;
+      const nextNode = node.nextElementSibling;
       panel.appendChild(node);
-      node = next;
+      node = nextNode;
     }
-    const empty = panel.previousElementSibling;
-    if (empty && empty.tagName === "P" && empty.classList.contains("card") && !empty.textContent.trim()) empty.remove();
     project.insertAdjacentElement("afterend", panel);
   }
 
