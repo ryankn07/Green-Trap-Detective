@@ -726,3 +726,73 @@ body.gi-gameplay .actions button{border-radius:11px}
  body.gi-gameplay .gi-card-zoom-hint{padding:4px 0}
 }
 @media(prefers-reduced-motion:reduce){*,*:before,*:after{scroll-behavior:auto!important;animation:none!important;transition:none!important}}
+
+
+/* CARD-FIRST GAMEPLAY: the designed Canva card is the project content, not a thumbnail beside duplicate copy. */
+.project.gi-project-canva{
+  display:flex!important;
+  flex-direction:column!important;
+  align-items:center!important;
+  gap:12px!important;
+  width:100%;
+  padding:0!important;
+  border:0!important;
+  border-radius:0!important;
+  background:transparent!important;
+  box-shadow:none!important;
+}
+.project.gi-project-canva:before{display:none!important}
+.gi-card-preview{width:min(100%,480px);margin:0 auto;min-width:0}
+.gi-card-button{
+  display:block;width:100%;padding:0;overflow:hidden;
+  border:0;border-radius:11px;background:transparent;
+  box-shadow:0 10px 26px rgba(18,49,31,.14);
+  cursor:zoom-in;text-align:center;
+}
+.gi-card-button:hover{border:0;background:transparent;filter:brightness(1.015)}
+.gi-card-button img{
+  display:block;width:100%;height:auto;aspect-ratio:794/1123;
+  object-fit:contain;border-radius:10px;background:#fbf8ee;
+}
+.gi-card-zoom-hint{display:block;padding:8px 4px 0;color:#64815e;font-size:11px;font-weight:650}
+.gi-project-accessible-copy{
+  position:absolute!important;width:1px!important;height:1px!important;padding:0!important;margin:-1px!important;
+  overflow:hidden!important;clip:rect(0,0,0,0)!important;white-space:nowrap!important;border:0!important;
+}
+.gi-project-card-failed .gi-project-accessible-copy{
+  position:static!important;width:auto!important;height:auto!important;margin:0!important;padding:14px!important;
+  overflow:visible!important;clip:auto!important;white-space:normal!important;
+}
+.gi-project-card-failed .gi-project-accessible-copy h2{font-size:23px;line-height:1.2;margin:8px 0}
+.gi-project-card-failed .gi-project-accessible-copy p{line-height:1.65}
+.project.gi-project-canva>.rule{
+  width:min(100%,480px);margin:0 auto;padding:12px 14px;
+  border:1px solid #d9e4cf;border-radius:12px;background:#e9efdd;
+  color:#244d36;line-height:1.55;
+}
+.gi-phase-actions{
+  margin:14px 0!important;padding:16px!important;
+  border:1px solid #dce5d7!important;border-radius:13px!important;
+  background:#fbf8ee!important;box-shadow:none!important;
+}
+.gi-phase-actions>h2{margin:0 0 8px;font-size:20px;line-height:1.25}
+.gi-phase-actions>p{font-size:13px;line-height:1.65}
+.gi-phase-actions form{display:grid;gap:12px}
+.gi-phase-actions form>button{width:100%;min-height:49px}
+.gi-phase-actions .summary{border-radius:12px}
+@media(min-width:761px){
+  .project.gi-project-canva{gap:10px!important}
+  .gi-card-preview{width:min(100%,460px)}
+  .gi-phase-actions{padding:17px!important}
+}
+@media(max-width:760px){
+  .project.gi-project-canva{gap:8px!important}
+  .gi-card-preview{width:min(100%,430px)}
+  .gi-card-button{border-radius:9px;box-shadow:0 7px 18px rgba(18,49,31,.12)}
+  .gi-card-button img{border-radius:9px}
+  .gi-card-zoom-hint{padding:6px 2px 0;font-size:10px}
+  .project.gi-project-canva>.rule{padding:11px 12px;font-size:13px}
+  .gi-phase-actions{margin:12px 0!important;padding:13px!important;border-radius:12px!important}
+  .gi-phase-actions>h2{font-size:19px}
+  .gi-phase-actions form{gap:10px}
+}

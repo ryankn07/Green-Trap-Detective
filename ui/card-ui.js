@@ -118,9 +118,37 @@
     }
   }
 
+  function enhancePhasePanel() {
+    const grid = app.querySelector(".grid");
+    const columns = grid ? grid.querySelectorAll(":scope > .column") : [];
+    const project = app.querySelector("section.project");
+    if (!project || columns.length < 2) return;
+    const mainCard = project.closest(".card");
+    const secondary = columns[1];
+    if (!mainCard || !secondary) return;
+    const headings = Array.from(secondary.children).filter(node => node.tagName === "H2");
+    const phaseHeading = headings.find(node => /^(THẢO LUẬN|HÀNH ĐỘNG BÍ MẬT|CÔNG BỐ|KẾT THÚC)$/.test(node.textContent.trim()));
+    if (!phaseHeading || phaseHeading.closest(".gi-phase-actions")) return;
+    const playerCards = Array.from(secondary.children).filter(node => node.classList?.contains("card") && node !== phaseHeading);
+    const playersCard = playerCards[playerCards.length - 1];
+    if (!playersCard) return;
+    const panel = document.createElement("section");
+    panel.className = "card gi-phase-actions";
+    let node = phaseHeading;
+    while (node && node !== playersCard) {
+      const next = node.nextElementSibling;
+      panel.appendChild(node);
+      node = next;
+    }
+    const empty = panel.previousElementSibling;
+    if (empty && empty.tagName === "P" && empty.classList.contains("card") && !empty.textContent.trim()) empty.remove();
+    project.insertAdjacentElement("afterend", panel);
+  }
+
   function enhance() {
     enhanceTimer();
     enhancePrivateRole();
+    enhancePhasePanel();
     const project = app.querySelector("section.project");
     if (!project || project.dataset.canvaCard) return;
     const raw = project.querySelector("small")?.textContent || "";
@@ -143,6 +171,7 @@
     img.decoding = "async";
     img.addEventListener("error", () => {
       card.classList.add("gi-card-unavailable");
+      project.classList.add("gi-project-card-failed");
       button.textContent = "Không tải được hình thẻ";
       button.disabled = true;
     }, { once: true });
@@ -153,10 +182,16 @@
     button.addEventListener("click", () => openCard(url, title));
     card.appendChild(button);
     const info = document.createElement("div");
-    info.className = "gi-card-details";
-    while (project.firstChild) info.appendChild(project.firstChild);
-    project.append(card, info);
+    info.className = "gi-project-accessible-copy";
+    const idLabel = project.querySelector("small");
+    const titleNode = project.querySelector("h2");
+    const descriptionNode = Array.from(project.querySelectorAll("p")).find(node => !node.classList.contains("rule"));
+    const resultNode = project.querySelector(".rule");
+    [idLabel, titleNode, descriptionNode].filter(Boolean).forEach(node => info.appendChild(node));
+    project.replaceChildren(card, info);
+    if (resultNode) project.appendChild(resultNode);
     project.classList.add("gi-project-canva");
+    project.setAttribute("aria-label", "Thẻ dự án " + title);
   }
   let scheduled = false;
   new MutationObserver(() => {
