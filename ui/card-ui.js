@@ -27,7 +27,34 @@
     document.body.appendChild(dlg);
     dlg.showModal();
   }
+  function enhancePrivateRole() {
+    const holder = app.querySelector("#role");
+    if (!holder || holder.dataset.canvaRole) return;
+    const code = holder.getAttribute("data-role");
+    if (code !== "PROTECTOR" && code !== "SABOTEUR") return;
+    const trigger = holder.querySelector("#show-role");
+    if (!trigger) return;
+    holder.dataset.canvaRole = "1";
+    const preview = document.createElement("div");
+    preview.className = "gi-private-role-card";
+    preview.hidden = true;
+    const img = document.createElement("img");
+    img.src = "/cards/ROLE_" + code + ".png";
+    img.alt = "Thẻ vai trò riêng của bạn";
+    img.loading = "lazy";
+    preview.appendChild(img);
+    holder.appendChild(preview);
+    trigger.addEventListener("pointerdown", () => { preview.hidden = false; });
+  }
+  function hidePrivateRole() {
+    const preview = app.querySelector(".gi-private-role-card");
+    if (preview) preview.hidden = true;
+  }
+  document.addEventListener("pointerup", hidePrivateRole, true);
+  document.addEventListener("pointercancel", hidePrivateRole, true);
+  window.addEventListener("blur", hidePrivateRole);
   function enhance() {
+    enhancePrivateRole();
     const project = app.querySelector("section.project");
     if (!project || project.dataset.canvaCard) return;
     const raw = project.querySelector("small")?.textContent || "";

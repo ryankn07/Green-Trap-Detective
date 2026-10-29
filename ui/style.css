@@ -164,3 +164,8 @@ p{line-height:1.7}
   .gi-project-canva .gi-card-details>h2{font-size:25px}
   .gi-project-canva .gi-card-details>p{font-size:13px}
 }
+
+/* Reveal the user's own Canva role card only while holding the reveal button. */
+.gi-private-role-card{flex:1 1 100%;width:100%;margin-top:8px}
+.gi-private-role-card[hidden]{display:none}
+.gi-private-role-card img{display:block;width:min(100%,180px);height:auto;margin:4px auto 0;border:1px solid #d2ddce;border-radius:8px;box-shadow:0 6px 20px #1a37220c}
