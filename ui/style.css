@@ -796,3 +796,97 @@ body.gi-gameplay .actions button{border-radius:11px}
   .gi-phase-actions>h2{font-size:19px}
   .gi-phase-actions form{gap:10px}
 }
+
+
+/* GREEN IMPACT — card-only artwork and full-width desktop play layout. */
+.project.gi-project-canva{
+  display:flex!important;
+  flex-direction:column!important;
+  align-items:center!important;
+  gap:12px!important;
+  width:100%!important;
+  margin:12px 0 0!important;
+  padding:0!important;
+  border:0!important;
+  border-radius:0!important;
+  background:transparent!important;
+  box-shadow:none!important;
+}
+.project.gi-project-canva:before{display:none!important}
+.project.gi-project-canva>.gi-card-preview{width:min(100%,400px)!important;min-width:0;margin:0 auto!important}
+.gi-card-preview{width:min(100%,400px);min-width:0;margin:0 auto}
+.gi-card-button{
+  display:block!important;width:100%!important;min-width:0!important;
+  margin:0!important;padding:0!important;overflow:hidden!important;
+  border:0!important;border-radius:0!important;background:transparent!important;
+  box-shadow:none!important;cursor:zoom-in;text-align:center;
+}
+.gi-card-button:hover,.gi-card-button:focus{background:transparent!important;box-shadow:none!important}
+.gi-card-image-viewport{
+  display:block;position:relative;width:100%;aspect-ratio:13/20;
+  overflow:hidden;background:transparent;border:0;border-radius:0;
+  isolation:isolate;
+}
+.gi-card-image-viewport img{
+  position:absolute;display:block;left:50%;top:50%;
+  width:125%!important;max-width:none!important;height:auto!important;
+  margin:0!important;padding:0!important;
+  border:0!important;border-radius:0!important;background:transparent!important;
+  object-fit:contain;transform:translate(-50%,-50%);
+  image-rendering:auto;filter:contrast(1.055) saturate(1.025);
+}
+.gi-card-zoom-hint{display:none!important}
+.gi-project-accessible-copy{
+  position:absolute!important;width:1px!important;height:1px!important;padding:0!important;margin:-1px!important;
+  overflow:hidden!important;clip:rect(0,0,0,0)!important;white-space:nowrap!important;border:0!important;
+}
+.gi-project-card-failed .gi-project-accessible-copy{
+  position:static!important;width:auto!important;height:auto!important;margin:0!important;padding:14px!important;
+  overflow:visible!important;clip:auto!important;white-space:normal!important;
+}
+.gi-project-card-failed .gi-project-accessible-copy h2{font-size:23px;line-height:1.2;margin:8px 0}
+.gi-project-card-failed .gi-project-accessible-copy p{line-height:1.65}
+.project.gi-project-canva>.rule{
+  width:min(100%,400px);margin:0 auto;padding:11px 13px;
+  border:1px solid #d9e4cf;border-radius:12px;background:#e9efdd;
+  color:#244d36;line-height:1.55;
+}
+.gi-card-dialog{width:min(94vw,560px)!important;max-width:560px!important;max-height:calc(100dvh - 24px)!important;padding:12px!important;background:#f8f6eb!important}
+.gi-card-dialog-top{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px}
+.gi-card-dialog-top strong{min-width:0;overflow-wrap:anywhere}
+.gi-card-full-wrap{
+  position:relative;width:min(100%,calc((100dvh - 115px)*.65));
+  max-height:calc(100dvh - 115px);aspect-ratio:13/20;
+  margin:0 auto;overflow:hidden;background:transparent;
+}
+.gi-card-full{
+  position:absolute!important;left:50%;top:50%;
+  display:block;width:125%!important;max-width:none!important;height:auto!important;
+  max-height:none!important;margin:0!important;padding:0!important;
+  border:0!important;border-radius:0!important;background:transparent!important;
+  object-fit:contain;transform:translate(-50%,-50%);
+  filter:contrast(1.055) saturate(1.025);
+}
+body.gi-gameplay #app{
+  max-width:none!important;width:100%!important;margin:0 auto!important;
+  padding:24px clamp(22px,2.7vw,48px) 42px!important;
+}
+body.gi-gameplay .grid{width:100%;grid-template-columns:minmax(0,1.15fr) minmax(0,.85fr)!important;gap:clamp(14px,1.7vw,24px)!important}
+body.gi-gameplay .grid>.column{min-width:0}
+body.gi-gameplay .grid>.column>.card{min-width:0}
+@media(min-width:1100px){
+  body.gi-gameplay #app{padding-left:clamp(28px,3vw,56px)!important;padding-right:clamp(28px,3vw,56px)!important}
+  body.gi-gameplay .grid{grid-template-columns:minmax(0,1.25fr) minmax(330px,.75fr)!important;gap:clamp(18px,1.8vw,30px)!important}
+  .project.gi-project-canva>.gi-card-preview,.gi-card-preview{width:min(100%,400px)!important}
+}
+@media(max-width:760px){
+  body.gi-gameplay #app{padding:12px 11px calc(28px + env(safe-area-inset-bottom))!important}
+  .project.gi-project-canva{gap:8px!important;margin-top:8px!important}
+  .project.gi-project-canva>.gi-card-preview,.gi-card-preview{width:min(100%,360px)!important}
+  .gi-card-image-viewport{aspect-ratio:13/20}
+  .gi-card-image-viewport img,.gi-card-full{width:125%!important}
+  .project.gi-project-canva>.rule{width:min(100%,360px);padding:10px 11px;font-size:13px}
+  .gi-card-dialog{width:calc(100vw - 20px)!important;max-height:calc(100dvh - 20px)!important;padding:9px!important}
+  .gi-card-dialog-top{margin-bottom:7px}
+  .gi-card-full-wrap{width:min(100%,calc((100dvh - 90px)*.65));max-height:calc(100dvh - 90px)}
+}
