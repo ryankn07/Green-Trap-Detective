@@ -53,7 +53,73 @@
   document.addEventListener("pointerup", hidePrivateRole, true);
   document.addEventListener("pointercancel", hidePrivateRole, true);
   window.addEventListener("blur", hidePrivateRole);
+
+  function phaseDuration(phaseText) {
+    const value = String(phaseText || "").toLocaleLowerCase("vi");
+    if (/kết quả|công bố|reveal|tổng kết/.test(value)) return 25;
+    if (/nhắm mắt|bí mật|đặt cược|hành động|blind/.test(value)) return 60;
+    return 120;
+  }
+  function secondsRemaining(text) {
+    const value = String(text || "").trim();
+    const clock = value.match(/(\d{1,2}):(\d{2})/);
+    if (clock) return Number(clock[1]) * 60 + Number(clock[2]);
+    const match = value.match(/(\d{1,3})/);
+    return match ? Number(match[1]) : null;
+  }
+  function enhanceTimer() {
+    const phase = app.querySelector(".phase");
+    document.body.classList.toggle("gi-gameplay", Boolean(phase));
+    let timer = app.querySelector(".gi-phase-timer");
+    if (!phase) {
+      if (timer) timer.remove();
+      return;
+    }
+    const countdown = app.querySelector(".countdown");
+    const header = phase.closest(".flex") || phase.parentElement;
+    if (!countdown || !header) {
+      if (timer) timer.hidden = true;
+      return;
+    }
+    if (!timer) {
+      timer = document.createElement("div");
+      timer.className = "gi-phase-timer";
+      timer.setAttribute("role", "progressbar");
+      timer.setAttribute("aria-label", "Thời gian còn lại của lượt");
+      timer.setAttribute("aria-valuemin", "0");
+      const fill = document.createElement("span");
+      fill.className = "gi-phase-timer__fill";
+      timer.appendChild(fill);
+    }
+    if (header.nextElementSibling !== timer) header.insertAdjacentElement("afterend", timer);
+    const total = phaseDuration(phase.textContent);
+    const remaining = secondsRemaining(countdown.textContent);
+    const fill = timer.firstElementChild;
+    if (remaining === null) { timer.hidden = true; return; }
+    timer.hidden = false;
+    const safeRemaining = Math.max(0, Math.min(total, remaining));
+    const ratio = safeRemaining / total;
+    const percentage = Math.max(0, Math.min(100, ratio * 100));
+    timer.setAttribute("aria-valuemax", String(total));
+    timer.setAttribute("aria-valuenow", String(safeRemaining));
+    timer.setAttribute("aria-valuetext", safeRemaining + " giây còn lại");
+    timer.title = safeRemaining + " giây còn lại";
+    timer.classList.toggle("is-warning", ratio <= .30 && ratio > .15);
+    timer.classList.toggle("is-urgent", ratio <= .15);
+    if (!timer.dataset.initialized) {
+      fill.style.transition = "none";
+      fill.style.width = percentage + "%";
+      timer.dataset.initialized = "1";
+      window.requestAnimationFrame(() => {
+        if (fill.isConnected) fill.style.transition = "width .95s linear, background .25s ease";
+      });
+    } else {
+      fill.style.width = percentage + "%";
+    }
+  }
+
   function enhance() {
+    enhanceTimer();
     enhancePrivateRole();
     const project = app.querySelector("section.project");
     if (!project || project.dataset.canvaCard) return;
@@ -97,6 +163,6 @@
     if (scheduled) return;
     scheduled = true;
     queueMicrotask(() => { scheduled = false; enhance(); });
-  }).observe(app, { childList: true, subtree: true });
+  }).observe(app, { childList: true, subtree: true, characterData: true });
   enhance();
 })();

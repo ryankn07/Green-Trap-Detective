@@ -327,3 +327,180 @@ textarea{min-height:112px}
 @media(prefers-reduced-motion:reduce){
   .gi-card-button,button{transition:none}
 }
+
+
+/* GREEN IMPACT — approved responsive WEB game design */
+:root{
+  --canvas:#f3f1e7;--surface:#fbf8ee;--surface-soft:#e9eddc;
+  --text:#173328;--muted:#5e7165;--subtle:#829287;
+  --green:#245b43;--green-hover:#17452f;--green-light:#e2edcf;
+  --border:#e1e1d3;--border-strong:#cfd6c3;--red:#c94d3f;--gold:#b18a36;
+  --shadow:0 7px 24px rgba(16,42,29,.075)
+}
+html{scroll-padding-top:76px;-webkit-text-size-adjust:100%}
+body{background:var(--canvas);overflow-x:clip}
+button,input,select,textarea{touch-action:manipulation}
+button{min-height:44px}
+input,select,textarea{font-size:16px}
+.top{position:sticky;top:0;z-index:30;min-height:64px;background:#fbf8ee;border-bottom:1px solid #e4e3d8;backdrop-filter:blur(14px)}
+.brand{gap:10px}.mark{background:#214e3b;color:#e2f2a0;border:1px solid #d2e78b;border-radius:12px}
+.brand b{letter-spacing:.07em}.status{display:inline-flex;align-items:center;gap:7px}
+.status:before{content:"";width:7px;height:7px;border-radius:50%;background:#69ad73;flex:0 0 7px}
+#app{padding:22px 20px calc(30px + env(safe-area-inset-bottom))}
+.card{border-radius:16px;background:var(--surface);border-color:var(--border);box-shadow:var(--shadow)}
+.enter-grid form{border-radius:14px;background:#fbf8ee}
+.enter-grid form:first-child{background:#e9efdc;border-color:#d8e1c9}
+.primary,button.primary{background:#20543d;border-color:#20543d}
+.secondary,button.secondary{background:#fbf8ee;border-color:#cbd9c9;color:#214f3b}
+input,select,textarea{border-color:#dcded0;background:#fffdf5;border-radius:11px}
+input:focus,textarea:focus,select:focus{border-color:#78a97c;box-shadow:0 0 0 3px #78a97c28}
+.welcome{border-color:#e0e0d3;background:#fbf8ee}.welcome h1 em{color:#6b963f}
+.welcome-aside{background:#e8eddb;border-color:#dce3cf;border-radius:15px}
+.welcome-orbit{color:#557e3b}.step-bubble{border-radius:10px;background:#245b43}
+.pill{background:#e7edda;color:#315c3c}
+.note{background:#edf0df;border-color:#e0e5d1;color:#47654a}
+.choice{background:#f8f6ec;border-color:#e0e2d5}
+.choice:has(input:checked){background:#e5edda;border-color:#90ad73}
+.summary{background:#edf0df;border-color:#dce4cd}
+.summary.success{background:#e6efda;border-color:#d0e2bf}
+.summary.danger{background:#fae8df;border-color:#f0cfc1}
+
+/* In-round pages use the deep-forest frame and warm paper panels from the approved design. */
+body.gi-gameplay{color:#f3f4e9;background:#0b1e16;background-image:radial-gradient(ellipse at 50% -22%,#173b2a 0%,#0b1e16 64%)}
+body.gi-gameplay .top{color:#f2f4e8;background:rgba(10,31,22,.96);border-bottom:1px solid #294737}
+body.gi-gameplay .brand b{color:#f4f5e9}
+body.gi-gameplay .brand small,body.gi-gameplay .header-sub{color:#a4b9a7}
+body.gi-gameplay .mark{background:#183b2b;color:#dff28b;border-color:#5c7e48;border-radius:50%}
+body.gi-gameplay .status{background:#173627;border-color:#315741;color:#dff28b}
+body.gi-gameplay #app{max-width:1160px;padding-top:22px}
+body.gi-gameplay .grid{grid-template-columns:minmax(0,1.15fr) minmax(290px,.85fr);gap:15px}
+body.gi-gameplay .card{color:#193328;background:#f7f4e9;border:1px solid #e4e3d6;border-radius:16px;box-shadow:0 10px 28px rgba(0,0,0,.12)}
+body.gi-gameplay .card p{color:#5c6b60}
+body.gi-gameplay .card h2,body.gi-gameplay .card h3{color:#17372a}
+body.gi-gameplay .phase{color:#dff28b;background:#153727;border:1px solid #315a41;border-radius:999px;padding:8px 12px;font-size:11px;letter-spacing:.075em}
+body.gi-gameplay .countdown{color:#473e1b;background:#f0e6b9;border:1px solid #e0d39a;border-radius:999px;padding:7px 11px;font-size:14px;font-variant-numeric:tabular-nums}
+body.gi-gameplay .project{border-color:#e0e0d2;background:#fbf8ed;border-radius:14px;box-shadow:0 6px 18px rgba(14,38,25,.055)}
+body.gi-gameplay .project h2{color:#16392a}
+body.gi-gameplay .project>p{color:#53665a}
+body.gi-gameplay .gi-project-canva{background:#fbf8ed}
+body.gi-gameplay .gi-card-button{background:#eeeddf;border-color:#dedfcf}
+body.gi-gameplay .gi-card-zoom-hint{color:#53714d}
+body.gi-gameplay .actions button{border-radius:11px;border-color:#d5ddce;background:#fdfbf2;color:#25523b}
+body.gi-gameplay .actions button.primary{background:#245b43;border-color:#245b43;color:#fff}
+body.gi-gameplay .actions button.primary:hover:not(:disabled){background:#17452f}
+body.gi-gameplay .choice{background:#fdfbf3;border-color:#dedfcf}
+body.gi-gameplay .choice:has(input:checked){background:#e8efd9;border-color:#9cb67e}
+body.gi-gameplay .person{border-bottom-color:#e7e5d8}
+body.gi-gameplay .avatar{border-radius:50%;background:#dce8d0;color:#244e37}
+body.gi-gameplay .note{background:#e8edd9;border-color:#dbe3cb;color:#405d43}
+body.gi-gameplay .summary{background:#e8eddb;border-color:#d9e2cb}
+body.gi-gameplay .summary.success{background:#e5efd9;border-color:#cfdfbd}
+body.gi-gameplay .summary.danger{background:#fae8df;border-color:#f0cfc1}
+body.gi-gameplay .code{background:#e8eddb;border-color:#d5dfc8;color:#245b43}
+body.gi-gameplay #role-value{color:#173328}
+body.gi-gameplay #show-role{background:#fbf8ee;border-color:#cbd8c5;color:#245b43}
+
+/* Progress bar is inserted immediately below the phase label and above the project. */
+.gi-phase-timer{display:block;width:100%;height:7px;overflow:hidden;margin:12px 0 15px;border-radius:999px;background:#dce2d5;box-shadow:inset 0 1px 2px rgba(22,44,30,.08)}
+.gi-phase-timer[hidden]{display:none}
+.gi-phase-timer__fill{display:block;height:100%;width:100%;border-radius:inherit;background:linear-gradient(90deg,#6ba65d 0%,#9acb67 55%,#d7ed82 100%);transition:width .95s linear,background .25s ease}
+.gi-phase-timer.is-warning .gi-phase-timer__fill{background:linear-gradient(90deg,#d9a33b,#f1d36d)}
+.gi-phase-timer.is-urgent .gi-phase-timer__fill{background:linear-gradient(90deg,#d94f42,#ef8964)}
+.gi-phase-timer.is-urgent{box-shadow:0 0 0 3px #d94f4218}
+@media(min-width:761px){
+ body.gi-gameplay .grid>.column{gap:14px}
+ body.gi-gameplay .grid>.column>.card{padding:20px}
+ body.gi-gameplay .project.gi-project-canva{grid-template-columns:minmax(155px,205px) minmax(0,1fr);gap:17px;padding:15px}
+}
+@media(max-width:900px){body.gi-gameplay .grid{grid-template-columns:minmax(0,1fr) minmax(275px,.9fr);gap:12px}}
+@media(max-width:760px){
+ html{scroll-padding-top:66px}
+ .top{min-height:calc(60px + env(safe-area-inset-top));gap:9px;padding:max(8px,env(safe-area-inset-top)) 12px 8px}
+ .brand{gap:8px;min-width:0}.mark{width:34px;height:34px;flex:0 0 34px;font-size:21px}
+ .brand b{font-size:12px;letter-spacing:.06em}.brand small{font-size:10px}
+ .header-end{gap:0;min-width:0}.header-sub{display:none}
+ .status{font-size:10px;padding:6px 8px;max-width:136px;overflow:hidden;text-overflow:ellipsis}
+ #app{padding:12px 12px calc(25px + env(safe-area-inset-bottom));min-height:calc(100svh - 60px)}
+ .welcome{margin:4px auto;padding:19px 15px;border-radius:15px}
+ .welcome-head{display:block;padding:0 1px 17px}
+ .welcome h1{font-size:clamp(34px,8.5vw,43px);line-height:1.07;letter-spacing:-.055em;margin:13px 0 10px}
+ .welcome-head p{font-size:13px;line-height:1.7}.welcome-aside{display:none}
+ .enter-grid{grid-template-columns:minmax(0,1fr);gap:10px}
+ .enter-grid form{padding:15px 13px;border-radius:13px}.form-heading{margin-bottom:14px}
+ .form-heading h2{font-size:18px}.form-heading p{font-size:12px}
+ .enter-grid button{min-height:49px;padding:13px;border-radius:10px}
+ .welcome-foot{display:grid;grid-template-columns:1fr;gap:7px;padding-top:13px;margin-top:15px;font-size:11px}
+ body.gi-gameplay .top{min-height:calc(60px + env(safe-area-inset-top))}
+ body.gi-gameplay #app{padding:12px 11px calc(28px + env(safe-area-inset-bottom));min-height:calc(100svh - 60px)}
+ body.gi-gameplay .grid{display:flex;flex-direction:column;gap:11px}
+ body.gi-gameplay .grid>.column{display:contents}
+ body.gi-gameplay .grid>.column:first-child>.card:first-child{order:1}
+ body.gi-gameplay .grid>.column:nth-child(2)>.card:first-child{order:2}
+ body.gi-gameplay .grid>.column:nth-child(2)>.card:nth-child(2){order:3}
+ body.gi-gameplay .grid>.column:nth-child(2)>.card:nth-child(3){order:4}
+ body.gi-gameplay .grid>.column:first-child>.card:nth-child(2){order:5}
+ body.gi-gameplay .grid>.column>.card{width:100%;min-width:0}
+ body.gi-gameplay .card{padding:14px;border-radius:15px}
+ body.gi-gameplay .card h2{font-size:19px;line-height:1.25}
+ body.gi-gameplay .card p{font-size:13px;line-height:1.65}
+ body.gi-gameplay .flex{gap:8px}
+ body.gi-gameplay .phase{font-size:10px;padding:7px 10px;letter-spacing:.045em}
+ body.gi-gameplay .countdown{font-size:13px;padding:7px 9px}
+ .gi-phase-timer{height:7px;margin:10px 0 12px}
+ body.gi-gameplay .project.gi-project-canva{grid-template-columns:minmax(100px,34%) minmax(0,1fr);gap:11px;padding:10px;align-items:start;margin-top:12px;border-radius:12px}
+ body.gi-gameplay .gi-card-preview{width:100%;min-width:0}
+ body.gi-gameplay .gi-card-button{padding:4px;border-radius:8px}
+ body.gi-gameplay .gi-card-button img{border-radius:5px}
+ body.gi-gameplay .gi-card-zoom-hint{font-size:10px;padding:6px 1px 2px}
+ body.gi-gameplay .gi-project-canva .gi-card-details>small:first-child{font-size:9px;letter-spacing:.035em;padding:4px 6px;margin:0 0 7px}
+ body.gi-gameplay .gi-project-canva .gi-card-details>h2{font-size:clamp(17px,4.6vw,21px);line-height:1.18;letter-spacing:-.035em;margin:1px 0 8px;overflow-wrap:anywhere}
+ body.gi-gameplay .gi-project-canva .gi-card-details>p{font-size:12px;line-height:1.55;margin:0 0 9px;overflow-wrap:anywhere}
+ body.gi-gameplay .gi-project-canva .gi-card-details>.rule{margin:0 0 9px;padding-top:8px}
+ body.gi-gameplay .project>small:first-child{font-size:10px;margin:13px 12px 0}
+ body.gi-gameplay .project h2{font-size:22px;margin:8px 12px 9px;overflow-wrap:anywhere}
+ body.gi-gameplay .project>p{font-size:13px;line-height:1.65;margin:0 12px 14px;overflow-wrap:anywhere}
+ body.gi-gameplay .project>.rule{margin:0 12px 12px;padding-top:10px}
+ body.gi-gameplay .actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-top:12px}
+ body.gi-gameplay .actions button{min-width:0;min-height:49px;padding:11px 8px;font-size:13px;line-height:1.3;white-space:normal;overflow-wrap:anywhere;border-radius:10px}
+ body.gi-gameplay .actions button:only-child{grid-column:1/-1}
+ body.gi-gameplay .card form{margin-top:11px}
+ body.gi-gameplay .card form label{font-size:12px}
+ body.gi-gameplay .card form>button,body.gi-gameplay .card>button,body.gi-gameplay .summary+button{width:100%;min-height:49px;padding:12px;font-size:14px;border-radius:10px}
+ body.gi-gameplay .choice{min-height:50px;padding:11px 10px;gap:9px;font-size:13px;line-height:1.4}
+ body.gi-gameplay .choice input{width:19px;height:19px;flex:0 0 19px}
+ body.gi-gameplay .two{gap:8px}
+ body.gi-gameplay .person{gap:9px;padding:9px 0;min-height:51px}
+ body.gi-gameplay .avatar{width:32px;height:32px;flex:0 0 32px}
+ body.gi-gameplay .person-info b{font-size:12px}
+ body.gi-gameplay .person-info small{font-size:10px}
+ body.gi-gameplay .coins{font-size:18px}
+ body.gi-gameplay .note{padding:11px 12px;font-size:12px;line-height:1.6}
+ body.gi-gameplay .summary{padding:14px}
+ body.gi-gameplay .summary h2{font-size:22px}
+ body.gi-gameplay .hist{max-height:270px}
+ body.gi-gameplay .hist>div{font-size:12px;padding:10px 0}
+ body.gi-gameplay #role{gap:8px}
+ body.gi-gameplay #role-value{font-size:12px}
+ body.gi-gameplay #show-role{margin-left:0;font-size:12px;padding:9px 10px}
+ body.gi-gameplay .gi-private-role-card img{width:min(100%,155px)}
+ body.gi-gameplay .gi-card-dialog{width:calc(100vw - 20px);max-width:570px;max-height:calc(100dvh - 20px);padding:9px;border-radius:12px}
+ body.gi-gameplay .gi-card-dialog-top{gap:8px;margin-bottom:7px}
+ body.gi-gameplay .gi-card-dialog-top strong{font-size:12px}
+ body.gi-gameplay .gi-card-full{max-height:calc(100dvh - 82px)}
+ #toast{font-size:12px;padding:12px 14px;max-width:calc(100vw - 24px)}
+}
+@media(max-width:360px){
+ body.gi-gameplay .project.gi-project-canva{grid-template-columns:minmax(0,1fr);gap:10px}
+ body.gi-gameplay .gi-card-preview{width:min(100%,170px);margin:0 auto}
+ body.gi-gameplay .gi-project-canva .gi-card-details>h2{font-size:21px}
+ body.gi-gameplay .actions{grid-template-columns:minmax(0,1fr)}
+ body.gi-gameplay .two{grid-template-columns:minmax(0,1fr)}
+}
+@media(orientation:landscape) and (max-height:540px) and (max-width:900px){
+ body.gi-gameplay .top{min-height:48px;padding-top:5px;padding-bottom:5px}
+ body.gi-gameplay #app{padding-top:8px}
+ body.gi-gameplay .project.gi-project-canva{grid-template-columns:100px minmax(0,1fr)}
+ body.gi-gameplay .gi-card-preview{width:100%}
+ body.gi-gameplay .gi-card-zoom-hint{padding:4px 0}
+}
+@media(prefers-reduced-motion:reduce){.gi-phase-timer__fill,button{transition:none!important}}
