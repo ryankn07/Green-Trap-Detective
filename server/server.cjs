@@ -16,6 +16,35 @@ const manager=new RoomManager({onUpdate:emitRoom});
 const MIME={'.html':'text/html; charset=utf-8','.js':'text/javascript; charset=utf-8','.css':'text/css; charset=utf-8','.svg':'image/svg+xml','.ico':'image/x-icon'};
 const HEADERS={'X-Content-Type-Options':'nosniff','Referrer-Policy':'no-referrer','X-Frame-Options':'DENY','Content-Security-Policy':"default-src 'self'; connect-src 'self'; img-src 'self' data:; style-src 'self'; script-src 'self'; object-src 'none'; base-uri 'none'; frame-ancestors 'none'"};
 const allowedPaths=new Set(['/','/index.html','/app.js','/style.css']);
+
+const canvaManifest=require('../ui/cards-manifest.json').cards;
+const cardDir=path.join(uiDir,'cards');
+const cardPattern=/^\/cards\/(PROJ_(?:0[1-9]|1\d|2[0-5])|ROLE_PROTECTOR|ROLE_SABOTEUR|GREENCOIN|BACK_0[1-4])\.png$/;
+const pendingCards=new Map();
+function imageMime(buf){
+  if(buf[0]===0x89 && buf.subarray(1,4).toString()==='PNG') return 'image/png';
+  if(buf[0]===0xff && buf[1]===0xd8) return 'image/jpeg';
+  if(buf.subarray(0,4).toString()==='RIFF' && buf.subarray(8,12).toString()==='WEBP') return 'image/webp';
+  return 'application/octet-stream';
+}
+async function getCanvaCard(id){
+  const filepath=path.join(cardDir,id+'.png');
+  try{return await fs.promises.readFile(filepath)}catch(e){if(e.code!=='ENOENT')throw e}
+  if(!canvaManifest[id])throw Error('Unknown Canva card');
+  if(pendingCards.has(id))return pendingCards.get(id);
+  const job=(async()=>{
+    const r=await fetch(canvaManifest[id].url,{headers:{Accept:'image/avif,image/webp,image/png,image/jpeg,image/*'},signal:AbortSignal.timeout(18000)});
+    if(!r.ok)throw Error('Canva card image fetch failed: '+r.status);
+    const bytes=Buffer.from(await r.arrayBuffer());
+    if(bytes.length<1000||bytes.length>8*1024*1024||!imageMime(bytes).startsWith('image/'))throw Error('Invalid Canva card image');
+    await fs.promises.mkdir(cardDir,{recursive:true});
+    await fs.promises.writeFile(filepath,bytes);
+    return bytes;
+  })();
+  pendingCards.set(id,job);
+  try{return await job}finally{pendingCards.delete(id)}
+}
+
 function readBody(req) {return new Promise((resolve,reject)=>{let content='';req.on('data',chunk=>{content+=chunk;if(content.length>8000){reject(Object.assign(Error('Request too large'),{code:'TOO_LARGE'}));req.destroy();}});req.on('end',()=>{try{resolve(JSON.parse(content||'{}'))}catch{reject(Object.assign(Error('Malformed JSON'),{code:'BAD_JSON'}))}});req.on('error',reject);});}
 function auth(req,url) {const code=url.searchParams.get('room')||req.headers['x-room-code'];const bearer=req.headers.authorization?.match(/^Bearer ([a-f0-9]{64})$/);return manager.authenticate(code,bearer?.[1]);}
 const server=http.createServer(async(req,res)=>{
@@ -29,6 +58,21 @@ const server=http.createServer(async(req,res)=>{
       const data=await fs.promises.readFile(filepath);
       res.writeHead(200,{'Content-Type':MIME[path.extname(filepath)]||'application/octet-stream','Cache-Control':'no-store'});return res.end(data);
     }
+
+    const cardMatch=req.method==='GET'?url.pathname.match(cardPattern):null;
+    if(cardMatch){
+      try{
+        const bytes=await getCanvaCard(cardMatch[1]);
+        res.writeHead(200,{'Content-Type':imageMime(bytes),'Cache-Control':'public, max-age=3600'});
+        return res.end(bytes);
+      }catch(e){return json(res,404,{error:'CARD_UNAVAILABLE'});}
+    }
+    if(req.method==='GET' && url.pathname==='/card-ui.js'){
+      const data=await fs.promises.readFile(path.join(uiDir,'card-ui.js'));
+      res.writeHead(200,{'Content-Type':MIME['.js'],'Cache-Control':'no-store'});
+      return res.end(data);
+    }
+
     if(req.method==='POST' && url.pathname==='/api/create') {
       const body=await readBody(req);const {room,player}=manager.create(body.name);
       return json(res,200,{roomCode:room.code,playerId:player.id,token:player.secret});

@@ -128,3 +128,39 @@ p{line-height:1.7}
 @media(max-width:900px){.grid{grid-template-columns:minmax(0,1fr) minmax(310px,.88fr);gap:13px}.column{gap:13px}.card{padding:17px}.project h2{margin-left:16px;margin-right:16px}.project>p{margin-left:16px;margin-right:16px}.project>small:first-child{margin-left:16px}.project>.rule{margin-left:16px;margin-right:16px}.header-sub{display:none}}
 @media(max-width:760px){.top{min-height:61px;padding:9px 15px}.brand b{font-size:13px}.brand small{font-size:10px}.mark{width:34px;height:34px;font-size:23px}.status{font-size:10px;padding:6px 9px}#app{padding:15px}.welcome{margin:5px auto;padding:20px}.welcome-head{display:block;padding-bottom:20px}.welcome h1{font-size:clamp(34px,8vw,47px)}.welcome-head p{font-size:13px}.welcome-aside{display:none}.enter-grid{grid-template-columns:1fr;gap:11px}.enter-grid form{padding:18px}.welcome-foot{gap:10px 18px}.grid{display:flex;flex-direction:column;gap:12px}.grid>.column{display:contents}.grid>.column:first-child>.card:first-child{order:1}.grid>.column:nth-child(2)>.card:first-child{order:2}.grid>.column:nth-child(2)>.card:nth-child(2){order:3}.grid>.column:nth-child(2)>.card:nth-child(3){order:4}.grid>.column:first-child>.card:nth-child(2){order:5}.grid>.column>.card{width:100%}.card{padding:17px}.project h2{font-size:29px}.project>p{font-size:13px}}
 @media(prefers-reduced-motion:reduce){*,*:before,*:after{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
+
+/* Cards brought in from the actual 32-page GREEN IMPACT Canva deck. */
+.project.gi-project-canva{
+  display:grid;grid-template-columns:minmax(185px,235px) minmax(0,1fr);
+  gap:20px;align-items:start;padding:19px;
+  border-radius:12px;background:#fff;border-color:#d4e2d7
+}
+.project.gi-project-canva:before{display:none}
+.gi-card-preview{min-width:0;width:100%}
+.gi-card-button{display:block;width:100%;border:1px solid #d4ded4;background:#f5f7f2;border-radius:11px;padding:7px;overflow:hidden;text-align:center;cursor:zoom-in}
+.gi-card-button:hover{border-color:#90b79b;background:#eef5ee}
+.gi-card-button:focus-visible{outline:3px solid #90bd9b;outline-offset:3px}
+.gi-card-button img{display:block;width:100%;height:auto;aspect-ratio:794 / 1123;object-fit:contain;border-radius:6px;background:#f3f4ef}
+.gi-card-zoom-hint{display:block;padding:7px 3px 3px;color:#53745e;font-size:11px;font-weight:750}
+.gi-card-unavailable{display:none}
+.gi-project-canva .gi-card-details{min-width:0}
+.gi-project-canva .gi-card-details>small:first-child{margin:3px 0 8px}
+.gi-project-canva .gi-card-details>h2{margin:8px 0 14px;font-size:clamp(23px,2.4vw,31px);line-height:1.16}
+.gi-project-canva .gi-card-details>p{margin:0 0 16px;line-height:1.82;font-size:13px}
+.gi-project-canva .gi-card-details>.rule{margin:0 0 14px}
+.gi-card-dialog{width:min(94vw,570px);max-height:94vh;overflow:auto;padding:14px;background:#fff;color:#172a22;border:1px solid #d4e2d7;border-radius:14px;box-shadow:0 24px 80px #0d241d60}
+.gi-card-dialog::backdrop{background:#0b2117bb;backdrop-filter:blur(3px)}
+.gi-card-dialog-top{display:flex;justify-content:space-between;gap:15px;align-items:center;margin-bottom:9px}
+.gi-card-dialog-top strong{font-size:13px;overflow-wrap:anywhere}
+.gi-card-dialog-top button{border:1px solid #ccdccf;border-radius:8px;background:#f6faf6;color:#245f47;font-size:12px;font-weight:700;padding:8px 11px}
+.gi-card-full{display:block;width:100%;height:auto;max-height:calc(94vh - 84px);object-fit:contain}
+@media(max-width:1000px){
+  .project.gi-project-canva{grid-template-columns:minmax(150px,200px) minmax(0,1fr);gap:15px;padding:15px}
+  .gi-project-canva .gi-card-details>h2{font-size:24px}
+}
+@media(max-width:760px){
+  .project.gi-project-canva{grid-template-columns:minmax(0,1fr);gap:14px;padding:14px}
+  .gi-card-preview{width:min(100%,270px);margin:0 auto}
+  .gi-project-canva .gi-card-details>h2{font-size:25px}
+  .gi-project-canva .gi-card-details>p{font-size:13px}
+}
