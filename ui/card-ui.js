@@ -121,37 +121,133 @@
     }
   }
 
-  function enhancePhasePanel() {
-    const grid = app.querySelector(".grid");
-    const columns = grid ? grid.querySelectorAll(":scope > .column") : [];
-    const project = app.querySelector("section.project");
-    if (!project || columns.length < 2) return;
-    const mainCard = project.closest(".card");
-    const secondary = columns[1];
-    if (!mainCard || !secondary) return;
-    const headings = Array.from(secondary.children).filter(node => node.tagName === "H2");
-    const phaseHeading = headings.find(node => /^(THẢO LUẬN|HÀNH ĐỘNG BÍ MẬT|CÔNG BỐ|KẾT THÚC)$/.test(node.textContent.trim()));
-    if (!phaseHeading || phaseHeading.closest(".gi-phase-actions")) return;
-    const playerCards = Array.from(secondary.children).filter(node => node.classList?.contains("card") && node !== phaseHeading);
-    const playersCard = playerCards[playerCards.length - 1];
-    if (!playersCard) return;
-    const emptyBefore = phaseHeading.previousElementSibling;
-    if (emptyBefore && emptyBefore.tagName === "P" && emptyBefore.classList.contains("card") && !emptyBefore.textContent.trim()) emptyBefore.remove();
-    const panel = document.createElement("section");
-    panel.className = "card gi-phase-actions";
-    let node = phaseHeading;
-    while (node && node !== playersCard) {
-      const nextNode = node.nextElementSibling;
-      panel.appendChild(node);
-      node = nextNode;
+  function moveLayoutNode(node, target, className) {
+    if (!node || !target || node === target) return;
+    if (className) node.classList.add(className);
+    if (node.parentElement !== target) target.appendChild(node);
+  }
+
+  function ensureLayoutSlot(grid, className) {
+    let slot = Array.from(grid.children).find(node => node.classList?.contains(className));
+    if (!slot) {
+      slot = document.createElement("div");
+      slot.className = className;
+      slot.dataset.giLayoutSlot = "1";
     }
-    project.insertAdjacentElement("afterend", panel);
+    return slot;
+  }
+
+  function orchestrateLayout() {
+    const grid = app.querySelector(".grid");
+    if (!grid) return;
+
+    const project = grid.querySelector("section.project");
+    const phase = grid.querySelector(".phase");
+    if (!project && !phase) return;
+
+    const cardColumn = ensureLayoutSlot(grid, "gi-col-card");
+    const centerColumn = ensureLayoutSlot(grid, "gi-col-center");
+    const sidebarColumn = ensureLayoutSlot(grid, "gi-col-sidebar");
+    const slots = [cardColumn, centerColumn, sidebarColumn];
+
+    slots.forEach((slot, index) => {
+      const current = grid.children[index] || null;
+      if (current !== slot) grid.insertBefore(slot, current);
+    });
+
+    const oldColumns = Array.from(grid.children).filter(node =>
+      node.classList?.contains("column")
+    );
+
+    const projectCard = project?.closest(".card");
+    const phaseCard =
+      phase?.closest(".card") ||
+      grid.querySelector(".gi-phase-timer")?.closest(".card") ||
+      projectCard;
+
+    const role = grid.querySelector("#role");
+    const roleCard = role?.closest(".card");
+    const people = grid.querySelector(".people");
+    const peopleCard = people?.closest(".card");
+    const form = grid.querySelector(".gi-phase-actions form") || grid.querySelector("form");
+    const formCard = form?.closest(".card");
+    const coinsCard = grid.querySelector(".coins")?.closest(".card");
+
+    // Keep the phase header and timer together in the center column.
+    if (phaseCard) moveLayoutNode(phaseCard, centerColumn, "gi-layout-phase-card");
+    if (projectCard && projectCard !== phaseCard) {
+      moveLayoutNode(projectCard, centerColumn, "gi-layout-project-shell");
+    }
+
+    // The first history block can be nested inside the project section.
+    // Extract its existing wrapper before moving the Canva project card.
+    const projectHistory = project?.querySelector(".hist");
+    const projectDiscussion = projectHistory?.closest(".rule") || projectHistory;
+    if (projectDiscussion && project.contains(projectDiscussion)) {
+      moveLayoutNode(projectDiscussion, centerColumn, "gi-discussion-feed");
+    }
+
+    if (project) {
+      project.classList.add("gi-project-canva");
+      moveLayoutNode(project, cardColumn);
+    }
+
+    // Keep the live discussion form in the center column.
+    if (formCard && ![phaseCard, projectCard, roleCard, peopleCard].includes(formCard)) {
+      moveLayoutNode(formCard, centerColumn, "gi-layout-form-card");
+    } else if (form && !centerColumn.contains(form)) {
+      moveLayoutNode(form, centerColumn, "gi-layout-form-card");
+    }
+
+    // A separate .hist card is the turn log; keep it in the center column.
+    for (const history of Array.from(grid.querySelectorAll(".hist"))) {
+      const historyCard = history.closest(".card");
+      if (
+        historyCard &&
+        ![phaseCard, projectCard, formCard, roleCard, peopleCard, coinsCard].includes(historyCard)
+      ) {
+        moveLayoutNode(historyCard, centerColumn, "gi-layout-history-card");
+      } else if (!historyCard && !centerColumn.contains(history)) {
+        const wrapper = history.closest(".rule") || history;
+        moveLayoutNode(wrapper, centerColumn, "gi-discussion-feed");
+      }
+    }
+
+    // Private role / wallet and the council list belong in the sidebar.
+    if (roleCard) moveLayoutNode(roleCard, sidebarColumn, "gi-layout-role-card");
+    else if (role && !sidebarColumn.contains(role)) moveLayoutNode(role, sidebarColumn);
+
+    if (
+      coinsCard &&
+      ![roleCard, peopleCard].includes(coinsCard) &&
+      !sidebarColumn.contains(coinsCard)
+    ) {
+      moveLayoutNode(coinsCard, sidebarColumn, "gi-layout-wallet-card");
+    }
+
+    if (peopleCard && peopleCard !== roleCard) {
+      moveLayoutNode(peopleCard, sidebarColumn, "gi-layout-people-card");
+    } else if (people && !sidebarColumn.contains(people)) {
+      moveLayoutNode(people, sidebarColumn);
+    }
+
+    // Preserve any remaining core-rendered content instead of leaving it
+    // stranded in the two legacy columns.
+    for (const column of oldColumns) {
+      for (const child of Array.from(column.children)) {
+        const hasSidebarContent =
+          child.matches?.("#role, .people, .coins") ||
+          child.querySelector?.("#role, .people, .coins");
+        moveLayoutNode(child, hasSidebarContent ? sidebarColumn : centerColumn);
+      }
+      if (!column.children.length) column.hidden = true;
+    }
   }
 
   function enhance() {
     enhanceTimer();
     enhancePrivateRole();
-    enhancePhasePanel();
+    orchestrateLayout();
     const project = app.querySelector("section.project");
     if (!project || project.dataset.canvaCard) return;
     const raw = project.querySelector("small")?.textContent || "";
