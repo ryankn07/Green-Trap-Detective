@@ -38,7 +38,7 @@ function recoverSession(error){
 }
 function handleSessionError(error){if(error?.code==='ROOM_NOT_FOUND'||error?.code==='UNAUTHORIZED'){recoverSession(error);return;}gameError(error);}
 const api=async(path,data,authenticated=false)=>{const headers={'Content-Type':'application/json'};if(authenticated){headers.Authorization=`Bearer ${session.token}`;headers['x-room-code']=session.roomCode;}
- const r=await fetch(path,{method:'POST',headers,body:JSON.stringify(data)});const value=await r.json().catch(()=>({}));if(!r.ok)throw Error(value.message||value.error||`HTTP ${r.status}`);return value;};
+ const r=await fetch(path,{method:'POST',headers,body:JSON.stringify(data)});const value=await r.json().catch(()=>({}));if(!r.ok){const error=Error(value.message||value.error||`HTTP ${r.status}`);error.code=value.error;error.status=r.status;throw error;}return value;};
 const readState=async()=>{const r=await fetch(`/api/state?room=${session.roomCode}`,{headers:{Authorization:`Bearer ${session.token}`},cache:'no-store'});const value=await r.json().catch(()=>({}));if(!r.ok){const error=Error(value.message||value.error||'Không thể tải trạng thái phòng');error.code=value.error;error.status=r.status;throw error;}captureStatementDraft();snapshot=value;render();};
 const copyRoom=async()=>{const url=`${location.origin}/?room=${session.roomCode}`;try{await navigator.clipboard.writeText(url);alert('Đã sao chép link mời: '+url);}catch{prompt('Sao chép link mời:',url)}};
 function onSession(s) {session=s;save();app.innerHTML='';readState().catch(handleSessionError);connectStream();}
