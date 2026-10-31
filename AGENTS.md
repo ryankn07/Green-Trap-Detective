@@ -32,8 +32,9 @@ Before changing gameplay UI, read `docs/UI_REFACTOR_BRIEF.md`. It is the task-sp
 - `ui/cards/ROLE_PROTECTOR.png`, `ROLE_SABOTEUR.png`: original role-card images.
 - `ui/cards-manifest.json`: Canva source metadata.
 - `package.json`: Node version and available npm scripts.
+- `scripts/restore-runtime-bundle.cjs`: portable Node-only recovery for missing bundled runtime files.
 
-The page shell loads `/app.js`; the server currently resolves that file from `public/app.js`. The room manager imports `engine/dist/data/projects.json`. In the GitHub tree at the handoff baseline, those two referenced paths were not present as tracked files. Before runtime testing, inspect the actual local workspace, ignored files, and `runtime.bundle.part*` files to locate the real source/assets. Do not fabricate replacement files or silently rewrite the server if they are absent; report the exact blocker and continue only with work that can be verified safely.
+The page shell loads `/app.js`, served from `public/app.js`. The room manager imports `engine/dist/data/projects.json`. These original files are restored from the checked-in `runtime.bundle.part*` archive and are tracked. `npm start` runs `scripts/restore-runtime-bundle.cjs` first; it restores only missing files and never overwrites existing source unless explicitly invoked with `--force`. Use `--check` to validate the archive without writing.
 
 ## Verified gameplay contract
 
