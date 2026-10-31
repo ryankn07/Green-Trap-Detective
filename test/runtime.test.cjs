@@ -47,6 +47,22 @@ test('runtime bundle can restore/validate the original client and project data',
   ], { encoding: 'utf8' });
   assert.equal(result.status, 0, result.stderr || result.stdout);
   assert.match(result.stdout, /10 project records/);
+
+  // Simulate a checkout with one missing bundled runtime file.
+  const stylePath = path.join(__dirname, '..', 'public/style.css');
+  const backupPath = stylePath + '.test-backup';
+  const originalStyle = fs.readFileSync(stylePath);
+  fs.renameSync(stylePath, backupPath);
+  try {
+    const restored = spawnSync(process.execPath, [
+      path.join(__dirname, '..', 'scripts/restore-runtime-bundle.cjs')
+    ], { encoding: 'utf8' });
+    assert.equal(restored.status, 0, restored.stderr || restored.stdout);
+    assert.deepEqual(fs.readFileSync(stylePath), originalStyle);
+  } finally {
+    if (fs.existsSync(stylePath)) fs.unlinkSync(stylePath);
+    if (fs.existsSync(backupPath)) fs.renameSync(backupPath, stylePath);
+  }
 });
 
 test('server starts and serves the real client and Canva project artwork', async () => {
@@ -64,6 +80,8 @@ test('server starts and serves the real client and Canva project artwork', async
   assert.match(source, /captureStatementDraft/);
   assert.match(source, /restoreStatementDraft/);
   assert.match(source, /recoverSession/);
+  assert.match(source, /return-home/);
+  assert.match(source, /sessionStorage.setItem\\(draftStorageKey/);
 
   const card = await fetch(baseUrl + '/cards/PROJ_01.png');
   assert.equal(card.status, 200);
