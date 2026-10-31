@@ -1,0 +1,48 @@
+name: Runtime and recovery checks
+
+on:
+  push:
+    branches:
+      - fix/runtime-bundle-and-room-ui
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Restore missing runtime files
+        run: npm run prestart
+      - name: Validate the bundled runtime archive
+        run: node scripts/restore-runtime-bundle.cjs --check
+      - name: Check JavaScript syntax
+        run: |
+          node --check public/app.js
+          node --check server/server.cjs
+          node --check server/rooms.cjs
+          node --check scripts/restore-runtime-bundle.cjs
+      - name: Run regression tests
+        run: npm test
+      - name: Smoke-test npm start
+        shell: bash
+        run: |
+          npm start > /tmp/green-impact-server.log 2>&1 &
+          server_pid=$!
+          trap 'kill "$server_pid" 2>/dev/null || true' EXIT
+          for attempt in $(seq 1 20); do
+            if curl --fail --silent http://127.0.0.1:3000/health > /dev/null; then
+              break
+            fi
+            sleep 1
+          done
+          curl --fail --silent http://127.0.0.1:3000/health
+          curl --fail --silent http://127.0.0.1:3000/app.js > /dev/null
+          curl --fail --silent http://127.0.0.1:3000/cards/PROJ_01.png > /dev/null
