@@ -3,6 +3,12 @@
   "version": "1.0.0",
   "private": true,
   "description": "GREEN IMPACT online multiplayer web game",
-  "engines": { "node": ">=20" },
-  "scripts": { "start": "node server/server.cjs" }
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "prestart": "node scripts/restore-runtime-bundle.cjs",
+    "start": "node server/server.cjs",
+    "test": "node --test"
+  }
 }
