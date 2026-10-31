@@ -68,7 +68,7 @@ test('server starts and serves the real client and Canva project artwork', async
   const card = await fetch(baseUrl + '/cards/PROJ_01.png');
   assert.equal(card.status, 200);
   assert.match(card.headers.get('content-type'), /image\/png/);
-  assert.ok(Number(card.headers.get('content-length') || 0) > 1000);
+  assert.ok((await card.arrayBuffer()).byteLength > 1000);
 });
 
 test('restored project data lets a three-player room start with the real engine', async () => {
