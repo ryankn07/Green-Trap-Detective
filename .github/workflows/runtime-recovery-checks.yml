@@ -3,7 +3,8 @@ name: Runtime and recovery checks
 on:
   push:
     branches:
-      - fix/runtime-bundle-and-room-ui
+      - main
+      - fix/**
   pull_request:
     branches:
       - main

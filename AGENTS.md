@@ -56,7 +56,7 @@ The following behavior is confirmed by the engine and room manager at the handof
 - Prefer rendering the correct four-column structure in the actual UI renderer over repeatedly moving existing nodes with a `MutationObserver`. Keep `card-ui.js` focused on card/role-art behavior where practical.
 - Derive phase labels, action availability, and progress from the actual game snapshot. The snapshot includes `phase`; the room view includes `serverTime` and `deadline`. Do not guess phase duration by parsing translated label text.
 - Use `textContent` for player-controlled text. Do not introduce unsafe HTML rendering.
-- Check `package.json` before running commands. At this baseline it only defines `npm start`; do not claim that lint/test scripts exist. Run `node --check` on changed JavaScript files and any tests that are actually present.
+- Check `package.json` before running commands. It defines `npm start` with runtime recovery and `npm test` for the Node test runner. Browser tests additionally require `PLAYWRIGHT_MODULE_PATH`; report skipped tests accurately. Run `node --check` on changed JavaScript files and the applicable tests.
 - Verify all three active phases, game-over rendering, private-information boundaries, card-image loading, and desktop/tablet/mobile layouts. If a runtime dependency is missing, state that testing is blocked rather than claiming success.
 - Make small, logically grouped changes. Summarize files changed, checks actually run, remaining issues, and any backend changes proposed separately.
 

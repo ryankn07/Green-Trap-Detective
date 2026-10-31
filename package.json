@@ -9,6 +9,7 @@
   "scripts": {
     "prestart": "node scripts/restore-runtime-bundle.cjs",
     "start": "node server/server.cjs",
-    "test": "node --test"
+    "test": "node --test",
+    "bundle:pack": "node scripts/package-runtime-bundle.cjs"
   }
 }
