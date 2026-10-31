@@ -46,7 +46,7 @@ test('runtime bundle can restore/validate the original client and project data',
     '--check'
   ], { encoding: 'utf8' });
   assert.equal(result.status, 0, result.stderr || result.stdout);
-  assert.match(result.stdout, /10 project records/);
+  assert.match(result.stdout, /25 project records/);
 
   // Simulate a checkout with one missing bundled runtime file.
   const stylePath = path.join(__dirname, '..', 'public/style.css');
@@ -58,7 +58,8 @@ test('runtime bundle can restore/validate the original client and project data',
       path.join(__dirname, '..', 'scripts/restore-runtime-bundle.cjs')
     ], { encoding: 'utf8' });
     assert.equal(restored.status, 0, restored.stderr || restored.stdout);
-    assert.deepEqual(fs.readFileSync(stylePath), originalStyle);
+    // Git may check text out with CRLF on Windows; the tar stores LF.
+    assert.equal(fs.readFileSync(stylePath, 'utf8').replace(/\r\n/g, '\n'), originalStyle.toString('utf8').replace(/\r\n/g, '\n'));
   } finally {
     if (fs.existsSync(stylePath)) fs.unlinkSync(stylePath);
     if (fs.existsSync(backupPath)) fs.renameSync(backupPath, stylePath);

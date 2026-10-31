@@ -728,298 +728,71 @@ body.gi-gameplay .actions button{border-radius:11px}
 @media(prefers-reduced-motion:reduce){*,*:before,*:after{scroll-behavior:auto!important;animation:none!important;transition:none!important}}
 
 
-/* GREEN IMPACT — canonical three-column gameplay layout.
-   The core app still renders its original two columns; card-ui.js migrates the
-   original nodes into these three slots without cloning them. */
-body.gi-gameplay #app {
-  width: 100% !important;
-  max-width: none !important;
-  margin: 0 !important;
-  padding: 20px clamp(16px, 2vw, 34px) 32px !important;
+/* Four functional areas are rendered directly by public/app.js. */
+body.gi-gameplay #app{max-width:1800px;width:100%;margin:0 auto;padding:20px clamp(12px,2vw,32px) 40px}
+.gi-game-grid{display:grid;grid-template-columns:minmax(150px,.65fr) minmax(300px,1.6fr) minmax(240px,1fr) minmax(230px,.95fr);grid-template-areas:"phase phase phase phase" "players project actions discussion";gap:16px;align-items:start}
+.gi-game-grid>*{min-width:0}
+.gi-phase-header{grid-area:phase}
+.gi-phase-header .phase{font-size:13px}
+.gi-phase-header progress{display:block;width:100%;height:7px;margin:12px 0;appearance:none;border:0;border-radius:10px;overflow:hidden;background:#dfe8d9}
+.gi-phase-header progress::-webkit-progress-bar{background:#dfe8d9}
+.gi-phase-header progress::-webkit-progress-value{background:#208056;border-radius:10px}
+.gi-area-players{grid-area:players}
+.gi-area-players .people{max-height:65vh;overflow:auto;overscroll-behavior:contain}
+.gi-area-players .person{display:grid;grid-template-columns:32px minmax(0,1fr);gap:7px}
+.gi-area-players .person-info{min-width:0;overflow-wrap:anywhere}
+.gi-area-players .pill{font-size:10px;grid-column:2;justify-self:start}
+.gi-area-project{grid-area:project;padding:18px}
+.gi-area-actions{grid-area:actions;display:grid;gap:14px}
+.gi-area-discussion{grid-area:discussion;display:grid;gap:14px}
+.gi-game-grid h2{font-size:19px}
+.gi-area-actions .card,.gi-area-discussion .card{min-width:0}
+.gi-game-grid .hist{max-height:50vh;overflow-y:auto;overscroll-behavior:contain;overflow-wrap:anywhere}
+.gi-statement{padding:12px 0;border-bottom:1px solid var(--border)}
+.gi-statement .pill{display:inline-block;margin:5px 0 5px 6px;white-space:normal}
+.gi-statement p{white-space:pre-wrap;overflow-wrap:anywhere;margin-top:6px}
+.gi-history summary{cursor:pointer;font-weight:700}
+.gi-mobile-wallet,.gi-toggle-players,.gi-close-players{display:none}
+body.gi-gameplay .gi-area-project .project.gi-project-canva{display:block;width:100%;margin:14px 0 0;padding:0;border:0;background:transparent;box-shadow:none}
+body.gi-gameplay .gi-area-project .project:before{display:none}
+body.gi-gameplay .gi-area-project .gi-card-preview{width:100%;max-width:none;margin:0}
+body.gi-gameplay .gi-area-project .gi-card-button{display:block;width:100%;padding:0;margin:0;border:0;border-radius:12px;background:transparent;box-shadow:none}
+body.gi-gameplay .gi-area-project .gi-card-image-viewport{display:block;width:100%;height:auto;aspect-ratio:794/1123;overflow:visible;background:transparent}
+body.gi-gameplay .gi-area-project .gi-card-image-viewport img{display:block;position:static;width:100%;height:100%;max-height:none;margin:0;transform:none;object-fit:contain;filter:none}
+body.gi-gameplay .gi-area-project .gi-project-accessible-copy{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap}
+body.gi-gameplay .gi-area-project .gi-project-card-failed .gi-project-accessible-copy{position:static;width:auto;height:auto;margin:12px 0;clip:auto;white-space:normal;overflow:visible}
+body.gi-gameplay .gi-area-project .gi-project-card-failed .gi-card-preview{display:none}
+body.gi-gameplay .gi-area-project .gi-project-card-failed h2,body.gi-gameplay .gi-area-project .gi-project-card-failed p,body.gi-gameplay .gi-area-project .gi-project-card-failed small{margin:12px 0}
+.gi-card-dialog{width:min(94vw,620px);max-width:620px}
+.gi-card-full-wrap{width:100%;height:auto;max-height:calc(100dvh - 115px);aspect-ratio:794/1123;margin:auto;overflow:visible;background:transparent}
+.gi-card-full{display:block;position:static;width:100%;height:100%;max-height:calc(100dvh - 115px);margin:0;transform:none;object-fit:contain;filter:none}
+@media(max-width:1199px){
+ .gi-game-grid{grid-template-columns:minmax(0,1.2fr) minmax(0,1fr);grid-template-areas:"phase phase" "project actions" "discussion discussion"}
+ .gi-toggle-players{display:block;position:fixed;right:16px;bottom:calc(16px + env(safe-area-inset-bottom));z-index:20;background:#17553c;color:white;border:1px solid #c8d8ca;border-radius:30px;padding:13px 18px;box-shadow:0 5px 22px #123c3433}
+ .gi-area-players{display:none;position:fixed;z-index:25;top:85px;right:12px;width:min(350px,calc(100vw - 24px));max-height:calc(100dvh - 120px);overflow:auto;box-shadow:0 12px 60px #001c3355}
+ .gi-area-players[data-open="true"]{display:block}
+ .gi-close-players{display:block;font-size:24px;padding:2px 12px}
+ .gi-area-players .people{max-height:calc(100dvh - 220px)}
 }
-
-body.gi-gameplay .grid {
-  display: grid !important;
-  width: 100% !important;
-  grid-template-columns: minmax(250px, .95fr) minmax(350px, 1.4fr) minmax(220px, .8fr) !important;
-  gap: clamp(12px, 1.35vw, 20px) !important;
-  align-items: start !important;
-}
-
-body.gi-gameplay .grid > .column {
-  display: none !important;
-}
-
-.gi-col-card,
-.gi-col-center,
-.gi-col-sidebar {
-  min-width: 0;
-}
-
-.gi-col-card {
-  display: flex;
-  justify-content: center;
-  align-items: flex-start;
-}
-
-.gi-col-center,
-.gi-col-sidebar {
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-}
-
-.gi-col-center > .card,
-.gi-col-sidebar > .card {
-  width: 100%;
-  min-width: 0;
-}
-
-.gi-col-card > .project.gi-project-canva {
-  display: flex !important;
-  flex-direction: column !important;
-  align-items: center !important;
-  justify-content: flex-start !important;
-  gap: 0 !important;
-  width: 100% !important;
-  max-width: 100% !important;
-  min-width: 0 !important;
-  margin: 0 !important;
-  padding: 0 !important;
-  overflow: visible !important;
-  border: 0 !important;
-  border-radius: 0 !important;
-  background: transparent !important;
-  box-shadow: none !important;
-}
-
-.gi-col-card > .project.gi-project-canva::before {
-  display: none !important;
-}
-
-.gi-col-card .gi-card-preview {
-  display: block;
-  width: 100% !important;
-  max-width: none !important;
-  min-width: 0;
-  margin: 0 !important;
-}
-
-.gi-col-card .gi-card-button {
-  display: block !important;
-  width: 100% !important;
-  height: auto !important;
-  margin: 0 !important;
-  padding: 0 !important;
-  overflow: visible !important;
-  border: 0 !important;
-  border-radius: 0 !important;
-  background: transparent !important;
-  box-shadow: none !important;
-}
-
-.gi-col-card .gi-card-image-viewport {
-  position: relative !important;
-  display: block !important;
-  width: 100% !important;
-  height: auto !important;
-  aspect-ratio: 794 / 1123 !important;
-  overflow: visible !important;
-  border: 0 !important;
-  border-radius: 0 !important;
-  background: transparent !important;
-}
-
-.gi-col-card .gi-card-image-viewport img {
-  position: static !important;
-  display: block !important;
-  width: 100% !important;
-  max-width: 100% !important;
-  height: 100% !important;
-  max-height: none !important;
-  margin: 0 !important;
-  padding: 0 !important;
-  transform: none !important;
-  border: 0 !important;
-  border-radius: 0 !important;
-  background: transparent !important;
-  object-fit: contain !important;
-  filter: none !important;
-  image-rendering: auto;
-}
-
-.gi-col-card .gi-project-accessible-copy {
-  position: absolute !important;
-  width: 1px !important;
-  height: 1px !important;
-  padding: 0 !important;
-  margin: -1px !important;
-  overflow: hidden !important;
-  clip: rect(0, 0, 0, 0) !important;
-  white-space: nowrap !important;
-  border: 0 !important;
-}
-
-.gi-col-card .project.gi-project-canva > .rule {
-  display: none !important;
-}
-
-.gi-col-center .gi-layout-phase-card {
-  order: 1;
-}
-
-.gi-col-center .gi-discussion-feed {
-  order: 2;
-  min-width: 0;
-  margin: 0 !important;
-  padding: 17px !important;
-  border: 1px solid var(--border) !important;
-  border-radius: 15px !important;
-  background: var(--surface) !important;
-  box-shadow: var(--shadow);
-}
-
-.gi-col-center .gi-layout-form-card {
-  order: 3;
-}
-
-.gi-col-center .gi-layout-history-card {
-  order: 4;
-}
-
-.gi-col-center .hist {
-  max-height: min(34vh, 360px);
-  overflow-y: auto;
-  overscroll-behavior: contain;
-}
-
-.gi-col-sidebar .gi-layout-role-card {
-  order: 1;
-}
-
-.gi-col-sidebar .gi-layout-wallet-card {
-  order: 2;
-}
-
-.gi-col-sidebar .gi-layout-people-card {
-  order: 3;
-}
-
-.gi-col-sidebar .people {
-  max-height: min(48vh, 520px);
-  overflow-y: auto;
-  overscroll-behavior: contain;
-}
-
-.gi-col-center .gi-phase-timer {
-  width: 100%;
-}
-
-.gi-col-center .gi-phase-actions {
-  margin: 0 !important;
-}
-
-.gi-card-dialog {
-  width: min(94vw, 620px) !important;
-  max-width: 620px !important;
-}
-
-.gi-card-full-wrap {
-  position: relative !important;
-  width: min(100%, 560px) !important;
-  max-height: calc(100dvh - 115px) !important;
-  aspect-ratio: 794 / 1123 !important;
-  margin: 0 auto !important;
-  overflow: visible !important;
-  background: transparent !important;
-}
-
-.gi-card-full {
-  position: static !important;
-  display: block !important;
-  width: 100% !important;
-  max-width: 100% !important;
-  height: 100% !important;
-  max-height: calc(100dvh - 115px) !important;
-  margin: 0 !important;
-  padding: 0 !important;
-  transform: none !important;
-  border: 0 !important;
-  border-radius: 0 !important;
-  background: transparent !important;
-  object-fit: contain !important;
-  filter: none !important;
-}
-
-@media (max-width: 1023px) {
-  body.gi-gameplay #app {
-    padding: 12px 12px calc(28px + env(safe-area-inset-bottom)) !important;
-  }
-
-  body.gi-gameplay .grid {
-    display: flex !important;
-    flex-direction: column !important;
-    gap: 12px !important;
-  }
-
-  body.gi-gameplay .grid > .column {
-    display: none !important;
-  }
-
-  .gi-col-card {
-    order: 1;
-    width: 100%;
-    justify-content: center;
-  }
-
-  body.gi-gameplay .gi-col-card > .project.gi-project-canva {
-    width: min(100%, 390px) !important;
-    max-width: 390px !important;
-    margin: 0 auto !important;
-  }
-
-  .gi-col-center {
-    order: 2;
-    width: 100%;
-  }
-
-  .gi-col-sidebar {
-    order: 3;
-    width: 100%;
-  }
-
-  .gi-col-center,
-  .gi-col-sidebar {
-    gap: 11px;
-  }
-
-  .gi-col-center .hist {
-    max-height: 280px;
-  }
-
-  .gi-col-sidebar .people {
-    max-height: 360px;
-  }
-
-  .gi-col-center > .card,
-  .gi-col-sidebar > .card {
-    padding: 14px;
-    border-radius: 15px;
-  }
-}
-
-@media (max-width: 390px) {
-  body.gi-gameplay .gi-col-card > .project.gi-project-canva {
-    width: 100% !important;
-    max-width: 100% !important;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .gi-col-center *,
-  .gi-col-sidebar *,
-  .gi-col-card * {
-    scroll-behavior: auto !important;
-    transition: none !important;
-  }
+@media(max-width:759px){
+ body.gi-gameplay{background:#edf2e8}
+ body.gi-gameplay .top{padding:10px 14px;min-height:58px}
+ body.gi-gameplay .brand small{display:none}
+ body.gi-gameplay #app{padding:12px 12px calc(92px + env(safe-area-inset-bottom))}
+ .gi-game-grid{display:flex;flex-direction:column;gap:14px}
+ .gi-game-grid>.gi-phase-header,.gi-game-grid>.gi-area-project,.gi-game-grid>.gi-area-actions,.gi-game-grid>.gi-area-discussion{width:100%}
+ .gi-game-grid .card{padding:16px;border-radius:19px;background:#fffef8;border:1px solid #dce5d6}
+ .gi-phase-header{order:0}
+ .gi-mobile-wallet{display:block;margin-bottom:10px;color:#17553c;font-weight:800}
+ .gi-area-project{order:1}
+ .gi-area-discussion{order:2}
+ .gi-area-actions{order:3}
+ body.gi-gameplay .gi-area-project .gi-card-preview{max-width:290px;margin:0 auto}
+ .gi-game-grid .hist{max-height:300px}
+ .gi-game-grid textarea{min-height:120px}
+ .gi-game-grid input,.gi-game-grid select,.gi-game-grid textarea{font-size:16px}
+ .gi-game-grid h2{font-size:20px}
+ .gi-game-grid .phase{white-space:normal;font-size:12px}
+ .gi-game-grid .countdown{flex-shrink:0}
+ .gi-area-players{top:70px}
 }

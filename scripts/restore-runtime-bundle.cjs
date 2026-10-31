@@ -62,9 +62,9 @@ function extractExpectedFiles(archiveBytes) {
   if (missing.length) throw new Error('Bundle is missing required files: ' + missing.join(', '));
 
   const projects = JSON.parse(found.get('engine/dist/data/projects.json').toString('utf8'));
-  if (!Array.isArray(projects) || projects.length !== 10 ||
+  if (!Array.isArray(projects) || projects.length !== 25 ||
       projects.some(project => !project || !/^PROJ_\d{2}$/.test(project.id || ''))) {
-    throw new Error('Bundled project data failed validation (expected 10 project records)');
+    throw new Error('Bundled project data failed validation (expected 25 project records)');
   }
   return found;
 }
@@ -85,7 +85,7 @@ function restoreRuntimeBundle({ checkOnly = false, force = false } = {}) {
   const files = extractExpectedFiles(archiveBytes);
 
   if (checkOnly) {
-    console.log(`Runtime bundle verified: ${files.size} files, 10 project records.`);
+    console.log(`Runtime bundle verified: ${files.size} files, 25 project records.`);
     return;
   }
 

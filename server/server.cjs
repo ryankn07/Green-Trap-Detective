@@ -3,6 +3,7 @@ const http=require('node:http');
 const fs=require('node:fs');
 const path=require('node:path');
 const {RoomManager}=require('./rooms.cjs');
+const {FileRoomStore}=require('./room-store.cjs');
 const port=Number(process.env.PORT||3000);
 const host='0.0.0.0';
 const streams=new Map();
@@ -12,7 +13,8 @@ const uiStylePath=path.resolve(__dirname,'../ui/style.css');
 function json(res,status,payload) {if(res.destroyed||res.writableEnded)return;res.writeHead(status,{'Content-Type':'application/json; charset=utf-8','Cache-Control':'no-store','X-Content-Type-Options':'nosniff'});res.end(JSON.stringify(payload));}
 function streamSend(res,type,data) {if(!res.destroyed&&!res.writableEnded) res.write('event: '+type+'\ndata: '+JSON.stringify(data)+'\n\n');}
 function emitRoom(room) {for(const [res,who] of (streams.get(room.code)||new Map())) {try{streamSend(res,'snapshot',manager.view(room,who));}catch{res.end();}}}
-const manager=new RoomManager({onUpdate:emitRoom});
+const snapshotPath=process.env.ROOM_STORE_PATH||(require.main===module?path.resolve(__dirname,'../data/rooms.json'):null);
+const manager=new RoomManager({onUpdate:emitRoom,store:snapshotPath?new FileRoomStore(snapshotPath):null});
 const MIME={'.html':'text/html; charset=utf-8','.js':'text/javascript; charset=utf-8','.css':'text/css; charset=utf-8','.svg':'image/svg+xml','.ico':'image/x-icon'};
 const HEADERS={'X-Content-Type-Options':'nosniff','Referrer-Policy':'no-referrer','X-Frame-Options':'DENY','Content-Security-Policy':"default-src 'self'; connect-src 'self'; img-src 'self' data:; style-src 'self'; script-src 'self'; object-src 'none'; base-uri 'none'; frame-ancestors 'none'"};
 const allowedPaths=new Set(['/','/index.html','/app.js','/style.css']);
