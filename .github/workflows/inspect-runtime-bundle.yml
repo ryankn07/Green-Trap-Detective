@@ -1,0 +1,49 @@
+name: Inspect compressed runtime bundle
+
+on:
+  push:
+    branches:
+      - fix/runtime-bundle-and-room-ui
+    paths:
+      - ".github/workflows/inspect-runtime-bundle.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Inspect bundle format without modifying files
+        shell: bash
+        run: |
+          python - <<'PY'
+          import base64, gzip, io, json, pathlib, tarfile, zipfile
+          parts = [pathlib.Path(f"runtime.bundle.part{i:02d}").read_text().strip() for i in (1,2,3)]
+          encoded = "".join(parts)
+          raw = base64.b64decode(encoded)
+          print("base64_chars:", len(encoded), "compressed_bytes:", len(raw))
+          payload = gzip.decompress(raw)
+          print("decompressed_bytes:", len(payload), "prefix_hex:", payload[:32].hex())
+          print("prefix_text:", repr(payload[:240]))
+          stream = io.BytesIO(payload)
+          if tarfile.is_tarfile(stream):
+              stream.seek(0)
+              with tarfile.open(fileobj=stream, mode="r:*") as archive:
+                  print("FORMAT: TAR")
+                  for item in archive.getmembers():
+                      print("ENTRY", item.name, item.size, "dir=" + str(item.isdir()))
+          elif zipfile.is_zipfile(stream):
+              stream.seek(0)
+              with zipfile.ZipFile(stream) as archive:
+                  print("FORMAT: ZIP")
+                  for item in archive.infolist():
+                      print("ENTRY", item.filename, item.file_size)
+          else:
+              try:
+                  parsed = json.loads(payload)
+                  print("FORMAT: JSON", list(parsed)[:50] if isinstance(parsed, dict) else type(parsed).__name__)
+              except Exception:
+                  print("FORMAT: OTHER")
+          PY
