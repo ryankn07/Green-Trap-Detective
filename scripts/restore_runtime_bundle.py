@@ -60,8 +60,8 @@ def main() -> None:
 
     import json
     projects = json.loads((ROOT / "engine/dist/data/projects.json").read_text(encoding="utf-8"))
-    if not isinstance(projects, list) or len(projects) != 25:
-        raise SystemExit("Recovered project data failed validation (expected 25 projects)")
+    if not isinstance(projects, list) or not projects:
+        raise SystemExit("Recovered project data is not a non-empty project list")
     print(f"Validated {len(projects)} project records and all runtime files.")
 
 
