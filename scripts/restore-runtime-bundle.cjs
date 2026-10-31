@@ -63,7 +63,7 @@ function extractExpectedFiles(archiveBytes) {
 
   const projects = JSON.parse(found.get('engine/dist/data/projects.json').toString('utf8'));
   if (!Array.isArray(projects) || projects.length !== 10 ||
-      projects.some(project => !project || !/^PROJ_\\d{2}$/.test(project.id || ''))) {
+      projects.some(project => !project || !/^PROJ_\d{2}$/.test(project.id || ''))) {
     throw new Error('Bundled project data failed validation (expected 10 project records)');
   }
   return found;
