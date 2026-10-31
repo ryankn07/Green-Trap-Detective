@@ -81,7 +81,7 @@ test('server starts and serves the real client and Canva project artwork', async
   assert.match(source, /restoreStatementDraft/);
   assert.match(source, /recoverSession/);
   assert.match(source, /return-home/);
-  assert.match(source, /sessionStorage\.setItem\(draftStorageKey/);
+  assert.ok(source.includes('sessionStorage.setItem(draftStorageKey'));
 
   const card = await fetch(baseUrl + '/cards/PROJ_01.png');
   assert.equal(card.status, 200);
