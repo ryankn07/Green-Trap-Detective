@@ -1,3 +1,5 @@
+> Current owner override, 2026-11-01: the original fixed-layout/8-player statements below are historical. Current PC design uses one horizontally scrolling player box; mobile retains its vertical panel. No hardcoded maximum of 12. See SCALE_AND_SECURITY.md.
+
 # GREEN IMPACT — UI Refactor Brief for Codex
 
 ## Objective

@@ -53,9 +53,11 @@ test('mobile gameplay follows server time, validates costs and completes ten rou
   try {
     const base='http://127.0.0.1:'+server.address().port;
     const {room,player}=manager.create('Người thử');
-    for(let i=1;i<8;i++)manager.join(room.code,'Người '+i);
+    for(let i=1;i<12;i++)manager.join(room.code,'Người '+i);
     for(const p of room.players)manager.connected(room,p);
-    assert.throws(()=>manager.join(room.code,'Thứ chín'),{code:'ROOM_FULL'});
+    manager.join(room.code,'Người thứ 13');
+    manager.connected(room,room.players.at(-1));
+    assert.equal(room.players.length,13,'the room must not be capped at eight or twelve');
     browser=await chromium.launch({channel:process.env.BROWSER_CHANNEL||'msedge',headless:true});
     const page=await browser.newPage({viewport:{width:390,height:844},isMobile:true,hasTouch:true});
     await page.addInitScript(session=>{
@@ -81,12 +83,13 @@ test('mobile gameplay follows server time, validates costs and completes ten rou
     await image.waitFor();assert.equal(await image.evaluate(i=>i.complete&&i.naturalWidth>0),true);
     assert.equal(await image.evaluate(i=>getComputedStyle(i).objectFit),'contain');
     assert.ok((await image.boundingBox()).width>=250,'mobile card must remain large');
-    await page.route('**/cards/PROJ_*.png',route=>route.abort());
+    const projectImageRoute=/\/cards(?:-hd)?\/PROJ_\d{2}\.png/;
+    await page.route(projectImageRoute,route=>route.abort());
     await page.reload();
     await page.locator('.gi-project-card-failed').waitFor();
     assert.equal(await page.locator('.gi-project-accessible-copy').evaluate(el=>getComputedStyle(el).position),'static');
     assert.ok((await page.locator('.gi-project-accessible-copy').textContent()).includes(room.state.projects.find(p=>p.id===room.state.deckIds[0]).title));
-    await page.unroute('**/cards/PROJ_*.png');await page.reload();
+    await page.unroute(projectImageRoute);await page.reload();
     await page.locator('#show-role').focus();await page.keyboard.down('Space');
     assert.notEqual(await page.locator('#role-value').textContent(),'••••••');
     await page.keyboard.up('Space');assert.equal(await page.locator('#role-value').textContent(),'••••••');

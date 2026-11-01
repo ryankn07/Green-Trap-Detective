@@ -17,7 +17,7 @@ function shuffled(values, randomInt) {
     return output;
 }
 function saboteurCount(playerCount) {
-    (0, errors_1.rule)(Number.isInteger(playerCount) && playerCount >= 3 && playerCount <= 12, "INVALID_SETUP", "Need 3–12 players");
+    (0, errors_1.rule)(Number.isSafeInteger(playerCount) && playerCount >= 3, "INVALID_SETUP", "Need at least 3 players");
     return Math.floor((playerCount - 1) / 2);
 }
 function assignBaseRoles(participants, randomInt) {

@@ -5,7 +5,9 @@ let snapshotReceivedAt=0,peopleOpen=false;
 const phaseSeconds={DEBATE:120,BLIND_ACTION:60,REVEAL:25};
 function acceptSnapshot(value){
  if(snapshot&&snapshot.room.code===value.room.code&&snapshot.room.revision>value.room.revision)return;
+ const scrolls=Array.from(app.querySelectorAll('.people,#players-panel')).map(el=>({key:el.id||'player-list',left:el.scrollLeft,top:el.scrollTop,focused:document.activeElement===el}));
  captureStatementDraft();snapshot=value;snapshotReceivedAt=performance.now();render();
+ for(const saved of scrolls){const el=saved.key==='player-list'?app.querySelector('.people'):document.getElementById(saved.key);if(el){el.scrollLeft=saved.left;el.scrollTop=saved.top;if(saved.focused)el.focus({preventScroll:true});}}
 }
 function remainingSeconds(){return snapshot?.deadline?Math.max(0,Math.ceil((snapshot.deadline-snapshot.serverTime-(performance.now()-snapshotReceivedAt))/1000)):0;}
 const draftStorageKey='green-impact-statement-draft';
@@ -76,7 +78,7 @@ function playerList(s){return s.room.players.map(p=>{const g=s.game?.players.fin
 function timer(s){if(!s.deadline)return '';const remain=remainingSeconds();return `<span class="countdown" id="clock">${remain}s</span>`;}
 function render(){if(!snapshot||!session)return;const s=snapshot;const me=s.game?.myPlayer;const host=s.room.hostId===(me?.id||session.playerId);const q=(new URLSearchParams(location.search)).get('room');
  document.body.classList.toggle('gi-gameplay',Boolean(s.game));
- if(!s.game){clearStatementDraft();app.innerHTML=`<section class="grid"><div class="column"><div class="card"><span class="eyebrow">PHÒNG CHỜ</span><h1>Phòng ${escapeHTML(s.room.code)}</h1><p>Mời bạn bè vào phòng trước khi bắt đầu ván.</p><div class="code mono">${escapeHTML(s.room.code)}</div><div class="actions"><button id="copy" class="primary">Sao chép link mời</button>${host?'<button id="start">Bắt đầu ván · 3–8 người</button>':'<span class="note">Đợi chủ phòng bắt đầu…</span>'}</div></div><div class="card"><h2>Người chơi (${s.room.players.length}/8)</h2><div class="people">${playerList(s)}</div></div></div><div class="column"><div class="card"><h2>Cách chơi</h2><p>Mỗi người được chia phe bí mật và nhận 2 xu. Thảo luận 10 dự án môi trường; đầu tư 1 xu hoặc giữ lại, dùng ngân hàng để kiểm chứng (3 xu) hoặc góp trục xuất (đủ 5 xu).</p><p>Mỗi thiết bị có phiên riêng, server giữ các đáp án và quyết định bí mật.</p><p class="tiny">Lời mời: ${escapeHTML(location.origin+'/?room='+s.room.code)}</p><button id="leave" >Rời phòng</button></div></div></section>`;return;}
+ if(!s.game){clearStatementDraft();app.innerHTML=`<section class="grid lobby"><div class="column"><div class="card lobby-invite"><span class="eyebrow">Phòng chờ</span><h1>Phòng ${escapeHTML(s.room.code)}</h1><p>Mời bạn bè vào phòng trước khi bắt đầu ván.</p><div class="code mono">${escapeHTML(s.room.code)}</div><div class="actions"><button id="copy" class="primary">Sao chép link mời</button>${host?`<button id="start">Bắt đầu ván</button>`:'<span class="note">Đợi chủ phòng bắt đầu…</span>'}</div></div><div class="card lobby-members"><h2>Người chơi (${s.room.players.length}${s.room.maxPlayers?' / '+s.room.maxPlayers:''})</h2><div class="people" tabindex="0" role="region" aria-label="Danh sách thành viên">${playerList(s)}</div><div class="lobby-table-art" aria-hidden="true"><svg class="lobby-orbit" viewBox="0 0 800 300" fill="none"><ellipse cx="400" cy="156" rx="340" ry="104"/><ellipse cx="400" cy="156" rx="286" ry="138" stroke-dasharray="3 10"/><path d="M56 186c20-32 31-65 36-102m-15 58c-33-4-39-27-38-45 27 4 40 19 38 45Zm9-29c26-3 41-23 40-46-25 5-41 21-40 46ZM718 177c-1-34 12-63 33-88m-27 54c-24-5-31-24-29-43 23 4 32 20 29 43Zm9-24c27 1 43-15 48-35-26-1-44 12-48 35Z"/></svg><div class="lobby-card gi-card-preview"><span class="gi-card-image-viewport"><picture><source srcset="/cards-hd/PROJ_11.png"><img src="/cards/PROJ_11.png" alt="" loading="lazy" decoding="async"></picture></span></div><div class="lobby-card gi-card-preview"><span class="gi-card-image-viewport"><picture><source srcset="/cards-hd/PROJ_01.png"><img src="/cards/PROJ_01.png" alt="" loading="lazy" decoding="async"></picture></span></div><div class="lobby-card gi-card-preview"><span class="gi-card-image-viewport"><picture><source srcset="/cards-hd/PROJ_25.png"><img src="/cards/PROJ_25.png" alt="" loading="lazy" decoding="async"></picture></span></div></div></div></div><div class="column"><div class="card lobby-rules"><h2>Cách chơi</h2><p>Mỗi người được chia phe bí mật và nhận 2 xu. Thảo luận 10 dự án môi trường; đầu tư 1 xu hoặc giữ lại, dùng ngân hàng để kiểm chứng (3 xu) hoặc góp trục xuất (đủ 5 xu).</p><p>Mỗi thiết bị có phiên riêng, server giữ các đáp án và quyết định bí mật.</p><p class="tiny">Lời mời: ${escapeHTML(location.origin+'/?room='+s.room.code)}</p><button id="leave" >Rời phòng</button></div></div></section>`;return;}
  const g=s.game;const latest=g.history.at(-1);let content='';
  if(g.phase==='DEBATE'){
  content=`<p>Nêu một lý do về việc nên hoặc không nên triển khai dự án. Mọi ý kiến được công khai.</p>${!me.isAlive?'<p class="note">Bạn đã bị loại và đang theo dõi trận.</p>':g.players.find(p=>p.id===me.id)?.hasStatement?'<div class="note">Đã gửi ý kiến. Đợi các người chơi khác…</div>':`<form id="statement"><label>Quan điểm<select id="stance"><option value="UNSURE">Chưa chắc chắn</option><option value="SUPPORT">Ủng hộ</option><option value="OPPOSE">Phản đối</option></select></label><label>Lý do<textarea id="statement-text" maxlength="500" required placeholder="Ví dụ: dự án cần làm rõ tác động tới hệ sinh thái..."></textarea></label><button type="submit" class="primary">Gửi ý kiến công khai</button></form>`}`;
@@ -100,8 +102,8 @@ function render(){if(!snapshot||!session)return;const s=snapshot;const me=s.game
    <div class="flex muted"><span>Bảo vệ: ${g.approvedProtectorCount}</span><span>Phá hoại: ${g.approvedSaboteurCount}</span></div>
   </header>
   <aside class="card gi-area-players" id="players-panel" data-open="${peopleOpen}" aria-label="Danh sách người chơi">
-   <div class="flex"><h2>Hội đồng · ${s.room.players.length}/8</h2><button type="button" class="gi-close-players" id="close-players" aria-label="Đóng danh sách">×</button></div>
-   <div class="people">${playerList(s)}</div>
+   <div class="flex"><h2>Hội đồng · ${s.room.players.length}${s.room.maxPlayers?' / '+s.room.maxPlayers:''}</h2><button type="button" class="gi-close-players" id="close-players" aria-label="Đóng danh sách">×</button></div>
+   <div class="people" tabindex="0" role="region" aria-label="Danh sách thành viên">${playerList(s)}</div>
   </aside>
   <section class="card gi-area-project" aria-label="Dự án hiện tại">
    <span class="eyebrow">DỰ ÁN ĐANG ĐƯỢC ĐƯA RA</span>
@@ -139,7 +141,7 @@ function wireBank(){
 async function act(type,payload){
  if(requesting)return false;
  requesting=true;
- try{await api('/api/action',{type,payload},true);if(type!=='leave')await readState();return true;}
+ try{await api('/api/action',{type,payload,...(type==='submit'?{context:{gameId:snapshot.game.gameId,round:snapshot.game.round,phase:snapshot.game.phase}}:{})},true);if(type!=='leave')await readState();return true;}
  catch(e){handleSessionError(e);return false;}
  finally{requesting=false;wireBank();}
 }
