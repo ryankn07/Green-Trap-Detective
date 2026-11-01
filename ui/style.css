@@ -597,3 +597,32 @@ body:has(#form-create) .brand b{font-family:var(--font-editorial);font-size:30px
 @media(min-width:1200px){
  body:has(#form-create) .top{max-width:none;width:100%;margin-inline:0;padding-inline:40px;border-inline:0;background:var(--canvas)}
 }
+
+/* One brand bar across entry, lobby and gameplay on desktop. */
+@media(min-width:1200px){
+ body .top,body:has(#form-create) .top,body.gi-gameplay .top{max-width:none;width:100%;margin-inline:0;padding-inline:40px;border-inline:0;border-bottom:1px solid var(--entry-rule)}
+}
+/* Fit the desktop entry to usable viewport height; short windows may still scroll. */
+@media(min-width:1200px) and (min-height:650px){
+ body:has(#form-create){height:100dvh;display:flex;flex-direction:column}
+ body:has(#form-create) .top{height:clamp(72px,10dvh,96px);min-height:0;flex:none;padding-block:8px}
+ body:has(#form-create) .brand-logo{height:clamp(48px,7dvh,68px)}
+ body:has(#form-create) #app{flex:1;min-height:0;width:100%;padding:16px 40px}
+ .welcome{height:100%;min-height:0;margin:0 auto;gap:48px;align-items:center}
+ .welcome-head{height:100%;min-height:0;padding:0;display:grid;grid-template-rows:auto auto minmax(0,1fr)}
+ .entry-heading h1{font-size:clamp(38px,6.8dvh,72px);line-height:1.05}
+ .entry-heading .heading-mark{height:12px;margin-top:6px}
+ .welcome-head>p{font-size:clamp(15px,1.8dvh,17px);margin-top:12px}
+ .welcome-art{min-height:0;height:100%;margin:0}
+ .welcome-card{width:clamp(160px,24dvh,270px)}
+ .welcome-card-left{--card-x:clamp(-130px,-13dvh,-82px)}
+ .welcome-card-right{--card-x:clamp(82px,13dvh,130px)}
+ .enter-grid{gap:12px;margin:0;min-height:0}
+ .enter-grid form{padding:clamp(16px,2dvh,24px);gap:10px}
+ .enter-grid .form-heading{margin:0}
+ .enter-grid .form-heading h2{font-size:clamp(24px,2.8dvh,28px)}
+ .enter-grid .form-heading p{margin-top:4px}
+ .enter-grid label{gap:4px}
+ .enter-grid input{min-height:44px;padding:9px 12px}
+ .enter-grid button{min-height:44px;padding:9px 16px}
+}
