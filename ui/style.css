@@ -138,7 +138,7 @@ body:has(#form-create) .brand b{font-family:var(--font-editorial);font-size:30px
 .enter-grid .primary:hover{background:var(--green-hover)}
 .enter-grid .secondary{background:transparent;border-color:var(--entry-ink);color:var(--entry-ink);border-radius:999px}
 .enter-grid .secondary:hover{background:var(--green-light)}
-#join-code{font-family:var(--font-figure);letter-spacing:.08em}
+#join-code{font-family:var(--font-body);letter-spacing:normal}
 .card{padding:24px;border:1px solid var(--border);border-radius:var(--radius);background:var(--surface);min-width:0}
 .card>h2+*,.card>h1+*{margin-top:16px}
 .card>p+p{margin-top:12px}
@@ -581,7 +581,6 @@ body:has(#form-create) .brand b{font-family:var(--font-editorial);font-size:30px
  .lobby-rules{grid-column:2;padding:0 0 0 28px;background:transparent;border:0;border-left:1px solid var(--entry-rule);border-radius:0}
  .lobby-rules h2{font-family:var(--font-editorial);font-size:26px;font-weight:500;line-height:1.2}
  .lobby-rules p{font-size:15px;line-height:1.8}
- .lobby-rules>p:nth-of-type(2),.lobby-rules>.tiny{display:none}
  .lobby-rules #leave{margin-top:24px;min-height:40px;padding:8px 0;border:0;border-bottom:1px solid currentColor;border-radius:0;background:transparent;font-size:14px}
  .lobby-rules #leave:hover{color:var(--text)}
  .lobby-table-art{position:relative;isolation:isolate;display:flex;align-items:center;justify-content:center;min-height:300px;margin-top:20px;overflow:hidden;pointer-events:none}
@@ -592,4 +591,9 @@ body:has(#form-create) .brand b{font-family:var(--font-editorial);font-size:30px
  .lobby-invite{position:relative;isolation:isolate;overflow:hidden}
  .lobby-invite::before{content:"";position:absolute;left:45%;top:-52px;width:240px;height:240px;border:1px solid #c7dfb632;border-radius:50%;z-index:-1;pointer-events:none}
  .lobby-invite::after{content:"";position:absolute;left:calc(45% + 205px);top:129px;width:72px;height:18px;border:1px solid #c7dfb632;border-radius:12px;transform:rotate(45deg);z-index:-1;pointer-events:none}
+}
+
+/* Keep the desktop brand bar full-width instead of boxing it into the hero. */
+@media(min-width:1200px){
+ body:has(#form-create) .top{max-width:none;width:100%;margin-inline:0;padding-inline:40px;border-inline:0;background:var(--canvas)}
 }
