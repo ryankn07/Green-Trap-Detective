@@ -35,7 +35,7 @@ function activeActor(state, id) {
 }
 function createGame({ gameId, players, projects, deckIds, roundLimit = 10 }) {
     (0, errors_1.rule)(typeof gameId === "string" && gameId.trim().length > 0, "INVALID_SETUP", "Missing game ID");
-    (0, errors_1.rule)(players.length >= 3 && players.length <= 12, "INVALID_SETUP", "Requires 3–12 players");
+    (0, errors_1.rule)(players.length >= 3, "INVALID_SETUP", "Requires at least 3 players");
     (0, errors_1.rule)(new Set(players.map(p => p.id)).size === players.length, "INVALID_SETUP", "Duplicate player IDs");
     (0, errors_1.rule)(players.every(p => typeof p.id === "string" && p.id.trim() && !["__proto__", "constructor", "prototype"].includes(p.id) && typeof p.name === "string" && p.name.trim() && faction(p.role)), "INVALID_SETUP", "Invalid player record");
     const defenders = players.filter(p => p.role === "PROTECTOR").length;

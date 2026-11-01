@@ -38,3 +38,17 @@ test('closed lobby rooms do not reappear after restart and corrupt snapshots fai
   assert.throws(()=>new RoomManager({store:new FileRoomStore(filename)}),/snapshot|JSON/i);
  }finally{fs.rmSync(filename,{force:true});fs.rmdirSync(dir);}
 });
+
+test('a failed persistence write does not leave an unacknowledged join in memory',()=>{
+ let broken=false;
+ const manager=new RoomManager({store:{load:()=>[],save:()=>{if(broken)throw Error('disk unavailable');}}});
+ const {room,player}=manager.create('Host');const revision=room.revision;
+ broken=true;
+ assert.throws(()=>manager.join(room.code,'Not saved'),/disk unavailable/);
+ assert.equal(room.players.length,1);assert.equal(room.revision,revision);
+  assert.throws(()=>manager.join(room.code,'Still not saved'),/disk unavailable/);
+  assert.equal(room.players.length,1);
+ assert.equal(manager.view(room,player).room.players.length,1);
+ assert.throws(()=>manager.leaveLobby(room,player),/disk unavailable/);
+ assert.equal(manager.getRoom(room.code),room);
+});

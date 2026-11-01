@@ -1,4 +1,6 @@
-# AGENTS.md — GREEN IMPACT
+# AGENTS.md — Green Trap Detective
+
+Current owner override (2026-11-01): support groups larger than 10; do not assume a maximum of 12. PC player boxes scroll horizontally, mobile player panels vertically. Preserve the existing redesign and native HD images. See docs/SCALE_AND_SECURITY.md for verified implementation and limits.
 
 ## Project purpose
 
@@ -49,7 +51,7 @@ The following behavior is confirmed by the engine and room manager at the handof
 - Inspection results are private to the inspecting player. Expulsion contributions are pooled by target; a target is expelled when pooled contributions reach at least 5. Do not publish individual contributors or their amounts.
 - Investment approval requires at least half of the living players, rounded up. Investors pay the investment cost whether or not the project is approved. An investor receives the engine-defined payout only when their role aligns with the project's alignment.
 - During play, `projectForPlayer` exposes the viewer's own role, coins, locked action, and inspection history. Other players' public entries contain identity/status and whether they have submitted or locked; they do not contain their role, wallet, inspection results, or action details. Project alignment/verdict/explanation are withheld until `REVEAL` or `GAME_OVER`. All roles become visible at `GAME_OVER`.
-- The engine accepts 3–12 players, but the current room manager rejects joins once a room has 8 players. The current playable room limit is therefore 3–8. Do not change that limit as part of a UI-only task.
+- The engine accepts groups of at least 3 with no hardcoded upper player count. ROOM_MAX_PLAYERS is an optional operator policy, default unset. Separate process resource budgets protect the server; these are not hosting capacity guarantees. Derive any displayed maximum from the authenticated room projection.
 
 ## Implementation and verification
 

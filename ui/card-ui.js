@@ -3,7 +3,38 @@
   "use strict";
   const app = document.getElementById("app");
   if (!app || !window.MutationObserver) return;
+  const scenery = document.querySelector("[data-landscape-parallax]");
+  if (scenery) {
+    const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
+    let frame = 0, offsetX = 0, offsetY = 0;
+    const resetScenery = () => {
+      cancelAnimationFrame(frame);
+      frame = 0;
+      scenery.removeAttribute("transform");
+    };
+    window.addEventListener("pointermove", event => {
+      if (event.pointerType !== "mouse" || reducedMotion.matches || document.hidden || !document.getElementById("form-create")) return;
+      offsetX = (event.clientX / window.innerWidth - .5) * 12;
+      offsetY = (event.clientY / window.innerHeight - .5) * 6;
+      if (!frame) frame = requestAnimationFrame(() => {
+        frame = 0;
+        scenery.setAttribute("transform", `translate(${offsetX} ${offsetY})`);
+      });
+    }, { passive: true });
+    document.documentElement.addEventListener("pointerleave", resetScenery);
+    window.addEventListener("blur", resetScenery);
+    document.addEventListener("visibilitychange", () => { if (document.hidden) resetScenery(); });
+    reducedMotion.addEventListener("change", resetScenery);
+  }
   const cardCode = /^PROJ_(?:0[1-9]|1\d|2[0-5])$/;
+  app.addEventListener("click", e => {
+    const link = e.target.closest("a[data-card-preview]");
+    if (!link) return;
+    const src = link.getAttribute("href");
+    if (!/^\/cards\/PROJ_(?:0[1-9]|1\d|2[0-5])\.png$/.test(src || "")) return;
+    e.preventDefault();
+    openCard(src, link.querySelector("img")?.alt || "Thẻ dự án");
+  });
   function openCard(src, title) {
     const dlg = document.createElement("dialog");
     dlg.className = "gi-card-dialog";
@@ -75,6 +106,9 @@
     button.setAttribute("aria-label", "Phóng to thẻ " + title);
     const viewport = document.createElement("span");
     viewport.className = "gi-card-image-viewport";
+    const picture = document.createElement("picture");
+    const hdSource = document.createElement("source");
+    hdSource.srcset = "/cards-hd/" + id + ".png";
     const img = document.createElement("img");
     const url = "/cards/" + id + ".png";
     img.src = url;
@@ -82,15 +116,23 @@
     img.loading = "eager";
     img.decoding = "async";
     img.setAttribute("fetchpriority", "high");
+    let usedOriginalFallback = false;
     img.addEventListener("error", () => {
+      if (!usedOriginalFallback && img.currentSrc.includes("/cards-hd/")) {
+        usedOriginalFallback = true;
+        hdSource.remove();
+        img.src = url;
+        return;
+      }
       card.classList.add("gi-card-unavailable");
       project.classList.add("gi-project-card-failed");
       button.textContent = "Không tải được hình thẻ";
       button.disabled = true;
-    }, { once: true });
-    viewport.appendChild(img);
+    });
+    picture.append(hdSource, img);
+    viewport.appendChild(picture);
     button.appendChild(viewport);
-    button.addEventListener("click", () => openCard(url, title));
+    button.addEventListener("click", () => openCard(img.currentSrc || url, title));
     card.appendChild(button);
     const info = document.createElement("div");
     info.className = "gi-project-accessible-copy";

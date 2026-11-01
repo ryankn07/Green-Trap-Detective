@@ -3,31 +3,57 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#0b1e16">
-<meta name="description" content="GREEN IMPACT — web game suy luận xã hội về môi trường. Tạo phòng và chơi cùng bạn bè trên trình duyệt.">
-<title>GREEN IMPACT — Chơi cùng bạn bè</title>
+<meta name="theme-color" content="#f6f3e9">
+<meta name="description" content="Green Trap Detective, web game suy luận xã hội về môi trường. Tạo phòng và chơi cùng bạn bè trên trình duyệt.">
+<title>Green Trap Detective: Chơi cùng bạn bè</title>
+<link rel="icon" type="image/png" href="/brand/green-trap-detective.png">
 <link rel="stylesheet" href="/style.css">
 <script defer src="/app.js"></script>
 <script defer src="/card-ui.js"></script>
 </head>
 <body>
+<div class="entry-scenery" aria-hidden="true">
+  <svg class="entry-landscape" viewBox="0 0 1600 440" preserveAspectRatio="none" focusable="false">
+    <g data-landscape-parallax>
+      <path class="landscape-far" d="M-120 170C80 20 230 95 430 185S760 265 1010 120S1370 65 1720 175V500H-120Z"/>
+      <path class="landscape-near" d="M-120 315C150 175 365 230 580 305S1000 345 1250 235S1510 195 1720 275V500H-120Z"/>
+      <path class="landscape-contour" d="M-100 205C100 55 260 130 450 215S780 295 1030 155S1400 100 1700 210"/>
+      <path class="landscape-contour" d="M-100 228C100 78 260 153 450 238S780 318 1030 178S1400 123 1700 233"/>
+    </g>
+  </svg>
+  <svg class="entry-leaves" viewBox="0 0 160 280" fill="none" focusable="false">
+    <path class="leaf-stem" d="M-15 275C80 220 30 130 130 20"/>
+    <path class="leaf-shape" d="M48 204C7 203 7 166 8 149C41 155 61 177 48 204ZM55 172C62 136 99 132 119 136C106 169 86 184 55 172ZM68 124C34 119 35 85 43 67C74 82 85 103 68 124ZM89 86C98 51 130 49 151 55C139 83 119 98 89 86Z"/>
+  </svg>
+</div>
 <header class="top">
-  <div class="brand"><span class="mark" aria-hidden="true">✳</span><div><b>GREEN IMPACT</b><small>Trò chơi suy luận môi trường</small></div></div>
-  <div class="header-end"><span class="header-sub">Chơi online · Không cần đăng ký</span><span id="connection" class="status">Đang kết nối</span></div>
+  <div class="brand"><img class="brand-logo" src="/brand/green-trap-detective.png" alt="" width="799" height="1030" decoding="async"><div><b class="wordmark">Green Trap Detective</b><small>Trò chơi suy luận môi trường</small></div></div>
+  <span id="connection" hidden></span>
 </header>
 <main id="app">
-  <section class="card welcome">
+  <section class="welcome">
     <div class="welcome-head">
-      <div><span class="eyebrow"><i></i> SOCIAL DEDUCTION GAME</span>
-      <h1>Một dự án xanh.<br><em>Nhiều bí mật.</em></h1>
-      <p>Bạn sẽ tin ai? Cùng bạn bè phân tích dự án, tranh luận và ra quyết định — trong khi mỗi người đều có vai trò riêng.</p></div>
-      <div class="welcome-aside"><span class="welcome-orbit">◎</span><strong>10 lượt</strong><span>3–8 người chơi</span><span>2 phe đối đầu</span></div>
+      <div class="entry-heading"><h1>Một dự án xanh.<br>Nhiều bí mật.</h1><svg class="heading-mark" viewBox="0 0 188 16" aria-hidden="true" focusable="false"><path d="M2 9C45 3 99 2 185 7M16 14C61 8 114 9 164 11"/></svg></div>
+      <p>Bạn sẽ tin ai? Cùng bạn bè phân tích dự án, tranh luận và ra quyết định, trong khi mỗi người đều có vai trò riêng.</p>
+      <figure class="welcome-art" aria-label="Thẻ dự án Green Trap Detective">
+        <a class="welcome-card welcome-card-left" href="/cards/PROJ_11.png" data-card-preview aria-label="Mở ảnh thẻ Rừng Ngập Mặn Ven Biển"><img src="/cards/PROJ_11.png" alt="Rừng Ngập Mặn Ven Biển" width="794" height="1123"></a>
+        <a class="welcome-card welcome-card-right" href="/cards/PROJ_25.png" data-card-preview aria-label="Mở ảnh thẻ Băng Chuyền Phân Loại Rác"><img src="/cards/PROJ_25.png" alt="Băng Chuyền Phân Loại Rác" width="794" height="1123"></a>
+        <a class="welcome-card welcome-card-front" href="/cards/PROJ_01.png" data-card-preview aria-label="Mở ảnh thẻ Lá Phổi Xanh"><img src="/cards/PROJ_01.png" alt="Lá Phổi Xanh" width="794" height="1123"></a>
+      </figure>
     </div>
-    <div class="enter-grid">
-      <form id="form-create"><div class="form-heading"><span class="step-bubble">1</span><div><h2>Tạo phòng mới</h2><p>Bạn sẽ là chủ phòng.</p></div></div><label>Tên của bạn<input id="create-name" maxlength="24" placeholder="Nhập tên hiển thị" autocomplete="nickname" required></label><button type="submit" class="primary">Tạo phòng <span aria-hidden="true">→</span></button></form>
-      <form id="form-join"><div class="form-heading"><span class="step-bubble step-bubble--light">2</span><div><h2>Tham gia phòng</h2><p>Nhập mã do bạn bè gửi.</p></div></div><label>Mã phòng<input id="join-code" maxlength="6" placeholder="6 ký tự" autocomplete="off" required></label><label>Tên của bạn<input id="join-name" maxlength="24" placeholder="Nhập tên hiển thị" autocomplete="nickname" required></label><button type="submit" class="secondary">Vào phòng <span aria-hidden="true">→</span></button></form>
+    <div class="enter-grid"><svg class="entry-botanical" viewBox="0 0 90 210" aria-hidden="true" focusable="false"><path d="M18 205C50 158 35 83 77 8"/><path class="botanical-leaf" d="M31 177C9 171 3 151 6 137C27 140 41 155 31 177ZM38 148C58 149 76 132 79 116C57 114 38 129 38 148ZM44 117C22 111 15 91 18 77C40 81 52 96 44 117ZM52 86C71 88 86 70 88 54C67 55 51 68 52 86ZM64 51C43 47 41 25 44 13C65 22 71 36 64 51Z"/><path d="M31 177L10 145M38 148L73 122M44 117L23 86M52 86L82 62M64 51L47 22"/></svg>
+      <form id="form-create">
+        <div class="form-heading"><div><h2>Tạo phòng mới</h2><p>Bạn sẽ là chủ phòng.</p></div></div>
+        <label>Tên của bạn<input id="create-name" maxlength="24" placeholder="Nhập tên hiển thị" autocomplete="nickname" required></label>
+        <button type="submit" class="primary">Tạo phòng</button>
+      </form>
+      <form id="form-join">
+        <div class="form-heading"><div><h2>Tham gia phòng</h2><p>Nhập mã do bạn bè gửi.</p></div></div>
+        <label>Mã phòng<input id="join-code" maxlength="6" placeholder="6 ký tự" autocomplete="off" required></label>
+        <label>Tên của bạn<input id="join-name" maxlength="24" placeholder="Nhập tên hiển thị" autocomplete="nickname" required></label>
+        <button type="submit" class="secondary">Vào phòng</button>
+      </form>
     </div>
-    <div class="welcome-foot"><span>✓ Chơi ngay trên trình duyệt</span><span>✓ Vai trò được giữ bí mật</span><span>✓ Không cần cài đặt</span></div>
   </section>
 </main>
 <div id="toast" role="status" aria-live="polite"></div>

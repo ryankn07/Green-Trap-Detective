@@ -92,3 +92,16 @@ image cannot load.
 - Read [AGENTS.md](./AGENTS.md) before making repository changes.
 - For the gameplay UI, follow [docs/UI_REFACTOR_BRIEF.md](./docs/UI_REFACTOR_BRIEF.md).
 - The engine and server define the rules and private-information boundary. The UI must reflect them; do not change gameplay to fit a mockup.
+
+
+## Larger rooms and baseline protection
+
+There is no hardcoded 8- or 12-player maximum. Groups larger than 10 are supported; the existing minimum to start is 3. Set optional `ROOM_MAX_PLAYERS` (integer >= 3) only when an operator wants a per-room policy. Without it, the UI shows the actual count without a fabricated maximum. Process-wide safety budgets still apply. PC member boxes scroll horizontally; mobile member panels scroll vertically.
+
+HTTP writes accept JSON objects up to 8000 bytes. Authenticated submissions include the current game/round/phase to reject stale commands. API and session rate limits return 429 with Retry-After. Error responses conceal unexpected internal details; room mutations roll back if persistence fails. The engine still validates wallets, targets, final locks and host permissions.
+
+Set `PUBLIC_ORIGIN` to the site's exact canonical origin when deploying behind a proxy. Forwarded client IP headers are ignored unless the socket and intermediate proxy addresses are explicitly configured in `TRUSTED_PROXY_IPS` (comma-separated exact addresses). Do not enable trust blindly or use client-supplied forwarded headers as identity. With no proxy trust, limits use socket IP and authenticated player sessions. Validate proxy behavior on the actual host before changing this setting.
+
+Per process: 100 rooms, 1200 roster slots / SSE subscriptions, 1500 sockets, 10000 rate-limit buckets. These are safety ceilings, not measured supported-host capacities. Single-process file persistence and in-memory limits do not provide distributed DDoS protection or shared state across replicas. A public room code is an invitation, not a secret access-control mechanism. See [implementation evidence](docs/SCALE_AND_SECURITY.md).
+
+Run the opt-in local load check with `node scripts/load-smoke.cjs`; `LOAD_SIZES` accepts pairs such as `[[1,25],[1,50]]`, and `LOAD_REPORT` can name a JSON output path. It uses temporary persistence, real HTTP/SSE, accelerated phase deadlines and no browser rendering. Never target a live service with this harness.
