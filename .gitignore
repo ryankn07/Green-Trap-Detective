@@ -1,2 +1,3 @@
 /data/
+/.web-dist/
 *.test-backup

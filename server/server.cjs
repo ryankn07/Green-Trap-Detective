@@ -158,7 +158,11 @@ const server=http.createServer(async(req,res)=>{
     }
     if(req.method==='POST' && url.pathname==='/api/action') {
       const {room,player}=auth(req,url);rate(res,'action:'+player.id,60);const body=await readBody(req);
-      switch(body.type){case 'start':manager.start(room,player);break;case 'submit':validateSubmission(room,body);manager.submit(room,player,body.payload||{});break;case 'next':manager.next(room,player);break;case 'leave':manager.leaveLobby(room,player);for(const [stream,who] of streams.get(room.code)||[])if(who.id===player.id)stream.end();break;default:return json(res,400,{error:'INVALID_ACTION',message:'Lệnh không được hỗ trợ.'});}
+      switch(body.type){case 'start':manager.start(room,player);break;case 'submit':validateSubmission(room,body);manager.submit(room,player,body.payload||{});break;case 'next':manager.next(room,player);break;case 'kick':{
+        const target=manager.kickLobby(room,player,body.targetId);
+        for(const [stream,who] of streams.get(room.code)||[])if(who.id===target.id)stream.end('event: kicked\ndata: {}\n\n');
+        break;
+      }case 'leave':manager.leaveLobby(room,player);for(const [stream,who] of streams.get(room.code)||[])if(who.id===player.id)stream.end();break;default:return json(res,400,{error:'INVALID_ACTION',message:'Lệnh không được hỗ trợ.'});}
       return json(res,200,{ok:true});
     }
     return json(res,404,{error:'NOT_FOUND'});

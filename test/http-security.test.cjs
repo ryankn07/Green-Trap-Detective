@@ -1,6 +1,14 @@
 'use strict';
 const test=require('node:test'),assert=require('node:assert/strict');
 const {server,manager}=require('../server/server.cjs');
+test('write origins can explicitly allow the shared Vercel frontend without allowing impostors',async()=>{
+ const previous=process.env.PUBLIC_ORIGINS;process.env.PUBLIC_ORIGINS=base+',https://green-impact-mobile-demo.vercel.app';
+ try{
+  assert.equal((await post('/api/create',{name:'Vercel allowed'},{Origin:'https://green-impact-mobile-demo.vercel.app'})).status,200);
+  assert.equal((await post('/api/create',{name:'Impostor'},{Origin:'https://green-impact-mobile-demo.vercel.app.attacker.invalid'})).status,403);
+  assert.equal((await post('/api/create',{name:'Foreign'},{Origin:'https://attacker.invalid'})).status,403);
+ }finally{if(previous===undefined)delete process.env.PUBLIC_ORIGINS;else process.env.PUBLIC_ORIGINS=previous;}
+});
 let base;
 test.before(async()=>{await new Promise(r=>server.listen(0,'127.0.0.1',r));base='http://127.0.0.1:'+server.address().port;});
 test.after(async()=>{server.closeAllConnections();await new Promise(r=>server.close(r));});

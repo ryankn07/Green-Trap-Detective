@@ -4,7 +4,7 @@ const fs=require('node:fs'),path=require('node:path');
 
 // A single-process store. Put this file on a persistent volume in production.
 class FileRoomStore {
-  constructor(filename){this.filename=path.resolve(filename);}
+  constructor(filename){this.filename=path.resolve(filename);this.encodedRooms=new WeakMap();this.directoryReady=false;}
   load(){
     let source;
     try{source=fs.readFileSync(this.filename,'utf8');}catch(error){if(error.code==='ENOENT')return [];throw error;}
@@ -20,15 +20,27 @@ class FileRoomStore {
     }
     return snapshot.rooms;
   }
-  save(rooms){
-    const records=[...rooms].map(room=>({code:room.code,hostId:room.hostId,
-      players:room.players.map(({id,name,secret})=>({id,name,secret})),
-      state:room.state,lastActivity:room.lastActivity,deadline:room.deadline,revision:room.revision}));
-    fs.mkdirSync(path.dirname(this.filename),{recursive:true,mode:0o700});
+  save(rooms,changedRoom=null){
+    const pending=[],records=[];
+    for(const room of rooms){
+      let encoded=changedRoom&&room!==changedRoom?this.encodedRooms.get(room):null;
+      if(!encoded){encoded=JSON.stringify({code:room.code,hostId:room.hostId,
+        players:room.players.map(({id,name,secret})=>({id,name,secret})),
+        state:room.state,lastActivity:room.lastActivity,deadline:room.deadline,revision:room.revision});pending.push([room,encoded]);}
+      records.push(encoded);
+    }
+    const directory=path.dirname(this.filename);
+    if(!this.directoryReady){fs.mkdirSync(directory,{recursive:true,mode:0o700});this.directoryReady=true;}
     const temporary=this.filename+'.tmp';
-    const fd=fs.openSync(temporary,'w',0o600);
-    try{fs.writeFileSync(fd,JSON.stringify({version:1,rooms:records}));fs.fsyncSync(fd);}finally{fs.closeSync(fd);}
+    let fd;
+    try{fd=fs.openSync(temporary,'w',0o600);}catch(error){
+      if(error.code!=='ENOENT')throw error;
+      fs.mkdirSync(directory,{recursive:true,mode:0o700});fd=fs.openSync(temporary,'w',0o600);
+    }
+    try{fs.writeFileSync(fd,'{"version":1,"rooms":['+records.join(',')+']}');fs.fsyncSync(fd);}finally{fs.closeSync(fd);}
     fs.renameSync(temporary,this.filename);
+    // Publish cached encodings only after the durable atomic replacement succeeds.
+    for(const [room,encoded] of pending)this.encodedRooms.set(room,encoded);
   }
 }
 module.exports={FileRoomStore};

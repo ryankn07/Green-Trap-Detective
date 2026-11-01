@@ -52,3 +52,21 @@ test('a failed persistence write does not leave an unacknowledged join in memory
  assert.throws(()=>manager.leaveLobby(room,player),/disk unavailable/);
  assert.equal(manager.getRoom(room.code),room);
 });
+test('saving another room cannot publish a failed kick; removals survive restart',()=>{
+ const {FileRoomStore}=require('../server/room-store.cjs');
+ const dir=fs.mkdtempSync(path.join(os.tmpdir(),'green-impact-multi-')),filename=path.join(dir,'rooms.json');
+ const rename=fs.renameSync;
+ try{
+  const store=new FileRoomStore(filename),manager=new RoomManager({store});
+  const first=manager.create('First'),target=manager.join(first.room.code,'Keep me').player,second=manager.create('Second');
+  fs.renameSync=()=>{throw Error('rename failed');};
+  assert.throws(()=>manager.kickLobby(first.room,first.player,target.id),/rename failed/);
+  fs.renameSync=rename;manager.join(second.room.code,'New guest');
+  let restored=new RoomManager({store:new FileRoomStore(filename)});
+  assert.equal(restored.authenticate(first.room.code,target.secret).player.id,target.id);
+  assert.equal(restored.getRoom(second.room.code).players.length,2);
+  manager.kickLobby(first.room,first.player,target.id);manager.leaveLobby(first.room,first.player);
+  restored=new RoomManager({store:new FileRoomStore(filename)});
+  assert.throws(()=>restored.getRoom(first.room.code),{code:'ROOM_NOT_FOUND'});assert.equal(restored.getRoom(second.room.code).players.length,2);
+ }finally{fs.renameSync=rename;fs.rmSync(filename,{force:true});fs.rmSync(filename+'.tmp',{force:true});fs.rmdirSync(dir);}
+});

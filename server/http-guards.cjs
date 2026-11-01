@@ -30,7 +30,8 @@ function checkOrigin(req){
  const origin=req.headers.origin;if(!origin)return;
  try{
   const value=new URL(origin);
-  if(process.env.PUBLIC_ORIGIN){if(value.origin!==new URL(process.env.PUBLIC_ORIGIN).origin)throw Error();}
+  const allowed=(process.env.PUBLIC_ORIGINS||process.env.PUBLIC_ORIGIN||'').split(',').map(x=>x.trim()).filter(Boolean);
+  if(allowed.length){if(!allowed.some(origin=>value.origin===new URL(origin).origin))throw Error();}
   else if(value.host!==req.headers.host||!['http:','https:'].includes(value.protocol))throw Error();
   if(value.origin!==origin)throw Error();
  }catch{throw new HttpError('BAD_ORIGIN','Nguồn yêu cầu không hợp lệ.',403);}
