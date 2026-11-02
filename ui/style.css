@@ -657,7 +657,9 @@ body.copy-confirmed::after{content:"";position:fixed;z-index:99;inset:0;pointer-
  .gi-top-wallet>span{font-size:11px}
  #mobile-show-role{display:grid;place-items:center;width:44px;height:40px;padding:5px;background:#edf6e9;border:1px solid #dce5d8;border-radius:12px;color:#0c4c34;touch-action:none;user-select:none}
  #mobile-show-role svg{width:33px;height:29px;fill:none;stroke:currentColor;stroke-width:3}
- #mobile-role-value:not([hidden]){position:absolute;top:54px;left:50%;transform:translateX(-50%);z-index:28;width:max-content;max-width:90vw;padding:12px 16px;border:1px solid #a9c9a6;border-radius:12px;background:#fffef8;color:#0c4c34;box-shadow:0 8px 24px rgba(12,76,52,.12);font-weight:700}
+ #mobile-role-value:not([hidden]){position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:80;width:min(78vw,320px,calc(70dvh * 1414 / 2000));padding:8px;border:1px solid #a9c9a6;border-radius:14px;background:#fffef8;box-shadow:0 12px 48px rgba(12,76,52,.28);pointer-events:none}
+ #mobile-role-value .gi-mobile-role-card{padding:0}
+ #mobile-role-value .gi-mobile-role-card img{width:100%;max-width:none;max-height:70dvh;border-radius:8px}
  .gi-round-chip{padding:8px 11px;border:1px solid #d4e5d1;border-radius:99px;background:#e9f3e5;color:#0c4c34;font-size:11px;font-weight:700;white-space:nowrap}
  .gi-game-grid{grid-template-areas:"phase" "project" "discussion" "actions";gap:12px}
  .gi-gameplay .gi-phase-header{margin:0;padding:12px;border:1px solid #dce5d8;border-radius:14px;background:#fffef8}

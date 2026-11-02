@@ -158,15 +158,15 @@
     dlg.showModal();
   }
   function enhancePrivateRole() {
-    const holder = app.querySelector("#role");
+    app.querySelectorAll("#role, #mobile-role-value").forEach(holder => {
     if (!holder || holder.dataset.canvaRole) return;
     const code = holder.getAttribute("data-role");
     if (code !== "PROTECTOR" && code !== "SABOTEUR") return;
-    const trigger = holder.querySelector("#show-role");
+    const trigger = holder.id === "mobile-role-value" ? app.querySelector("#mobile-show-role") : holder.querySelector("#show-role");
     if (!trigger) return;
     holder.dataset.canvaRole = "1";
     const preview = document.createElement("div");
-    preview.className = "gi-private-role-card";
+    preview.className = "gi-private-role-card" + (holder.id === "mobile-role-value" ? " gi-mobile-role-card" : "");
     preview.hidden = true;
     const picture = document.createElement("picture");
     picture.dataset.cardImage = "1";
@@ -184,14 +184,18 @@
     preview.appendChild(picture);
     holder.appendChild(preview);
     trigger.addEventListener("pointerdown", () => { preview.hidden = false; });
+    trigger.addEventListener("pointerleave", hidePrivateRole);
+    });
   }
   function hidePrivateRole() {
-    const preview = app.querySelector(".gi-private-role-card");
-    if (preview) preview.hidden = true;
+    app.querySelectorAll(".gi-private-role-card").forEach(preview => { preview.hidden = true; });
+    const mobile = app.querySelector("#mobile-role-value");
+    if (mobile) mobile.hidden = true;
   }
   document.addEventListener("pointerup", hidePrivateRole, true);
   document.addEventListener("pointercancel", hidePrivateRole, true);
   window.addEventListener("blur", hidePrivateRole);
+  document.addEventListener("visibilitychange", () => { if (document.hidden) hidePrivateRole(); });
 
   function enhance() {
     enhanceExistingCardPictures(app);
