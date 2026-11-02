@@ -149,7 +149,7 @@ function render(){if(!snapshot||!session)return;const s=snapshot;const me=s.game
    <div class="card gi-action-panel"><h2>${escapeHTML(phaseText[g.phase])}</h2>${content}</div>
   </section>
   <section class="gi-area-discussion" aria-label="Nhận định công khai">
-   <div class="card"><h2>Nhận định trong phòng</h2><p class="tiny">Một nhận định công khai mỗi người, mỗi lượt</p><div class="hist">${discussion}</div></div>
+   <div class="card"><h2>Nhận định trong phòng</h2><div class="hist">${discussion}</div></div>
    <details class="card gi-history"><summary>Nhật ký · ${g.history.length} lượt</summary><div class="hist">${g.history.map(h=>'<div>Lượt '+h.round+': '+escapeHTML(h.projectTitle)+' · '+(h.approved?'Thông qua':'Bác bỏ')+' · '+escapeHTML(h.verdictLabel)+'</div>').join('')||'<p class="tiny">Chưa có kết quả.</p>'}</div></details>
   </section>
  </div>
