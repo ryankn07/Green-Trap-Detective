@@ -71,3 +71,5 @@ jobs:
           cat /tmp/green-trap-health.json
           curl --fail --silent http://127.0.0.1:3123/app.js > /dev/null
           curl --fail --silent http://127.0.0.1:3123/cards/PROJ_01.png > /dev/null
+          curl --fail --silent http://127.0.0.1:3123/cards-hd-webp/PROJ_01.webp > /dev/null
+          curl --fail --silent http://127.0.0.1:3123/card-webp-manifest.js > /dev/null

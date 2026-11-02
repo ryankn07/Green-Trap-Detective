@@ -27,16 +27,85 @@
     reducedMotion.addEventListener("change", resetScenery);
   }
   const cardCode = /^PROJ_(?:0[1-9]|1\d|2[0-5])$/;
-  document.querySelectorAll("a[data-card-preview][data-fallback-src]").forEach(link => {
-    const image = link.querySelector("img");
-    const fallback = link.getAttribute("data-fallback-src");
-    if (!image || !fallback) return;
+  function bindCardPicture(picture) {
+    if (!picture || picture.dataset.cardFallbackBound) return;
+    const image = picture.querySelector("img");
+    if (!image) return;
+    picture.dataset.cardFallbackBound = "1";
     image.addEventListener("error", () => {
-      if (image.getAttribute("src") === fallback) return;
-      image.src = fallback;
-      link.href = fallback;
+      const failed = image.currentSrc || image.src;
+      if (failed.includes("/cards-hd-webp/")) {
+        picture.querySelector('source[type="image/webp"]')?.remove();
+        const png = picture.querySelector('source[type="image/png"]');
+        const fallback = png?.getAttribute("srcset") || picture.dataset.fallback;
+        if (fallback && new URL(fallback, location.href).href !== image.src) image.src = fallback;
+        return;
+      }
+      if (failed.includes("/cards-hd/")) {
+        picture.querySelector('source[type="image/png"]')?.remove();
+        const fallback = picture.dataset.fallback;
+        if (fallback && new URL(fallback, location.href).href !== image.src) {
+          image.src = fallback;
+          return;
+        }
+      }
+      const card = picture.closest(".gi-card-preview");
+      if (card) {
+        card.classList.add("gi-card-unavailable");
+        const project = card.closest("section.project");
+        if (project) project.classList.add("gi-project-card-failed");
+        const button = card.querySelector("button");
+        if (button) {
+          button.textContent = "Không tải được hình thẻ";
+          button.disabled = true;
+        }
+      }
     });
-  });
+  }
+  function bindCardPictures(root) {
+    if (!root || !root.querySelectorAll) return;
+    if (root.matches?.("picture[data-card-image]")) bindCardPicture(root);
+    root.querySelectorAll("picture[data-card-image]").forEach(bindCardPicture);
+  }
+  function addWebpSource(picture, id, before = null) {
+    const src = window.GREEN_TRAP_WEBP_CARDS?.[id];
+    if (!src || picture.querySelector('source[type="image/webp"]')) return;
+    const source = document.createElement("source");
+    source.type = "image/webp";
+    source.srcset = src;
+    if (before) picture.insertBefore(source, before);
+    else picture.prepend(source);
+  }
+  function enhanceExistingCardPictures(root) {
+    if (!root || !root.querySelectorAll) return;
+    root.querySelectorAll("picture").forEach(picture => {
+      const image = picture.querySelector("img");
+      const hdSource = Array.from(picture.querySelectorAll("source")).find(source =>
+        /^\/cards-hd\//.test(source.getAttribute("srcset") || "")
+      );
+      const hdPath = hdSource?.getAttribute("srcset") || "";
+      const id = hdPath.match(/^\/cards-hd\/([A-Z0-9_]+)\.png$/)?.[1];
+      if (id) {
+        hdSource.type = "image/png";
+        addWebpSource(picture, id, hdSource);
+      }
+      if (image && !picture.dataset.fallback) picture.dataset.fallback = image.getAttribute("src") || "";
+      picture.dataset.cardImage = "1";
+      bindCardPicture(picture);
+    });
+  }
+  function enhanceWalletIcon() {
+    const image = app.querySelector('.gi-top-wallet img[src="/cards-hd/GREENCOIN.png"]');
+    const webp = window.GREEN_TRAP_WEBP_CARDS?.GREENCOIN;
+    if (!image || !webp || image.dataset.cardWebp) return;
+    image.dataset.cardWebp = "1";
+    const fallback = image.getAttribute("src");
+    image.addEventListener("error", () => {
+      if (image.currentSrc.includes("/cards-hd-webp/")) image.src = fallback;
+    }, { once: true });
+    image.src = webp;
+  }
+  bindCardPictures(document);
   app.addEventListener("click", e => {
     const link = e.target.closest("a[data-card-preview]");
     if (!link) return;
@@ -65,16 +134,20 @@
     const picture = document.createElement("picture");
     const full = document.createElement("img");
     const cardPath = new URL(src, location.href).pathname;
-    const original = cardPath.replace("/cards-hd/", "/cards/");
+    const cardId = cardPath.match(/(PROJ_(?:0[1-9]|1\d|2[0-5]))\.(?:png|webp)$/)?.[1];
+    const hdPath = cardId ? "/cards-hd/" + cardId + ".png" : cardPath;
+    const original = cardId ? "/cards/" + cardId + ".png" : cardPath.replace("/cards-hd/", "/cards/");
+    picture.dataset.cardImage = "1";
+    picture.dataset.fallback = original;
+    addWebpSource(picture, cardId);
+    const hdSource = document.createElement("source");
+    hdSource.type = "image/png";
+    hdSource.srcset = hdPath;
+    picture.appendChild(hdSource);
     full.src = original;
     full.alt = "Hình thẻ Canva — " + title;
-    if (cardPath.includes("/cards-hd/")) {
-      const source = document.createElement("source");
-      source.srcset = cardPath;
-      picture.appendChild(source);
-      full.addEventListener("error", () => { source.remove(); full.src = original; }, { once: true });
-    }
     picture.appendChild(full);
+    bindCardPicture(picture);
     viewport.appendChild(picture);
     fullWrap.appendChild(viewport);
     dlg.append(top, fullWrap);
@@ -94,12 +167,20 @@
     const preview = document.createElement("div");
     preview.className = "gi-private-role-card";
     preview.hidden = true;
+    const picture = document.createElement("picture");
+    picture.dataset.cardImage = "1";
+    picture.dataset.fallback = "/cards/ROLE_" + code + ".png";
+    addWebpSource(picture, "ROLE_" + code);
+    const hdSource = document.createElement("source");
+    hdSource.type = "image/png";
+    hdSource.srcset = "/cards-hd/ROLE_" + code + ".png";
     const img = document.createElement("img");
-    img.src = "/cards-hd/ROLE_" + code + ".png";
-    img.addEventListener("error", () => { img.src = "/cards/ROLE_" + code + ".png"; }, { once: true });
+    img.src = "/cards/ROLE_" + code + ".png";
     img.alt = "Thẻ vai trò riêng của bạn";
     img.loading = "lazy";
-    preview.appendChild(img);
+    picture.append(hdSource, img);
+    bindCardPicture(picture);
+    preview.appendChild(picture);
     holder.appendChild(preview);
     trigger.addEventListener("pointerdown", () => { preview.hidden = false; });
   }
@@ -112,6 +193,9 @@
   window.addEventListener("blur", hidePrivateRole);
 
   function enhance() {
+    enhanceExistingCardPictures(app);
+    bindCardPictures(app);
+    enhanceWalletIcon();
     enhancePrivateRole();
     const project = app.querySelector("section.project");
     if (!project || project.dataset.canvaCard) return;
@@ -130,29 +214,21 @@
     const viewport = document.createElement("span");
     viewport.className = "gi-card-image-viewport";
     const picture = document.createElement("picture");
-    const hdSource = document.createElement("source");
-    hdSource.srcset = "/cards-hd/" + id + ".png";
-    const img = document.createElement("img");
     const url = "/cards/" + id + ".png";
+    picture.dataset.cardImage = "1";
+    picture.dataset.fallback = url;
+    const hdSource = document.createElement("source");
+    hdSource.type = "image/png";
+    hdSource.srcset = "/cards-hd/" + id + ".png";
+    addWebpSource(picture, id, hdSource);
+    const img = document.createElement("img");
     img.src = url;
     img.alt = "Thẻ dự án thiết kế trên Canva: " + title;
     img.loading = "eager";
     img.decoding = "async";
     img.setAttribute("fetchpriority", "high");
-    let usedOriginalFallback = false;
-    img.addEventListener("error", () => {
-      if (!usedOriginalFallback && img.currentSrc.includes("/cards-hd/")) {
-        usedOriginalFallback = true;
-        hdSource.remove();
-        img.src = url;
-        return;
-      }
-      card.classList.add("gi-card-unavailable");
-      project.classList.add("gi-project-card-failed");
-      button.textContent = "Không tải được hình thẻ";
-      button.disabled = true;
-    });
     picture.append(hdSource, img);
+    bindCardPicture(picture);
     viewport.appendChild(picture);
     button.appendChild(viewport);
     button.addEventListener("click", () => openCard(img.currentSrc || url, title));
