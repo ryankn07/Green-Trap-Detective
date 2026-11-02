@@ -1,49 +1,73 @@
-name: Runtime and recovery checks
+name: CI
 
 on:
   push:
     branches:
-      - main
-      - fix/**
+      - '**'
   pull_request:
     branches:
       - main
+  workflow_dispatch:
 
 permissions:
   contents: read
 
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
-  test:
+  verify:
+    name: Verify (Node ${{ matrix.node-version }})
     runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        node-version: [20, 22]
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
         with:
-          node-version: 20
-      - name: Restore missing runtime files
-        run: npm run prestart
-      - name: Validate the bundled runtime archive
-        run: node scripts/restore-runtime-bundle.cjs --check
-      - name: Check JavaScript syntax
-        run: |
-          node --check public/app.js
-          node --check server/server.cjs
-          node --check server/rooms.cjs
-          node --check scripts/restore-runtime-bundle.cjs
-      - name: Run regression tests
+          node-version: ${{ matrix.node-version }}
+
+      - name: Install locked dependencies
+        run: npm ci
+
+      - name: Check source syntax and required assets
+        run: npm run check
+
+      - name: Verify runtime recovery bundle
+        run: npm run bundle:check
+
+      - name: Run automated tests
         run: npm test
-      - name: Smoke-test npm start
+
+      - name: Build static frontend
+        run: npm run build:web
+
+      - name: Smoke-test the HTTP server
         shell: bash
         run: |
-          npm start > /tmp/green-impact-server.log 2>&1 &
+          set -euo pipefail
+          PORT=3123 ROOM_STORE_PATH=/tmp/green-trap-ci-rooms.json node server/server.cjs > /tmp/green-trap-server.log 2>&1 &
           server_pid=$!
           trap 'kill "$server_pid" 2>/dev/null || true' EXIT
+          ready=false
           for attempt in $(seq 1 20); do
-            if curl --fail --silent http://127.0.0.1:3000/health > /dev/null; then
+            if curl --fail --silent http://127.0.0.1:3123/health > /tmp/green-trap-health.json; then
+              ready=true
               break
             fi
             sleep 1
           done
-          curl --fail --silent http://127.0.0.1:3000/health
-          curl --fail --silent http://127.0.0.1:3000/app.js > /dev/null
-          curl --fail --silent http://127.0.0.1:3000/cards/PROJ_01.png > /dev/null
+          if [ "$ready" != true ]; then
+            cat /tmp/green-trap-server.log
+            exit 1
+          fi
+          cat /tmp/green-trap-health.json
+          curl --fail --silent http://127.0.0.1:3123/app.js > /dev/null
+          curl --fail --silent http://127.0.0.1:3123/cards/PROJ_01.png > /dev/null
