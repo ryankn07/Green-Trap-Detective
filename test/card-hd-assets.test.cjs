@@ -4,7 +4,11 @@ const {server}=require('../server/server.cjs');
 let base;
 test.before(async()=>{await new Promise(r=>server.listen(0,'127.0.0.1',r));base='http://127.0.0.1:'+server.address().port});
 test.after(async()=>{server.closeAllConnections();await new Promise(r=>server.close(r))});
-test('native high-resolution exports exist for all 25 project cards while original URLs stay intact',async()=>{
+test('native high-resolution exports exist for all 32 cards while original URLs stay intact',async()=>{
+ for(const id of ['ROLE_PROTECTOR','ROLE_SABOTEUR','GREENCOIN','BACK_01','BACK_02','BACK_03','BACK_04']){
+  const response=await fetch(base+'/cards-hd/'+id+'.png');assert.equal(response.status,200,id);
+  assert.deepEqual(Buffer.from(await response.arrayBuffer()),fs.readFileSync(path.join(__dirname,'../ui/cards-hd',id+'.png')));
+ }
  for(let i=1;i<=25;i++){
   const id='PROJ_'+String(i).padStart(2,'0');
   const r=await fetch(base+'/cards-hd/'+id+'.png');assert.equal(r.status,200,id);

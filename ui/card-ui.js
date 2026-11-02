@@ -73,7 +73,8 @@
     preview.className = "gi-private-role-card";
     preview.hidden = true;
     const img = document.createElement("img");
-    img.src = "/cards/ROLE_" + code + ".png";
+    img.src = "/cards-hd/ROLE_" + code + ".png";
+    img.addEventListener("error", () => { img.src = "/cards/ROLE_" + code + ".png"; }, { once: true });
     img.alt = "Thẻ vai trò riêng của bạn";
     img.loading = "lazy";
     preview.appendChild(img);

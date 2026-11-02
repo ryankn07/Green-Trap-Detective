@@ -4,7 +4,9 @@ const {createHash}=require('node:crypto');
 const fs=require('node:fs');
 const path=require('node:path');
 const {RoomManager}=require('./rooms.cjs');
-const {FileRoomStore}=require('./room-store.cjs');
+const {FileRoomStore,serializeRoom,validateSnapshot}=require('./room-store.cjs');
+const {SupabaseSnapshotStore}=require('./supabase-snapshot.cjs');
+const {DurableCoordinator}=require('./durable-coordinator.cjs');
 const {HttpError,readBody,checkOrigin,validateSubmission}=require('./http-guards.cjs');
 const {GameError}=require('../engine/dist/errors.js');
 const {RateLimiter,clientAddress}=require('./rate-limit.cjs');
@@ -15,6 +17,7 @@ function rate(res,key,limit){const retry=limiter.take(key,limit);if(retry){res.s
 const port=Number(process.env.PORT||3000);
 const host='0.0.0.0';
 const streams=new Map();
+let pendingStreams=0;
 const publicDir=path.resolve(__dirname,'../public');
 const uiDir=path.resolve(__dirname,'../ui');
 const uiStylePath=path.resolve(__dirname,'../ui/style.css');
@@ -35,16 +38,29 @@ function writeStreamFrame(res,frame){
     writeStreamFrame(res,pending.latest);
   }});
 }
-function broadcastRoom(room) {for(const [res,who] of (streams.get(room.code)||new Map())) {try{streamSend(res,'snapshot',manager.view(room,who));}catch{res.end();}}}
 // Batch near-simultaneous player updates; every frame remains a complete projection.
 const pendingBroadcasts=new Map();
 function emitRoom(room){
  if(pendingBroadcasts.has(room.code))return;
- const timer=setTimeout(()=>{pendingBroadcasts.delete(room.code);if(manager.rooms.get(room.code)===room)broadcastRoom(room);},16);
+ const timer=setTimeout(()=>{pendingBroadcasts.delete(room.code);void transaction(()=>{const current=manager.rooms.get(room.code);if(!current)return [];const frames=[];for(const [res,who] of streams.get(room.code)||[]){const member=current.players.find(p=>p.id===who.id&&!p.removed);if(member)frames.push([res,manager.view(current,member)]);}return frames;}).then(frames=>{for(const [res,view] of frames)streamSend(res,'snapshot',view);}).catch(()=>{});},16);
  timer.unref();pendingBroadcasts.set(room.code,timer);
 }
 const snapshotPath=process.env.ROOM_STORE_PATH||(require.main===module?path.resolve(__dirname,'../data/rooms.json'):null);
-const manager=new RoomManager({onUpdate:emitRoom,store:snapshotPath?new FileRoomStore(snapshotPath):null});
+const remoteEnabled=Boolean(process.env.GAME_SUPABASE_URL||process.env.GAME_SUPABASE_SERVICE_KEY);
+if(remoteEnabled&&(!process.env.GAME_SUPABASE_URL||!process.env.GAME_SUPABASE_SERVICE_KEY))throw Error('Incomplete remote snapshot configuration');
+const remote=remoteEnabled?new SupabaseSnapshotStore({url:process.env.GAME_SUPABASE_URL,key:process.env.GAME_SUPABASE_SERVICE_KEY}):null;
+let remoteReady=!remote;
+let coordinator;
+const manager=new RoomManager({onUpdate:room=>{if(!remote)emitRoom(room);},store:remote?{load:()=>[],save:(_rooms,room)=>coordinator.markChanged(room)}:snapshotPath?new FileRoomStore(snapshotPath):null});
+if(remote){
+  coordinator=new DurableCoordinator({failClosed:true,
+    capture:()=>structuredClone(manager.rooms),
+    restore:rooms=>{manager.rooms=rooms;manager.saved=new WeakMap();for(const room of rooms.values())manager.remember(room);},
+    commit:async()=>{try{await remote.commit({version:1,rooms:Array.from(manager.rooms.values(),serializeRoom)});}catch(error){for(const group of streams.values())for(const res of group.keys())res.destroy();throw error;}},
+    onCommitted:rooms=>{for(const room of rooms)if(room&&manager.rooms.get(room.code)===room)emitRoom(room);}
+  });
+}
+const transaction=fn=>remote?coordinator.run(fn):Promise.resolve().then(fn);
 const MIME={'.html':'text/html; charset=utf-8','.js':'text/javascript; charset=utf-8','.css':'text/css; charset=utf-8','.svg':'image/svg+xml','.ico':'image/x-icon'};
 const HEADERS={'X-Content-Type-Options':'nosniff','Referrer-Policy':'no-referrer','X-Frame-Options':'DENY','Content-Security-Policy':"default-src 'self'; connect-src 'self'; img-src 'self' data:; style-src 'self'; script-src 'self'; object-src 'none'; base-uri 'none'; frame-ancestors 'none'"};
 const allowedPaths=new Set(['/','/index.html','/app.js','/style.css']);
@@ -86,7 +102,7 @@ const server=http.createServer(async(req,res)=>{
     const address=clientAddress(req,trustedProxies);
     if(url.pathname.startsWith('/api/'))rate(res,'api:'+address,3000);
     if(req.method==='POST'&&url.pathname.startsWith('/api/'))checkOrigin(req);
-    if(req.method==='GET' && url.pathname==='/health')return json(res,200,{status:'ok',activeRooms:manager.rooms.size});
+    if(req.method==='GET' && url.pathname==='/health')return json(res,200,await transaction(()=>({status:'ok',activeRooms:manager.rooms.size})));
     if(req.method==='GET' && allowedPaths.has(url.pathname)) {
       const filename=url.pathname==='/'?'index.html':url.pathname.slice(1);
       const filepath=(filename==='index.html'||filename==='style.css')?path.join(uiDir,filename):path.join(publicDir,filename);
@@ -106,7 +122,7 @@ const server=http.createServer(async(req,res)=>{
       res.writeHead(200,{'Content-Type':filename.endsWith('.txt')?'text/plain; charset=utf-8':'font/woff2','Cache-Control':'public, max-age=86400'});
       return res.end(bytes);
     }
-    const hdCardMatch=req.method==='GET'?url.pathname.match(/^\/cards-hd\/(PROJ_(?:0[1-9]|1\d|2[0-5]))\.png$/):null;
+    const hdCardMatch=req.method==='GET'?url.pathname.match(/^\/cards-hd\/(PROJ_(?:0[1-9]|1\d|2[0-5])|ROLE_PROTECTOR|ROLE_SABOTEUR|GREENCOIN|BACK_0[1-4])\.png$/):null;
     if(hdCardMatch){
       try{
         const bytes=await fs.promises.readFile(path.join(uiDir,'cards-hd',hdCardMatch[1]+'.png'));
@@ -130,40 +146,39 @@ const server=http.createServer(async(req,res)=>{
 
     if(req.method==='POST' && url.pathname==='/api/create') {
       rate(res,'create:'+address,30);
-      const body=await readBody(req);const {room,player}=manager.create(body.name,createHash('sha256').update(address).digest('hex'));
-      return json(res,200,{roomCode:room.code,playerId:player.id,token:player.secret});
+      const body=await readBody(req);const result=await transaction(()=>{const {room,player}=manager.create(body.name,createHash('sha256').update(address).digest('hex'));return {roomCode:room.code,playerId:player.id,token:player.secret};});
+      return json(res,200,result);
     }
     if(req.method==='POST' && url.pathname==='/api/join') {
       rate(res,'join:'+address,180);
-      const body=await readBody(req);const {room,player}=manager.join(body.roomCode,body.name,createHash('sha256').update(address).digest('hex'));
-      return json(res,200,{roomCode:room.code,playerId:player.id,token:player.secret});
+      const body=await readBody(req);const result=await transaction(()=>{const {room,player}=manager.join(body.roomCode,body.name,createHash('sha256').update(address).digest('hex'));return {roomCode:room.code,playerId:player.id,token:player.secret};});
+      return json(res,200,result);
     }
     if(req.method==='GET' && url.pathname==='/api/state') {
-      const {room,player}=auth(req,url);rate(res,'state:'+player.id,120);return json(res,200,manager.view(room,player));
+      const result=await transaction(()=>{const {room,player}=auth(req,url);rate(res,'state:'+player.id,120);return manager.view(room,player);});return json(res,200,result);
     }
     if(req.method==='GET' && url.pathname==='/api/stream') {
-      const {room,player}=auth(req,url);
-      rate(res,'stream:'+player.id,30);
-      let total=0;for(const group of streams.values())total+=group.size;
-      const replacing=Array.from(streams.get(room.code)?.values()||[]).some(p=>p.id===player.id);
-      if(total>=MAX_STREAMS&&!replacing)throw new HttpError('SERVER_BUSY','Máy chủ đang đầy. Hãy thử lại sau.',503);
+      let reserved=false;
+      let pair;
+      try{pair=await transaction(()=>{const result=auth(req,url);rate(res,'stream:'+result.player.id,30);let total=0;for(const group of streams.values())total+=group.size;const replacing=Array.from(streams.get(result.room.code)?.values()||[]).some(p=>p.id===result.player.id);if(total+pendingStreams>=MAX_STREAMS&&!replacing)throw new HttpError('SERVER_BUSY','Máy chủ đang đầy. Hãy thử lại sau.',503);pendingStreams++;reserved=true;manager.connected(result.room,result.player);return result;});}finally{if(reserved)pendingStreams--;}
+      const {room,player}=pair;
+      if(res.destroyed){await transaction(()=>{const current=manager.rooms.get(room.code);const member=current?.players.find(p=>p.id===player.id&&!p.removed);if(member)manager.disconnected(current,member);});return;}
       res.writeHead(200,{'Content-Type':'text/event-stream; charset=utf-8','Cache-Control':'no-store, no-transform','Connection':'keep-alive','X-Accel-Buffering':'no'});
       res.write(': connected\n\n');
       if(!streams.has(room.code))streams.set(room.code,new Map());
       const subscriptions=streams.get(room.code);
       for(const [old,other] of subscriptions) if(other.id===player.id && old!==res) {streamSend(old,'superseded',{});old.end();subscriptions.delete(old);}
       subscriptions.set(res,player);
-      res.on('close',()=>{if(subscriptions.get(res)?.id===player.id){subscriptions.delete(res);if(!subscriptions.size)streams.delete(room.code);if(manager.rooms.get(room.code)===room&&room.players.includes(player)&&!Array.from(subscriptions.values()).some(p=>p.id===player.id))try{manager.disconnected(room,player);}catch(error){console.error('Disconnect persistence failed:',error.name);}}});
-      manager.connected(room,player);streamSend(res,'snapshot',manager.view(room,player));
+      res.on('close',()=>{if(subscriptions.get(res)?.id===player.id){subscriptions.delete(res);if(!subscriptions.size)streams.delete(room.code);if(!Array.from(subscriptions.values()).some(p=>p.id===player.id))void transaction(()=>{const current=manager.rooms.get(room.code);const member=current?.players.find(p=>p.id===player.id&&!p.removed);if(member)manager.disconnected(current,member);}).catch(error=>console.error('Disconnect persistence failed:',error.name));}});
+      streamSend(res,'snapshot',await transaction(()=>{const current=manager.rooms.get(room.code);const member=current?.players.find(p=>p.id===player.id&&!p.removed);if(!member)throw Error('Session no longer available');return manager.view(current,member);}));
       return;
     }
     if(req.method==='POST' && url.pathname==='/api/action') {
-      const {room,player}=auth(req,url);rate(res,'action:'+player.id,60);const body=await readBody(req);
-      switch(body.type){case 'start':manager.start(room,player);break;case 'submit':validateSubmission(room,body);manager.submit(room,player,body.payload||{});break;case 'next':manager.next(room,player);break;case 'kick':{
-        const target=manager.kick(room,player,body.targetId);
-        for(const [stream,who] of streams.get(room.code)||[])if(who.id===target.id)stream.end('event: kicked\ndata: {}\n\n');
-        break;
-      }case 'leave':manager.leaveLobby(room,player);for(const [stream,who] of streams.get(room.code)||[])if(who.id===player.id)stream.end();break;default:return json(res,400,{error:'INVALID_ACTION',message:'Lệnh không được hỗ trợ.'});}
+      const body=await readBody(req);
+      const effect=await transaction(()=>{const {room,player}=auth(req,url);rate(res,'action:'+player.id,60);
+      switch(body.type){case 'start':manager.start(room,player);break;case 'submit':validateSubmission(room,body);manager.submit(room,player,body.payload||{});break;case 'next':manager.next(room,player);break;case 'kick':{const target=manager.kick(room,player,body.targetId);return {code:room.code,id:target.id,kicked:true};}case 'leave':manager.leaveLobby(room,player);return {code:room.code,id:player.id};default:throw new HttpError('INVALID_ACTION','Lệnh không được hỗ trợ.',400);}
+      return null;});
+      if(effect)for(const [stream,who] of streams.get(effect.code)||[])if(who.id===effect.id)effect.kicked?stream.end('event: kicked\ndata: {}\n\n'):stream.end();
       return json(res,200,{ok:true});
     }
     return json(res,404,{error:'NOT_FOUND'});
@@ -181,7 +196,10 @@ server.headersTimeout=10000;
 server.keepAliveTimeout=5000;
 server.maxConnections=1500;
 server.on('close',()=>{for(const timer of pendingBroadcasts.values())clearTimeout(timer);pendingBroadcasts.clear();});
-const clock=setInterval(()=>{try{manager.tick();}catch(error){console.error('Room clock failed:',error.name);}},500);clock.unref();
+const clock=setInterval(()=>{if(remoteReady&&!coordinator?.unavailable)void transaction(()=>manager.tick()).catch(error=>console.error('Room clock failed:',error.name));},500);clock.unref();
 const heartbeat=setInterval(()=>{limiter.prune();for(const group of streams.values())for(const res of group.keys())if(!res.destroyed&&!res.writableEnded)if(!res.writableNeedDrain)res.write(': heartbeat\n\n');},15000);heartbeat.unref();
-if(require.main===module)server.listen(port,host,()=>console.log('GREEN IMPACT multiplayer listening on port '+port));
+if(require.main===module)(async()=>{
+  if(remote){const rooms=validateSnapshot(await remote.load());manager.rooms=new Map(rooms.map(room=>[room.code,{...room,players:room.players.map(p=>({...p,online:false})),connections:new Map()}]));manager.saved=new WeakMap();for(const room of manager.rooms.values())manager.remember(room);remoteReady=true;}
+  server.listen(port,host,()=>console.log('GREEN IMPACT multiplayer listening on port '+port));
+})().catch(error=>{console.error('Remote snapshot startup failed:',error.name);process.exitCode=1;clearInterval(clock);clearInterval(heartbeat);});
 module.exports={server,manager};

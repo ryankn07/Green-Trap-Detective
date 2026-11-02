@@ -1,3 +1,10 @@
 /data/
 /.web-dist/
 *.test-backup
+
+.env
+.env.*
+!.env.example
+*.local
+playwright-report/
+test-results/
