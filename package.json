@@ -3,13 +3,24 @@
   "version": "1.0.0",
   "private": true,
   "description": "Green Trap Detective: trò chơi suy luận xã hội trực tuyến về môi trường",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ryankn07/ee.git"
+  },
+  "homepage": "https://github.com/ryankn07/ee#readme",
+  "bugs": {
+    "url": "https://github.com/ryankn07/ee/issues"
+  },
   "engines": {
     "node": ">=20"
   },
   "scripts": {
     "prestart": "node scripts/restore-runtime-bundle.cjs",
     "start": "node server/server.cjs",
+    "check": "node scripts/check.cjs",
     "test": "node --test",
-    "bundle:pack": "node scripts/package-runtime-bundle.cjs"
+    "bundle:check": "node scripts/restore-runtime-bundle.cjs --check",
+    "bundle:pack": "node scripts/package-runtime-bundle.cjs",
+    "build:web": "node scripts/build-web.cjs"
   }
 }

@@ -27,11 +27,21 @@
     reducedMotion.addEventListener("change", resetScenery);
   }
   const cardCode = /^PROJ_(?:0[1-9]|1\d|2[0-5])$/;
+  document.querySelectorAll("a[data-card-preview][data-fallback-src]").forEach(link => {
+    const image = link.querySelector("img");
+    const fallback = link.getAttribute("data-fallback-src");
+    if (!image || !fallback) return;
+    image.addEventListener("error", () => {
+      if (image.getAttribute("src") === fallback) return;
+      image.src = fallback;
+      link.href = fallback;
+    });
+  });
   app.addEventListener("click", e => {
     const link = e.target.closest("a[data-card-preview]");
     if (!link) return;
     const src = link.getAttribute("href");
-    if (!/^\/cards\/PROJ_(?:0[1-9]|1\d|2[0-5])\.png$/.test(src || "")) return;
+    if (!/^\/cards(?:-hd)?\/PROJ_(?:0[1-9]|1\d|2[0-5])\.png$/.test(src || "")) return;
     e.preventDefault();
     openCard(src, link.querySelector("img")?.alt || "Thẻ dự án");
   });

@@ -1,4 +1,6 @@
 'use strict';
+const fs=require('node:fs');
+const path=require('node:path');
 const test=require('node:test'),assert=require('node:assert/strict');
 const {server}=require('../server/server.cjs');
 let base;
@@ -17,4 +19,18 @@ test('website uses the new identity and serves its transparent logo locally',asy
  assert.match(html,/src="\/brand\/green-trap-detective.png"/);
  assert.equal((await fetch(base+'/brand/.env')).status,404);
  assert.equal((await fetch(base+'/brand/%2e%2e%2fserver%2fserver.cjs')).status,404);
+});
+
+test('README banner is high-resolution vector artwork using the original logo and Green Coin',()=>{
+ const root=path.join(__dirname,'..');
+ const readme=fs.readFileSync(path.join(root,'README.md'),'utf8');
+ const banner=fs.readFileSync(path.join(root,'docs/assets/brand-banner.svg'),'utf8');
+ assert.match(readme,/docs\/assets\/brand-banner\.svg/);
+ assert.doesNotMatch(readme,/docs\/assets\/brand-banner\.webp/);
+ assert.match(banner,/width="2400" height="1350"/);
+ const embedded=[...banner.matchAll(/href="data:image\/png;base64,([^"]+)"/g)].map(match=>Buffer.from(match[1],'base64'));
+ assert.equal(embedded.length,2,'banner embeds the logo and Green Coin');
+ assert.deepEqual(embedded[0],fs.readFileSync(path.join(root,'ui/brand/green-trap-detective.png')));
+ assert.deepEqual(embedded[1],fs.readFileSync(path.join(root,'ui/cards/GREENCOIN.png')));
+ assert.equal(fs.existsSync(path.join(root,'docs/assets/brand-banner.webp')),false,'old low-resolution banner is removed');
 });

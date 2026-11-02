@@ -1,5 +1,13 @@
+node_modules/
+.env
+.env.*
+!.env.example
 /data/
 /.web-dist/
+/coverage/
+/playwright-report/
+/test-results/
+*.log
 *.test-backup
 
 .env
@@ -8,3 +16,5 @@
 *.local
 playwright-report/
 test-results/
+.DS_Store
+Thumbs.db

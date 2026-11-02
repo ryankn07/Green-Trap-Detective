@@ -5,7 +5,7 @@ const path = require('node:path');
 const zlib = require('node:zlib');
 
 const ROOT = path.resolve(__dirname, '..');
-const PARTS = [1, 2, 3].map(n => path.join(ROOT, `runtime.bundle.part${String(n).padStart(2, '0')}`));
+const PARTS = [1, 2, 3].map(n => path.join(ROOT, 'runtime', 'compatibility', `part${String(n).padStart(2, '0')}.b64`));
 const EXPECTED = [
   'engine/dist/data/projects.json',
   'public/index.html',
