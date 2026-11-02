@@ -4,17 +4,23 @@ Current owner override (2026-11-01): support groups larger than 10; do not assum
 
 ## Project purpose
 
-GREEN IMPACT is a browser-based Vietnamese multiplayer social-deduction game about environmental projects. The current stack is Node.js (20+), a built-in HTTP server, and vanilla HTML/CSS/JavaScript. Keep the existing stack unless the owner explicitly approves a change.
+GREEN TRAP DETECTIVE is a browser-based Vietnamese multiplayer social-deduction game about environmental projects. The current stack is Node.js (20+), a built-in HTTP server, and vanilla HTML/CSS/JavaScript. Keep the existing stack unless the owner explicitly approves a change.
 
 ## Required context for UI work
 
-Before changing gameplay UI, read `docs/UI_REFACTOR_BRIEF.md`. It is the task-specific specification for the current four-column UI correction.
+Read the current design record that matches the surface being changed:
+
+- `docs/UI_REDESIGN.md` for the entry page and overall visual direction.
+- `docs/PC_GAME_REDESIGN.md` for the current PC gameplay layout.
+- `docs/BRAND_AND_CARD_FINISH.md` and `docs/CARD_HD_FIX.md` for brand treatment and original card assets.
+
+`docs/UI_REFACTOR_BRIEF.md` and `docs/LOBBY_REDESIGN.md` are historical task records. Their older layout and capacity assumptions are superseded where they conflict with later owner-approved work. Always verify current behavior against source code and tests.
 
 ## Non-negotiable rules
 
 1. **The engine and server are the source of truth.** Make the UI represent existing rules and data. Do not change gameplay, economy, phase transitions, room capacity, or server behavior merely to make a mockup appear to work.
-2. **Preserve the current mockup.** This is a correction/refactor, not a redesign. Keep its established layout, visual language, and component hierarchy as much as possible. Do not replace it with a new theme or a generic dashboard.
-3. **Preserve original Canva artwork.** Use the existing project-card PNGs as-is. Never redraw, regenerate, crop, recolor, or substitute card artwork.
+2. **Preserve the current approved design.** Keep its established visual language and component hierarchy; do not replace it with a generic dashboard. A redesign is in scope only when the owner explicitly requests one. The approved entry-page and PC gameplay directions are recorded in `docs/UI_REDESIGN.md` and `docs/PC_GAME_REDESIGN.md`.
+3. **Preserve original Canva artwork.** Keep the source PNG pixels unchanged; never redraw, regenerate, recolor, or substitute card artwork. CSS may trim only measured exterior export margins where the current card treatment documents it; never clip meaningful interior artwork or text.
 4. **Do not invent game mechanics or data.** No new resource types, costs, rewards, counters, buttons, phases, or player abilities unless the engine explicitly supports them.
 5. **Protect private information.** Render only information present in the authenticated player's server projection. Never infer or reveal another player's role, wallet, inspection result, or locked action.
 6. Do not add frameworks or dependencies without approval. Keep the existing vanilla implementation and Vietnamese UI copy.
@@ -25,7 +31,10 @@ Before changing gameplay UI, read `docs/UI_REFACTOR_BRIEF.md`. It is the task-sp
 - `engine/dist/engine.js`: phase transitions, statement validation, action validation/costs, round resolution, elimination and win conditions.
 - `engine/dist/view.js`: per-player data projection and the visibility boundary for private information.
 - `engine/dist/setup.js`: role assignment and project-deck selection.
-- `server/rooms.cjs`: room lifecycle, current room-size limit, phase deadlines, timeout defaults, and engine calls.
+- `server/rooms.cjs`: room lifecycle, optional room-size policy, admission reservations, phase deadlines, timeout defaults, and engine calls.
+- `server/limits.cjs`: minimum room size, optional operator limit, and process-level resource budgets.
+- `server/rate-limit.cjs`: in-memory request limits and trusted-proxy address resolution.
+- `server/http-guards.cjs`: request-body, media-type, submission, and Origin validation.
 - `server/server.cjs`: HTTP routes, authentication, server-sent events, static-file serving, and card-image routes.
 - `ui/index.html`: page shell and script/style loading.
 - `ui/style.css`: current visual system and responsive styling.
@@ -36,7 +45,7 @@ Before changing gameplay UI, read `docs/UI_REFACTOR_BRIEF.md`. It is the task-sp
 - `package.json`: Node version and available npm scripts.
 - `scripts/restore-runtime-bundle.cjs`: portable Node-only recovery for missing bundled runtime files.
 
-The page shell loads `/app.js`, served from `public/app.js`. The room manager imports `engine/dist/data/projects.json`. These original files are restored from the checked-in `runtime/compatibility/part*.b64` archive and are tracked. `npm start` runs `scripts/restore-runtime-bundle.cjs` first; it restores only missing files and never overwrites existing source unless explicitly invoked with `--force`. Use `--check` to validate the archive without writing.
+The page shell loads `/app.js`, served from `public/app.js`. The legacy `public/index.html` and `public/style.css` are retained as compatibility-bundle inputs for the older Render recovery path; the active server and Vercel build use `ui/index.html` and `ui/style.css`. Do not remove those legacy files without updating the archive, restore script, and parity tests. The room manager imports `engine/dist/data/projects.json`. These original files are restored from the checked-in `runtime/compatibility/part*.b64` archive and are tracked. `npm start` runs `scripts/restore-runtime-bundle.cjs` first; it restores only missing files and never overwrites existing source unless explicitly invoked with `--force`. Use `--check` to validate the archive without writing.
 
 ## Verified gameplay contract
 
@@ -55,7 +64,7 @@ The following behavior is confirmed by the engine and room manager at the handof
 
 ## Implementation and verification
 
-- Prefer rendering the correct four-column structure in the actual UI renderer over repeatedly moving existing nodes with a `MutationObserver`. Keep `card-ui.js` focused on card/role-art behavior where practical.
+- Prefer changing the actual renderer in `public/app.js` for structural gameplay UI. Keep `ui/card-ui.js` focused on card-specific presentation and image behavior; do not use a `MutationObserver` to reconstruct the main layout. Any observer used for card enhancement must be idempotent and must not duplicate controls or disrupt focus, drafts, or scroll position during live rerenders.
 - Derive phase labels, action availability, and progress from the actual game snapshot. The snapshot includes `phase`; the room view includes `serverTime` and `deadline`. Do not guess phase duration by parsing translated label text.
 - Use `textContent` for player-controlled text. Do not introduce unsafe HTML rendering.
 - Check `package.json` before running commands. It defines `npm start` with runtime recovery and `npm test` for the Node test runner. Browser tests additionally require `PLAYWRIGHT_MODULE_PATH`; report skipped tests accurately. Run `node --check` on changed JavaScript files and the applicable tests.

@@ -1,7 +1,8 @@
 # Larger rooms and baseline security
 
-Implemented locally, 2026-11-01. Nothing was committed, pushed or deployed.
-Starting HEAD: 4b7eb19f3402cfbec7b14ede1a7ed92453f32b6d; the existing UI/branding/HD worktree was preserved.
+Historical implementation and verification report, dated 2026-11-01. The opening status below describes the original task handoff, not the current repository state: the capacity and security implementation described here is present in the current main source and tests. The local measurements remain local measurements; they do not establish live Vercel/Render configuration, production capacity, or current service health.
+
+Original task snapshot: implemented locally from HEAD 4b7eb19f3402cfbec7b14ede1a7ed92453f32b6d, with the existing UI/branding/HD worktree preserved. Nothing had been committed, pushed, or deployed at that snapshot.
 
 ## Owner requirement and correction
 
