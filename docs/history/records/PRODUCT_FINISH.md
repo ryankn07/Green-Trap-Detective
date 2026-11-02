@@ -26,4 +26,4 @@ rounds and widths 320/390/768/1440. It is not a load test or a Safari/iOS test.
 
 Update, 2 November 2026: the owner has now supplied both ending videos. Their
 local integration, final-screen effects and project-card QR links are recorded
-in [ENDINGS.md](ENDINGS.md); the pending-media statement above is historical.
+in [ENDINGS.md](../../ENDINGS.md); the pending-media statement above is historical.

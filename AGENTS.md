@@ -11,16 +11,16 @@ GREEN TRAP DETECTIVE is a browser-based Vietnamese multiplayer social-deduction 
 Read the current design record that matches the surface being changed:
 
 - `docs/UI_REDESIGN.md` for the entry page and overall visual direction.
-- `docs/PC_GAME_REDESIGN.md` for the current PC gameplay layout.
+- `docs/DESKTOP_GAME_RELEASE_20261103.md` for the current PC gameplay layout (the earlier plan is archived).
 - `docs/BRAND_AND_CARD_FINISH.md` and `docs/CARD_HD_FIX.md` for brand treatment and original card assets.
 - `docs/ENDINGS.md` for winner-based videos, ending-only presentation and card QR links.
 
-`docs/UI_REFACTOR_BRIEF.md` and `docs/LOBBY_REDESIGN.md` are historical task records. Their older layout and capacity assumptions are superseded where they conflict with later owner-approved work. Always verify current behavior against source code and tests.
+`docs/history/briefs/UI_REFACTOR_BRIEF.md` and `docs/history/briefs/LOBBY_REDESIGN.md` are historical task records. Their older layout and capacity assumptions are superseded where they conflict with later owner-approved work. Always verify current behavior against source code and tests.
 
 ## Non-negotiable rules
 
 1. **The engine and server are the source of truth.** Make the UI represent existing rules and data. Do not change gameplay, economy, phase transitions, room capacity, or server behavior merely to make a mockup appear to work.
-2. **Preserve the current approved design.** Keep its established visual language and component hierarchy; do not replace it with a generic dashboard. A redesign is in scope only when the owner explicitly requests one. The approved entry-page and PC gameplay directions are recorded in `docs/UI_REDESIGN.md` and `docs/PC_GAME_REDESIGN.md`.
+2. **Preserve the current approved design.** Keep its established visual language and component hierarchy; do not replace it with a generic dashboard. A redesign is in scope only when the owner explicitly requests one. The approved entry-page and PC gameplay directions are recorded in `docs/UI_REDESIGN.md` and `docs/DESKTOP_GAME_RELEASE_20261103.md`.
 3. **Preserve original Canva artwork.** Keep the source PNG pixels unchanged; never redraw, regenerate, recolor, or substitute card artwork. CSS may trim only measured exterior export margins where the current card treatment documents it; never clip meaningful interior artwork or text.
 4. **Do not invent game mechanics or data.** No new resource types, costs, rewards, counters, buttons, phases, or player abilities unless the engine explicitly supports them.
 5. **Protect private information.** Render only information present in the authenticated player's server projection. Never infer or reveal another player's role, wallet, inspection result, or locked action.

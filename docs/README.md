@@ -21,27 +21,31 @@ Use this page to find the right project document. The root [README](../README.md
 
 - [Scale and security report](SCALE_AND_SECURITY.md) — implementation details, local load measurements, security controls, and operational limits. Read its dated scope note before using the measurements.
 - [Game glossary](GLOSSARY.md) — Vietnamese game terminology.
-- [Project completion record](PRODUCT_FINISH.md) — product/content and deployment notes as recorded on 31 October 2026.
 
 ## Implementation and verification records
 
 These documents preserve the scope, decisions, and test evidence from specific implementation tasks:
 
-- [In-game removal and admission](GAME_KICK_AND_ADMISSION.md)
-- [Lobby recovery and load test](LOBBY_KICK_AND_SOAK.md)
+- [In-game removal and admission](history/records/GAME_KICK_AND_ADMISSION.md)
+- [Lobby recovery and load test](history/records/LOBBY_KICK_AND_SOAK.md)
 - [Brand and card finish](BRAND_AND_CARD_FINISH.md)
 - [Native HD card images](CARD_HD_FIX.md)
 - [Video endings and card QR links](ENDINGS.md)
-- [PC gameplay redesign](PC_GAME_REDESIGN.md)
+- [Earlier PC gameplay redesign](history/briefs/PC_GAME_REDESIGN.md)
 - [Entry-page redesign](UI_REDESIGN.md)
+- [Desktop gameplay release, 3 November](DESKTOP_GAME_RELEASE_20261103.md)
+- [Mobile component verification, 3 November](MOBILE_VERIFICATION_20261103.md)
+- [Historical product completion record](history/records/PRODUCT_FINISH.md)
 
 They are dated records, not live monitoring. A statement such as "local", "uncommitted", or "not deployed" describes the state at the time that document was written. Use the current Git history and source/tests for repository state; verify Vercel and Render separately before making claims about the live deployment.
 
 ## Historical briefs and superseded plans
 
-- [Earlier UI refactor brief](UI_REFACTOR_BRIEF.md) — contains older fixed-layout and player-cap assumptions that later owner decisions superseded.
-- [Earlier lobby redesign](LOBBY_REDESIGN.md) — design record for an earlier lobby pass.
-- [Earlier reset plan](NEXT_RESET_PLAN.md) — planning snapshot; its 12-player ceiling and reject-player-13 criteria are explicitly superseded.
+- [History index](history/README.md) — archived plans and dated implementation reports.
+
+- [Earlier UI refactor brief](history/briefs/UI_REFACTOR_BRIEF.md) — contains older fixed-layout and player-cap assumptions that later owner decisions superseded.
+- [Earlier lobby redesign](history/briefs/LOBBY_REDESIGN.md) — design record for an earlier lobby pass.
+- [Earlier reset plan](history/briefs/NEXT_RESET_PLAN.md) — planning snapshot; its 12-player ceiling and reject-player-13 criteria are explicitly superseded.
 
 These files are retained for context. Do not treat them as current requirements when they conflict with AGENTS.md, later implementation records, or the current source code.
 

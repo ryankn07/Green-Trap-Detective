@@ -1,6 +1,6 @@
 # PC gameplay redesign — 2026-11-01
 
-Superseded for desktop presentation by [the 3 November release](DESKTOP_GAME_RELEASE_20261103.md). The original record below is retained as history.
+Superseded for desktop presentation by [the 3 November release](../../DESKTOP_GAME_RELEASE_20261103.md). The original record below is retained as history.
 
 ## Scope and acceptance
 
