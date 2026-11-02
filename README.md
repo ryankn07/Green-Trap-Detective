@@ -147,6 +147,8 @@ Khi ván kết thúc, phe Bảo vệ thắng dẫn đến **Good Ending**, phe P
 
 Môi trường chạy chính thức hiện **không sử dụng thư viện npm của bên thứ ba**.
 
+**Cách triển khai:** `vercel.json` định tuyến yêu cầu API tới Vercel Functions (`api/game.js`), sử dụng kho phòng riêng trong Supabase và cơ chế hỏi trạng thái định kỳ. Lệnh `npm start` vẫn chạy máy chủ Node cục bộ với kết nối SSE. Xem [kiến trúc chi tiết](docs/ARCHITECTURE.md).
+
 ### Chạy dự án trên máy cá nhân
 
 #### Yêu cầu
@@ -194,9 +196,11 @@ Bộ kiểm thử trình duyệt Playwright là tùy chọn và yêu cầu đã 
 ~~~text
 .
 ├── .github/              # CI, mẫu issue, mẫu pull request, Dependabot
+├── api/                  # Hàm API cho Vercel
 ├── docs/
 │   ├── assets/           # Biểu ngữ thương hiệu và sơ đồ kiến trúc
 │   ├── decisions/        # Hồ sơ quyết định kiến trúc
+│   ├── history/          # Kế hoạch cũ và hồ sơ triển khai
 │   ├── README.md           # Documentation index
 │   ├── ARCHITECTURE.md
 │   ├── DEVELOPMENT.md
@@ -209,6 +213,7 @@ Bộ kiểm thử trình duyệt Playwright là tùy chọn và yêu cầu đã 
 │   └── compatibility/    # Generated runtime recovery bundle
 ├── scripts/              # Công cụ kiểm tra, dựng ứng dụng, nhập tài nguyên và tạo gói
 ├── server/               # API HTTP, phòng chơi, xác thực, SSE và lưu trữ
+├── supabase/             # Mã tạo bảng và thủ tục lưu trạng thái
 ├── test/                 # Bộ kiểm thử tự động
 ├── ui/
 │   ├── brand/            # Tài nguyên thương hiệu
@@ -385,6 +390,8 @@ Read [the architecture guide](docs/ARCHITECTURE.md) for module responsibilities,
 
 The production runtime currently has **no third-party npm dependencies**.
 
+**Deployment paths:** `vercel.json` routes API requests to a Vercel Function (`api/game.js`) using private Supabase room storage and client polling. `npm start` still runs the local Node/SSE server. See the [architecture guide](docs/ARCHITECTURE.md).
+
 ## Run locally
 
 ### Requirements
@@ -432,9 +439,11 @@ The optional Playwright browser suite requires an existing Playwright installati
 ~~~text
 .
 ├── .github/              # CI, issue templates, PR template, Dependabot
+├── api/                  # Vercel Function entry point
 ├── docs/
 │   ├── assets/           # Brand banner and architecture diagrams
 │   ├── decisions/        # Architecture decision records
+│   ├── history/          # Superseded plans and dated implementation records
 │   ├── ARCHITECTURE.md
 │   ├── DEVELOPMENT.md
 │   ├── GLOSSARY.md
@@ -445,6 +454,7 @@ The optional Playwright browser suite requires an existing Playwright installati
 │   └── compatibility/    # Generated runtime recovery bundle
 ├── scripts/              # Checks, build, asset import, bundle utilities
 ├── server/               # HTTP API, rooms, authentication, SSE, persistence
+├── supabase/             # Database migrations for serverless persistence
 ├── test/                 # Automated test suite
 ├── ui/
 │   ├── brand/            # Brand assets

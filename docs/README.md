@@ -18,9 +18,11 @@ Use this page to find the right project document. The root [README](../README.md
 ## Engineering references
 
 - [Static delivery performance](PERFORMANCE.md) — gzip negotiation, lossless WebP delivery, cache behavior, and verification.
-
 - [Scale and security report](SCALE_AND_SECURITY.md) — implementation details, local load measurements, security controls, and operational limits. Read its dated scope note before using the measurements.
 - [Game glossary](GLOSSARY.md) — Vietnamese game terminology.
+- [Durable room storage](DURABLE_ROOMS.md) — persistence and recovery configuration for the long-running server.
+- [Vercel and Supabase rollout](VERCEL_SUPABASE_TRIAL.md) — dated migration record and serverless behavior.
+- [Performance and soak testing](SOAK.md) — load testing scope and evidence.
 
 ## Implementation and verification records
 

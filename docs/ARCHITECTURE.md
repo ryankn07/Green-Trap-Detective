@@ -4,7 +4,7 @@
 
 GREEN TRAP DETECTIVE is a Vietnamese-language, browser-based multiplayer social-deduction game built around environmental project cards. Players discuss one project, submit a private action, and then review the round result.
 
-The repository deliberately uses a small dependency-free runtime: Node.js, the built-in HTTP module, browser HTML/CSS/JavaScript, and server-sent events (SSE).
+The repository uses Node.js, browser HTML/CSS/JavaScript, and the built-in HTTP module without third-party npm runtime packages. It supports two delivery paths: a long-running local Node server with server-sent events (SSE), and a Vercel Function using HTTP polling and private Supabase room persistence.
 
 ## System context
 
@@ -26,10 +26,14 @@ flowchart LR
     HTTP -->|SSE snapshots| Browser
 ~~~
 
+The diagram above describes the long-running Node server path. On Vercel, `api/game.js` handles short-lived requests, invokes `server/serverless-game.cjs`, and stores room state in Supabase. The browser uses polling rather than an SSE subscription in that path.
+
 ## Runtime responsibilities
 
 | Area | Responsibility | Main files |
 | --- | --- | --- |
+| Vercel Function | Stateless HTTP request handling, authenticated commands and per-room persistence | api/game.js, server/serverless-game.cjs |
+| Supabase per-room storage | Atomic state updates and request receipts for serverless requests | server/supabase-room-store.cjs, supabase/migrations/ |
 | Game engine | Game setup, role assignment, project selection, phase transitions, action validation, round resolution, win conditions | engine/dist/ |
 | Room management | Room lifecycle, player sessions, host permissions, phase deadlines, timeout defaults | server/rooms.cjs |
 | HTTP and realtime transport | Routes, bearer authentication, origin/body validation, rate limits, static assets, SSE subscriptions | server/server.cjs, server/http-guards.cjs, server/rate-limit.cjs |
@@ -73,10 +77,12 @@ This has important operational limits:
 - Multiple server replicas do not share in-memory rooms, SSE subscriptions, or rate-limit state.
 - The current design is not a distributed database or a multi-region deployment.
 
-Use the configured remote store or a persistent volume for durable recovery. Horizontal scaling still requires additional coordination. Do not describe configured safety ceilings as measured hosting capacity.
+The Vercel Function path is different from the singleton Node/SSE modes: it loads per-room data from Supabase for each request and uses conditional writes with idempotency receipts. Its polling, hosting quotas and concurrent write behavior must be evaluated separately; local Node load results are not Vercel capacity guarantees. See [the Vercel and Supabase implementation record](VERCEL_SUPABASE_TRIAL.md).
+
+Use a remote store or a persistent volume when room recovery must survive process restarts. Horizontal scaling and operational capacity require evidence for the chosen deployment path.
 
 ## Deployment shape
 
-The current deployment configuration builds a static frontend for Vercel and rewrites API and health requests to the Node service configured in vercel.json. The Node service can also be run locally with npm start.
+The checked-in `vercel.json` builds the static frontend, routes `/api/*` and `/health` to `api/game.js`, and selects Vercel's Singapore region (`sin1`). The Function requires `GAME_TRIAL_ENABLED=1`, `GAME_SUPABASE_URL` and `GAME_SUPABASE_SERVICE_KEY` for its Supabase-backed room store; missing configuration fails closed. The traditional Node/SSE server can still be run locally using `npm start` and has its own local-file or remote singleton storage configuration.
 
-Review vercel.json and the hosting provider's current configuration before changing domains, origins, build commands, or persistence settings. Documentation describes the repository configuration; it does not guarantee that a hosted service is currently healthy.
+Review the active Vercel project configuration, credentials and deployment history before changing routing or persistence. Repository configuration alone does not prove a hosted service is healthy.
