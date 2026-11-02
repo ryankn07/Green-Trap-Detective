@@ -1,0 +1,556 @@
+{
+  "format": "WebP lossless",
+  "encoder": "Pillow 12.3.0",
+  "pixelVerification": "Decoded RGBA bytes compared exactly with source PNG",
+  "assetCount": 32,
+  "webpCount": 32,
+  "sourceBytes": 46494252,
+  "webpBytes": 29804754,
+  "savedBytes": 16689498,
+  "assets": {
+    "BACK_01": {
+      "source": "ui/cards-hd/BACK_01.png",
+      "sourceBytes": 282737,
+      "webp": "ui/cards-hd-webp/BACK_01.webp",
+      "webpBytes": 141788,
+      "used": true,
+      "savedBytes": 140949,
+      "dimensions": [
+        1414,
+        2000
+      ],
+      "preservedMetadata": [
+        "exif",
+        "xmp"
+      ],
+      "pixelExact": true
+    },
+    "BACK_02": {
+      "source": "ui/cards-hd/BACK_02.png",
+      "sourceBytes": 1054545,
+      "webp": "ui/cards-hd-webp/BACK_02.webp",
+      "webpBytes": 507582,
+      "used": true,
+      "savedBytes": 546963,
+      "dimensions": [
+        1414,
+        2000
+      ],
+      "preservedMetadata": [
+        "exif",
+        "xmp"
+      ],
+      "pixelExact": true
+    },
+    "BACK_03": {
+      "source": "ui/cards-hd/BACK_03.png",
+      "sourceBytes": 642970,
+      "webp": "ui/cards-hd-webp/BACK_03.webp",
+      "webpBytes": 459212,
+      "used": true,
+      "savedBytes": 183758,
+      "dimensions": [
+        1414,
+        2000
+      ],
+      "preservedMetadata": [
+        "exif",
+        "xmp"
+      ],
+      "pixelExact": true
+    },
+    "BACK_04": {
+      "source": "ui/cards-hd/BACK_04.png",
+      "sourceBytes": 176048,
+      "webp": "ui/cards-hd-webp/BACK_04.webp",
+      "webpBytes": 107412,
+      "used": true,
+      "savedBytes": 68636,
+      "dimensions": [
+        1414,
+        2000
+      ],
+      "preservedMetadata": [
+        "exif",
+        "xmp"
+      ],
+      "pixelExact": true
+    },
+    "GREENCOIN": {
+      "source": "ui/cards-hd/GREENCOIN.png",
+      "sourceBytes": 164288,
+      "webp": "ui/cards-hd-webp/GREENCOIN.webp",
+      "webpBytes": 90020,
+      "used": true,
+      "savedBytes": 74268,
+      "dimensions": [
+        1414,
+        2000
+      ],
+      "preservedMetadata": [
+        "exif",
+        "xmp"
+      ],
+      "pixelExact": true
+    },
+    "PROJ_01": {
+      "source": "ui/cards-hd/PROJ_01.png",
+      "sourceBytes": 2362362,
+      "webp": "ui/cards-hd-webp/PROJ_01.webp",
+      "webpBytes": 1729856,
+      "used": true,
+      "savedBytes": 632506,
+      "dimensions": [
+        1414,
+        2000
+      ],
+      "preservedMetadata": [
+        "exif",
+        "xmp"
+      ],
+      "pixelExact": true
+    },
+    "PROJ_02": {
+      "source": "ui/cards-hd/PROJ_02.png",
+      "sourceBytes": 2061675,
+      "webp": "ui/cards-hd-webp/PROJ_02.webp",
+      "webpBytes": 1464532,
+      "used": true,
+      "savedBytes": 597143,
+      "dimensions": [
+        1414,
+        2000
+      ],
+      "preservedMetadata": [
+        "exif",
+        "xmp"
+      ],
+      "pixelExact": true
+    },
+    "PROJ_03": {
+      "source": "ui/cards-hd/PROJ_03.png",
+      "sourceBytes": 2838227,
+      "webp": "ui/cards-hd-webp/PROJ_03.webp",
+      "webpBytes": 1154472,
+      "used": true,
+      "savedBytes": 1683755,
+      "dimensions": [
+        1414,
+        2000
+      ],
+      "preservedMetadata": [
+        "exif",
+        "xmp"
+      ],
+      "pixelExact": true
+    },
+    "PROJ_04": {
+      "source": "ui/cards-hd/PROJ_04.png",
+      "sourceBytes": 2480514,
+      "webp": "ui/cards-hd-webp/PROJ_04.webp",
+      "webpBytes": 1062136,
+      "used": true,
+      "savedBytes": 1418378,
+      "dimensions": [
+        1414,
+        2000
+      ],
+      "preservedMetadata": [
+        "exif",
+        "xmp"
+      ],
+      "pixelExact": true
+    },
+    "PROJ_05": {
+      "source": "ui/cards-hd/PROJ_05.png",
+      "sourceBytes": 2281041,
+      "webp": "ui/cards-hd-webp/PROJ_05.webp",
+      "webpBytes": 960520,
+      "used": true,
+      "savedBytes": 1320521,
+      "dimensions": [
+        1414,
+        2000
+      ],
+      "preservedMetadata": [
+        "exif",
+        "xmp"
+      ],
+      "pixelExact": true
+    },
+    "PROJ_06": {
+      "source": "ui/cards-hd/PROJ_06.png",
+      "sourceBytes": 926077,
+      "webp": "ui/cards-hd-webp/PROJ_06.webp",
+      "webpBytes": 530086,
+      "used": true,
+      "savedBytes": 395991,
+      "dimensions": [
+        1414,
+        2000
+      ],
+      "preservedMetadata": [
+        "exif",
+        "xmp"
+      ],
+      "pixelExact": true
+    },
+    "PROJ_07": {
+      "source": "ui/cards-hd/PROJ_07.png",
+      "sourceBytes": 818714,
+      "webp": "ui/cards-hd-webp/PROJ_07.webp",
+      "webpBytes": 486754,
+      "used": true,
+      "savedBytes": 331960,
+      "dimensions": [
+        1414,
+        2000
+      ],
+      "preservedMetadata": [
+        "exif",
+        "xmp"
+      ],
+      "pixelExact": true
+    },
+    "PROJ_08": {
+      "source": "ui/cards-hd/PROJ_08.png",
+      "sourceBytes": 678029,
+      "webp": "ui/cards-hd-webp/PROJ_08.webp",
+      "webpBytes": 408280,
+      "used": true,
+      "savedBytes": 269749,
+      "dimensions": [
+        1414,
+        2000
+      ],
+      "preservedMetadata": [
+        "exif",
+        "xmp"
+      ],
+      "pixelExact": true
+    },
+    "PROJ_09": {
+      "source": "ui/cards-hd/PROJ_09.png",
+      "sourceBytes": 593151,
+      "webp": "ui/cards-hd-webp/PROJ_09.webp",
+      "webpBytes": 342236,
+      "used": true,
+      "savedBytes": 250915,
+      "dimensions": [
+        1414,
+        2000
+      ],
+      "preservedMetadata": [
+        "exif",
+        "xmp"
+      ],
+      "pixelExact": true
+    },
+    "PROJ_10": {
+      "source": "ui/cards-hd/PROJ_10.png",
+      "sourceBytes": 766927,
+      "webp": "ui/cards-hd-webp/PROJ_10.webp",
+      "webpBytes": 444358,
+      "used": true,
+      "savedBytes": 322569,
+      "dimensions": [
+        1414,
+        2000
+      ],
+      "preservedMetadata": [
+        "exif",
+        "xmp"
+      ],
+      "pixelExact": true
+    },
+    "PROJ_11": {
+      "source": "ui/cards-hd/PROJ_11.png",
+      "sourceBytes": 1895313,
+      "webp": "ui/cards-hd-webp/PROJ_11.webp",
+      "webpBytes": 1353078,
+      "used": true,
+      "savedBytes": 542235,
+      "dimensions": [
+        1414,
+        2000
+      ],
+      "preservedMetadata": [
+        "exif",
+        "xmp"
+      ],
+      "pixelExact": true
+    },
+    "PROJ_12": {
+      "source": "ui/cards-hd/PROJ_12.png",
+      "sourceBytes": 1721384,
+      "webp": "ui/cards-hd-webp/PROJ_12.webp",
+      "webpBytes": 1269788,
+      "used": true,
+      "savedBytes": 451596,
+      "dimensions": [
+        1414,
+        2000
+      ],
+      "preservedMetadata": [
+        "exif",
+        "xmp"
+      ],
+      "pixelExact": true
+    },
+    "PROJ_13": {
+      "source": "ui/cards-hd/PROJ_13.png",
+      "sourceBytes": 1624430,
+      "webp": "ui/cards-hd-webp/PROJ_13.webp",
+      "webpBytes": 1162464,
+      "used": true,
+      "savedBytes": 461966,
+      "dimensions": [
+        1414,
+        2000
+      ],
+      "preservedMetadata": [
+        "exif",
+        "xmp"
+      ],
+      "pixelExact": true
+    },
+    "PROJ_14": {
+      "source": "ui/cards-hd/PROJ_14.png",
+      "sourceBytes": 1295970,
+      "webp": "ui/cards-hd-webp/PROJ_14.webp",
+      "webpBytes": 911858,
+      "used": true,
+      "savedBytes": 384112,
+      "dimensions": [
+        1414,
+        2000
+      ],
+      "preservedMetadata": [
+        "exif",
+        "xmp"
+      ],
+      "pixelExact": true
+    },
+    "PROJ_15": {
+      "source": "ui/cards-hd/PROJ_15.png",
+      "sourceBytes": 1569620,
+      "webp": "ui/cards-hd-webp/PROJ_15.webp",
+      "webpBytes": 1124846,
+      "used": true,
+      "savedBytes": 444774,
+      "dimensions": [
+        1414,
+        2000
+      ],
+      "preservedMetadata": [
+        "exif",
+        "xmp"
+      ],
+      "pixelExact": true
+    },
+    "PROJ_16": {
+      "source": "ui/cards-hd/PROJ_16.png",
+      "sourceBytes": 2187900,
+      "webp": "ui/cards-hd-webp/PROJ_16.webp",
+      "webpBytes": 1641710,
+      "used": true,
+      "savedBytes": 546190,
+      "dimensions": [
+        1414,
+        2000
+      ],
+      "preservedMetadata": [
+        "exif",
+        "xmp"
+      ],
+      "pixelExact": true
+    },
+    "PROJ_17": {
+      "source": "ui/cards-hd/PROJ_17.png",
+      "sourceBytes": 1792169,
+      "webp": "ui/cards-hd-webp/PROJ_17.webp",
+      "webpBytes": 1313814,
+      "used": true,
+      "savedBytes": 478355,
+      "dimensions": [
+        1414,
+        2000
+      ],
+      "preservedMetadata": [
+        "exif",
+        "xmp"
+      ],
+      "pixelExact": true
+    },
+    "PROJ_18": {
+      "source": "ui/cards-hd/PROJ_18.png",
+      "sourceBytes": 1793597,
+      "webp": "ui/cards-hd-webp/PROJ_18.webp",
+      "webpBytes": 1294412,
+      "used": true,
+      "savedBytes": 499185,
+      "dimensions": [
+        1414,
+        2000
+      ],
+      "preservedMetadata": [
+        "exif",
+        "xmp"
+      ],
+      "pixelExact": true
+    },
+    "PROJ_19": {
+      "source": "ui/cards-hd/PROJ_19.png",
+      "sourceBytes": 1294861,
+      "webp": "ui/cards-hd-webp/PROJ_19.webp",
+      "webpBytes": 886698,
+      "used": true,
+      "savedBytes": 408163,
+      "dimensions": [
+        1414,
+        2000
+      ],
+      "preservedMetadata": [
+        "exif",
+        "xmp"
+      ],
+      "pixelExact": true
+    },
+    "PROJ_20": {
+      "source": "ui/cards-hd/PROJ_20.png",
+      "sourceBytes": 1645225,
+      "webp": "ui/cards-hd-webp/PROJ_20.webp",
+      "webpBytes": 1178248,
+      "used": true,
+      "savedBytes": 466977,
+      "dimensions": [
+        1414,
+        2000
+      ],
+      "preservedMetadata": [
+        "exif",
+        "xmp"
+      ],
+      "pixelExact": true
+    },
+    "PROJ_21": {
+      "source": "ui/cards-hd/PROJ_21.png",
+      "sourceBytes": 1823278,
+      "webp": "ui/cards-hd-webp/PROJ_21.webp",
+      "webpBytes": 1346808,
+      "used": true,
+      "savedBytes": 476470,
+      "dimensions": [
+        1414,
+        2000
+      ],
+      "preservedMetadata": [
+        "exif",
+        "xmp"
+      ],
+      "pixelExact": true
+    },
+    "PROJ_22": {
+      "source": "ui/cards-hd/PROJ_22.png",
+      "sourceBytes": 1553769,
+      "webp": "ui/cards-hd-webp/PROJ_22.webp",
+      "webpBytes": 1089014,
+      "used": true,
+      "savedBytes": 464755,
+      "dimensions": [
+        1414,
+        2000
+      ],
+      "preservedMetadata": [
+        "exif",
+        "xmp"
+      ],
+      "pixelExact": true
+    },
+    "PROJ_23": {
+      "source": "ui/cards-hd/PROJ_23.png",
+      "sourceBytes": 1726145,
+      "webp": "ui/cards-hd-webp/PROJ_23.webp",
+      "webpBytes": 1167412,
+      "used": true,
+      "savedBytes": 558733,
+      "dimensions": [
+        1414,
+        2000
+      ],
+      "preservedMetadata": [
+        "exif",
+        "xmp"
+      ],
+      "pixelExact": true
+    },
+    "PROJ_24": {
+      "source": "ui/cards-hd/PROJ_24.png",
+      "sourceBytes": 1864961,
+      "webp": "ui/cards-hd-webp/PROJ_24.webp",
+      "webpBytes": 1336522,
+      "used": true,
+      "savedBytes": 528439,
+      "dimensions": [
+        1414,
+        2000
+      ],
+      "preservedMetadata": [
+        "exif",
+        "xmp"
+      ],
+      "pixelExact": true
+    },
+    "PROJ_25": {
+      "source": "ui/cards-hd/PROJ_25.png",
+      "sourceBytes": 1300601,
+      "webp": "ui/cards-hd-webp/PROJ_25.webp",
+      "webpBytes": 906342,
+      "used": true,
+      "savedBytes": 394259,
+      "dimensions": [
+        1414,
+        2000
+      ],
+      "preservedMetadata": [
+        "exif",
+        "xmp"
+      ],
+      "pixelExact": true
+    },
+    "ROLE_PROTECTOR": {
+      "source": "ui/cards-hd/ROLE_PROTECTOR.png",
+      "sourceBytes": 1677778,
+      "webp": "ui/cards-hd-webp/ROLE_PROTECTOR.webp",
+      "webpBytes": 1220060,
+      "used": true,
+      "savedBytes": 457718,
+      "dimensions": [
+        1414,
+        2000
+      ],
+      "preservedMetadata": [
+        "exif",
+        "xmp"
+      ],
+      "pixelExact": true
+    },
+    "ROLE_SABOTEUR": {
+      "source": "ui/cards-hd/ROLE_SABOTEUR.png",
+      "sourceBytes": 1599946,
+      "webp": "ui/cards-hd-webp/ROLE_SABOTEUR.webp",
+      "webpBytes": 712436,
+      "used": true,
+      "savedBytes": 887510,
+      "dimensions": [
+        1414,
+        2000
+      ],
+      "preservedMetadata": [
+        "exif",
+        "xmp"
+      ],
+      "pixelExact": true
+    }
+  }
+}
