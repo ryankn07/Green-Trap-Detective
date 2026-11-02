@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="docs/assets/brand-banner.webp" alt="Biểu ngữ dự án Green Trap Detective với biểu trưng nhóm và Green Coin trong trò chơi" width="100%">
+  <img src="docs/assets/brand-banner.svg" alt="Green Trap Detective — logo gốc, Green Coin và công nghệ Node.js, Vanilla JS, SSE" width="100%">
 
   <br>
 
