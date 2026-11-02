@@ -1,0 +1,56 @@
+name: Generate lossless HD WebP assets
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'ui/cards-hd/**'
+      - 'scripts/generate-card-webp.py'
+      - '.github/workflows/card-webp-assets.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: card-webp-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  generate:
+    name: Generate and verify lossless WebP
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Check out source artwork
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref }}
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install pinned image build tool
+        run: python -m pip install --disable-pip-version-check Pillow==12.3.0
+      - name: Verify encoder preserves exact pixels
+        run: python scripts/generate-card-webp.py --self-test
+      - name: Generate only smaller lossless derivatives
+        run: python scripts/generate-card-webp.py
+      - name: Re-open every derivative and compare decoded RGBA pixels
+        run: python scripts/generate-card-webp.py --check
+      - name: Commit verified derivatives
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TARGET_BRANCH: ${{ github.ref_name }}
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add ui/cards-hd-webp ui/card-webp-manifest.js
+          if git diff --cached --quiet; then
+            echo "No generated WebP changes to commit."
+            exit 0
+          fi
+          git commit -m "assets(cards): add verified lossless WebP derivatives"
+          git push "https://x-access-token:$GH_TOKEN@github.com/$GITHUB_REPOSITORY.git" "HEAD:$TARGET_BRANCH"
