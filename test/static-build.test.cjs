@@ -8,10 +8,15 @@ test('Vercel build includes the shared client and HD cards but no private server
  assert.equal(fs.readFileSync(path.join(output,'app.js'),'utf8'),fs.readFileSync(path.join(root,'public/app.js'),'utf8'));
  const home=fs.readFileSync(path.join(output,'index.html'),'utf8');
  for(const id of ['PROJ_01','PROJ_11','PROJ_25']){
-  assert.ok(home.includes('href="/cards-hd/'+id+'.png"'),id+' homepage link uses HD artwork');
-  assert.ok(home.includes('src="/cards-hd/'+id+'.png"'),id+' homepage image uses HD artwork');
-  assert.ok(home.includes('data-fallback-src="/cards/'+id+'.png"'),id+' homepage keeps original fallback');
+  assert.ok(home.includes('href="/cards-hd/'+id+'.png"'),id+' homepage link opens the native HD artwork');
+  assert.ok(home.includes('data-fallback-src="/cards/'+id+'.png"'),id+' homepage retains the original thumbnail fallback');
  }
+ assert.match(home,/<img src="\/cards-hd\/PROJ_01\.png"[^>]*fetchpriority="high"/,'front hero card keeps native HD priority');
+ for(const id of ['PROJ_11','PROJ_25']){
+  assert.match(home,new RegExp('<img src="\\/cards\\/'+id+'\\.png"[^>]*loading="lazy"[^>]*fetchpriority="low"'),id+' side hero card uses a lazy low-bandwidth thumbnail');
+ }
+ assert.match(home,/href="\/cards-hd\/PROJ_11\.png"[^>]*<img src="\/cards\/PROJ_11\.png"/,'opening a side card still targets its native HD artwork');
+ assert.match(home,/href="\/cards-hd\/PROJ_25\.png"[^>]*<img src="\/cards\/PROJ_25\.png"/,'opening a side card still targets its native HD artwork');
  const cardUi=fs.readFileSync(path.join(output,'card-ui.js'),'utf8');
  assert.ok(cardUi.includes('cards(?:-hd)?'),'card preview accepts original and HD paths');
 });

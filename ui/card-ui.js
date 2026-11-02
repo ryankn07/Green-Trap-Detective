@@ -1,4 +1,4 @@
-/* GREEN IMPACT card-art integration; no changes to game logic or role secrecy. */
+/* Green Trap Detective card-art integration; no changes to game logic or role secrecy. */
 (function () {
   "use strict";
   const app = document.getElementById("app");
