@@ -787,4 +787,3 @@ body.copy-confirmed::after{content:"";position:fixed;z-index:99;inset:0;pointer-
  body.gi-gameplay .gi-history .hist {font-size:12px;line-height:1.8;margin-top:15px}
  body.gi-gameplay .gi-history .hist>div {padding:12px 0;border-bottom:1px solid var(--border)}
 }
-
