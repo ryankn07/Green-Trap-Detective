@@ -1,3 +1,13 @@
+node_modules/
+.env
+.env.*
+!.env.example
 /data/
 /.web-dist/
+/coverage/
+/playwright-report/
+/test-results/
+*.log
 *.test-backup
+.DS_Store
+Thumbs.db
