@@ -9,6 +9,7 @@ This project follows a lightweight Keep a Changelog structure. Entries describe 
 ### Changed
 - Align maintainer instructions with the current Green Trap Detective design and runtime boundaries.
 - Add a linked documentation index and clarify the historical scope of dated implementation reports.
+- Document the legacy frontend files retained by the runtime recovery bundle.
 
 ### Added
 - Repository architecture, development, contribution, security, and AI-assisted development guides.

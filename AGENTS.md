@@ -45,7 +45,7 @@ Read the current design record that matches the surface being changed:
 - `package.json`: Node version and available npm scripts.
 - `scripts/restore-runtime-bundle.cjs`: portable Node-only recovery for missing bundled runtime files.
 
-The page shell loads `/app.js`, served from `public/app.js`. The room manager imports `engine/dist/data/projects.json`. These original files are restored from the checked-in `runtime/compatibility/part*.b64` archive and are tracked. `npm start` runs `scripts/restore-runtime-bundle.cjs` first; it restores only missing files and never overwrites existing source unless explicitly invoked with `--force`. Use `--check` to validate the archive without writing.
+The page shell loads `/app.js`, served from `public/app.js`. The legacy `public/index.html` and `public/style.css` are retained as compatibility-bundle inputs for the older Render recovery path; the active server and Vercel build use `ui/index.html` and `ui/style.css`. Do not remove those legacy files without updating the archive, restore script, and parity tests. The room manager imports `engine/dist/data/projects.json`. These original files are restored from the checked-in `runtime/compatibility/part*.b64` archive and are tracked. `npm start` runs `scripts/restore-runtime-bundle.cjs` first; it restores only missing files and never overwrites existing source unless explicitly invoked with `--force`. Use `--check` to validate the archive without writing.
 
 ## Verified gameplay contract
 
