@@ -108,10 +108,10 @@ function render(){if(!snapshot||!session)return;const s=snapshot;const me=s.game
  const stanceLabel={SUPPORT:'Ủng hộ',OPPOSE:'Phản đối',UNSURE:'Chưa chắc chắn'};
  const discussion=statements.map(st=>{const name=s.room.players.find(p=>p.id===st.playerId)?.name||'Người chơi';return '<div class="gi-statement"><span class="gi-chat-avatar" aria-hidden="true">'+escapeHTML(name.charAt(0).toUpperCase())+'</span><div class="gi-chat-bubble"><b>'+escapeHTML(name)+'</b><span class="pill">'+escapeHTML(stanceLabel[st.stance]||'Nhận định')+'</span><p>'+escapeHTML(st.text)+'</p></div></div>';}).join('')||'<p class="tiny">Nhận định sẽ xuất hiện khi người chơi gửi ý kiến.</p>';
  app.innerHTML=`
- <div class="gi-mobile-topbar"><div class="gi-top-wallet"><img src="/cards-hd/GREENCOIN.png" alt="" width="24" height="24"><b>${me.coins}</b><span>xu</span></div><button id="mobile-show-role" type="button" aria-label="Nhấn giữ để xem vai trò" aria-describedby="mobile-role-value" aria-pressed="false"><svg viewBox="0 0 64 64" aria-hidden="true"><path d="M5 32c7-11 17-17 27-17s20 6 27 17c-7 11-17 17-27 17S12 43 5 32Z"/><circle cx="32" cy="32" r="10"/></svg></button><span id="mobile-role-value" role="status" hidden></span><span class="gi-round-chip">Lượt ${g.round} / ${g.roundLimit}</span></div>
+ <div class="gi-mobile-topbar"><div class="gi-top-wallet"><img src="/brand/green-coin.png" alt="" width="24" height="24"><b>${me.coins}</b><span>xu</span></div><button id="mobile-show-role" type="button" aria-label="Nhấn giữ để xem vai trò" aria-describedby="mobile-role-value" aria-pressed="false"><svg viewBox="0 0 64 64" aria-hidden="true"><path d="M5 32c7-11 17-17 27-17s20 6 27 17c-7 11-17 17-27 17S12 43 5 32Z"/><circle cx="32" cy="32" r="10"/></svg></button><span id="mobile-role-value" role="status" hidden></span><span class="gi-round-chip">Lượt ${g.round} / ${g.roundLimit}</span></div>
  <div class="gi-game-grid" data-game-layout="four-areas">
   <header class="card gi-phase-header">
-   <div class="gi-mobile-wallet">◈ ${me.coins} xu</div>
+   <div class="gi-mobile-wallet"><img class="gi-coin-icon" src="/brand/green-coin.png" alt="" width="28" height="28"> ${me.coins} xu</div>
    <div class="flex"><span class="phase">${escapeHTML(phaseText[g.phase])} · LƯỢT ${g.round}/${g.roundLimit}</span>${timer(s)}</div>
    ${g.phase!=='GAME_OVER'?'<progress id="phase-progress" max="'+phaseSeconds[g.phase]+'" value="'+remainingSeconds()+'" aria-label="Thời gian còn lại"></progress>':''}
    <div class="flex muted"><span>Bảo vệ: ${g.approvedProtectorCount}</span><span>Phá hoại: ${g.approvedSaboteurCount}</span></div>
@@ -125,7 +125,7 @@ function render(){if(!snapshot||!session)return;const s=snapshot;const me=s.game
    <section class="project"><small>HỒ SƠ ${escapeHTML(project.id)}</small><h2>${escapeHTML(project.title)}</h2><p>${escapeHTML(project.description)}</p></section>
   </section>
   <section class="gi-area-actions" aria-label="Hồ sơ và hành động cá nhân">
-   <div class="card gi-profile-panel${me.inspections?.length?' gi-has-inspections':''}"><div class="flex"><h2>Hồ sơ cá nhân</h2><span class="coins">◈ ${me.coins}</span></div><p><b>${escapeHTML(me.name)}</b> · ${me.isAlive?'Còn trong ván':'Đã bị loại'}</p>
+   <div class="card gi-profile-panel${me.inspections?.length?' gi-has-inspections':''}"><div class="flex"><h2>Hồ sơ cá nhân</h2><span class="coins"><img class="gi-coin-icon" src="/brand/green-coin.png" alt="" width="28" height="28"> ${me.coins}</span></div><p><b>${escapeHTML(me.name)}</b> · ${me.isAlive?'Còn trong ván':'Đã bị loại'}</p>
     <div id="role" class="note" data-role="${escapeHTML(me.role)}">Vai trò của bạn: <b id="role-value">••••••</b><button id="show-role" type="button">Nhấn giữ để xem</button></div>
     ${me.inspections?.length?'<div class="rule"><h3>Kiểm chứng riêng</h3>'+me.inspections.map(x=>'<p class="tiny">Lượt '+x.round+': '+escapeHTML(s.room.players.find(p=>p.id===x.targetId)?.name)+' — '+escapeHTML(labelRole(x.revealedRole))+'</p>').join('')+'</div>':''}
    </div>

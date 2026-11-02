@@ -178,6 +178,7 @@ body:has(#form-create) .brand b{font-family:var(--font-editorial);font-size:30px
 .person-info small{display:block;font-size:12px;color:var(--muted);margin-top:4px}
 .dead{opacity:.6}
 .coins{font-family:var(--font-figure);font-size:24px;font-weight:600;color:var(--text);white-space:nowrap;font-variant-numeric:tabular-nums}
+.gi-coin-icon{display:inline-block;width:1.4em;height:1.4em;object-fit:contain;vertical-align:middle;flex-shrink:0}
 .rule{border-top:1px solid var(--border);margin-top:16px;padding-top:16px}
 .rule p+p{margin-top:8px}
 .choice{display:flex;align-items:center;gap:12px;min-height:54px;padding:12px;border:1px solid var(--border-strong);background:var(--green-light);font-weight:600}

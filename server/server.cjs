@@ -149,8 +149,9 @@ const server=http.createServer(async(req,res)=>{
       return serveStatic(req,res,filepath);
     }
 
-    if(req.method==='GET' && url.pathname==='/brand/green-trap-detective.png'){
-      const bytes=await fs.promises.readFile(path.join(uiDir,'brand','green-trap-detective.png'));
+    if(req.method==='GET' && (url.pathname==='/brand/green-trap-detective.png'||url.pathname==='/brand/green-coin.png')){
+      const filename=url.pathname==='/brand/green-coin.png'?'green-coin.png':'green-trap-detective.png';
+      const bytes=await fs.promises.readFile(path.join(uiDir,'brand',filename));
       res.writeHead(200,{'Content-Type':'image/png','Cache-Control':'public, max-age=86400'});
       return res.end(bytes);
     }
