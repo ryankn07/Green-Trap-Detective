@@ -6,6 +6,9 @@ This project follows a lightweight Keep a Changelog structure. Entries describe 
 
 ## [Unreleased]
 
+### Fixed
+- Prevent early timer wakeups from adding an unintended polling cycle to the serverless soak check.
+
 ### Changed
 - Serve all 32 native HD cards through pixel-exact lossless WebP derivatives when supported, retaining the original PNG assets as fallback.
 - Negotiate and cache gzip-compressed static text responses on the Node server while preserving byte-identical identity responses.
@@ -16,6 +19,7 @@ This project follows a lightweight Keep a Changelog structure. Entries describe 
 - Document the legacy frontend files retained by the runtime recovery bundle.
 
 ### Added
+- Winner-based Good/Bad Ending videos, an animated final screen, full last-round reveal and QR links beside original project cards.
 - Repository architecture, development, contribution, security, and AI-assisted development guides.
 - Automated repository checks for JavaScript syntax, project records, and original card assets.
 - Pull request and issue templates, plus consistent editor and Git attributes.

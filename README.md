@@ -103,6 +103,8 @@ Trò chơi sử dụng hệ thống thẻ minh họa riêng. Đây là các tài
 
 Máy chủ quản lý đồng hồ của từng giai đoạn, thời hạn, việc kiểm tra dữ liệu đầu vào và quá trình chuyển trạng thái. Trình duyệt chỉ hiển thị trạng thái nhận được, không tự quyết định kết quả trò chơi.
 
+Khi ván kết thúc, phe Bảo vệ thắng dẫn đến **Good Ending**, phe Phá hoại thắng dẫn đến **Bad Ending**. Người chơi có thể xem video ngay trên trang hoặc quét mã QR bên thẻ dự án để mở trên điện thoại. Kết quả hòa giữ màn kết thúc trung lập. Xem [ghi chú tích hợp ending](docs/ENDINGS.md).
+
 ### Kiến trúc hệ thống
 
 <img src="docs/assets/architecture.svg" alt="Kiến trúc hệ thống gồm trình duyệt, HTTP và SSE, bộ quản lý phòng, bộ máy trò chơi, lớp phân tách dữ liệu người chơi và kho lưu phòng" width="100%">

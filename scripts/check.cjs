@@ -91,7 +91,13 @@ for (const asset of [
   'ui/cards/GREENCOIN.png',
   'ui/cards/ROLE_PROTECTOR.png',
   'ui/cards/ROLE_SABOTEUR.png',
-  'ui/brand/green-trap-detective.png'
+  'ui/brand/green-trap-detective.png',
+  'ui/ending.html',
+  'ui/ending.css',
+  'ui/endings/good.mp4',
+  'ui/endings/bad.mp4',
+  'ui/endings/good-poster.jpg',
+  'ui/endings/bad-poster.jpg'
 ]) {
   if (!fs.existsSync(path.join(root, asset))) fail('Missing required asset: ' + asset);
 }

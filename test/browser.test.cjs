@@ -2,6 +2,40 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
 const playwrightPath = process.env.PLAYWRIGHT_MODULE_PATH;
+
+test('ending films keep comparable proportions in demo and normal browser viewports', {skip: !playwrightPath}, async () => {
+  const {chromium}=require(playwrightPath);
+  const {server}=require('../server/server.cjs');
+  let browser;
+  await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));
+  try {
+    const base='http://127.0.0.1:'+server.address().port;
+    browser=await chromium.launch({channel:process.env.BROWSER_CHANNEL||'msedge',headless:true});
+    for(const ending of ['good','bad']){
+      const ratios=[];
+      for(const [width,height] of [[1350,820],[1690,896]]){
+        const context=await browser.newContext({viewport:{width,height},deviceScaleFactor:1.5,reducedMotion:'reduce'});
+        const page=await context.newPage();
+        await page.goto(base+'/ending.html?ending='+ending);
+        await page.locator('.ending-film-frame video').waitFor();
+        await page.evaluate(()=>document.fonts.ready);
+        const video=await page.locator('video').boundingBox();
+        const home=await page.locator('.ending-home').boundingBox();
+        assert.ok(Math.abs(video.width/video.height-16/9)<.002,'film retains native aspect ratio');
+        assert.ok(Math.abs(video.x+video.width/2-width/2)<1,'film remains centered');
+        assert.ok(Math.abs(home.x+home.width/2-width/2)<1,'home control remains centered');
+        assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),'no horizontal overflow');
+        ratios.push(video.width/width);
+        await context.close();
+      }
+      assert.ok(Math.abs(ratios[0]-ratios[1])<.03,'film must not stay at one fixed pixel width as the window grows');
+    }
+  } finally {
+    if(browser)await browser.close();
+    server.closeAllConnections();await new Promise(resolve=>server.close(resolve));
+  }
+});
+
 async function screenshot(page,name){
   if(!process.env.BROWSER_ARTIFACT_DIR)return;
   const fs=require('node:fs'),path=require('node:path');
