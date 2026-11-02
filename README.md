@@ -1,49 +1,142 @@
+<div align="center">
+  <img src="docs/assets/hero-banner.svg" alt="Green Trap Detective — One green project. Many hidden motives." width="100%">
+
+  <br>
+
+  <a href="https://greentrap.vercel.app/"><strong>PLAY THE LIVE DEMO</strong></a>
+  &nbsp; · &nbsp;
+  <a href="https://github.com/ryankn07/ee/issues">Report an issue</a>
+  &nbsp; · &nbsp;
+  <a href="docs/ARCHITECTURE.md">Explore the architecture</a>
+
+  <br><br>
+
+  <a href="https://github.com/ryankn07/ee/actions/workflows/runtime-recovery-checks.yml"><img src="https://github.com/ryankn07/ee/actions/workflows/runtime-recovery-checks.yml/badge.svg?branch=main" alt="CI status"></a>
+  <img src="https://img.shields.io/badge/Node.js-20%2B-43853d?logo=node.js&logoColor=white" alt="Node.js 20+">
+  <img src="https://img.shields.io/badge/Runtime-Dependency--free-315c43" alt="Dependency-free runtime">
+  <img src="https://img.shields.io/badge/Realtime-SSE-c69b50" alt="Server-sent events">
+</div>
+
 # GREEN TRAP DETECTIVE
 
-[![CI](https://github.com/ryankn07/ee/actions/workflows/runtime-recovery-checks.yml/badge.svg?branch=main)](https://github.com/ryankn07/ee/actions/workflows/runtime-recovery-checks.yml)
-![Node.js](https://img.shields.io/badge/Node.js-20%2B-339933?logo=node.js&logoColor=white)
-![No runtime dependencies](https://img.shields.io/badge/runtime-dependency--free-2f6f4e)
+**One green project. Many hidden motives.**
 
-**GREEN TRAP DETECTIVE** is a Vietnamese-language, browser-based multiplayer social-deduction game about environmental projects. Players examine one project at a time, discuss its merits, make private decisions, and discover the round outcome.
+GREEN TRAP DETECTIVE is a Vietnamese-language, browser-based multiplayer social-deduction game about environmental projects. Players discuss a project, submit private decisions, and uncover the outcome together — while trying to work out who is protecting the environment and who is sabotaging it.
 
-The project is built with a deliberately lightweight stack: Node.js, the built-in HTTP server, vanilla JavaScript, HTML, CSS, and server-sent events.
+The project combines a custom card-based game experience with a server-authoritative Node.js backend, real-time updates, private player-state projections, and a lightweight browser client.
 
-## Project highlights
+## At a glance
 
-- Room-based multiplayer sessions with live server-sent event (SSE) updates.
-- A role-based social-deduction game with public statements and private actions.
-- Server-owned game phases, deadlines, validation, and round resolution.
-- Viewer-specific state projection to protect roles, wallets, locked actions, and inspection results.
-- 25 original project records and their original Canva card artwork; 10 projects are selected for a match.
-- File-based room snapshot recovery with atomic replacement.
-- Responsive browser client and a static frontend build.
-- Node.js automated tests for gameplay, room management, HTTP security, persistence, assets, and runtime-bundle integrity.
+| 25 original project cards | 10-round match | Live multiplayer | Server-authoritative rules |
+|:---:|:---:|:---:|:---:|
+| Original Canva artwork | Debate → action → reveal | HTTP + SSE | Private state stays server-side |
+
+## The game, in pictures
+
+The game uses an illustrated card system. These are original project assets already included in the repository — not stock images or mockups.
+
+<div align="center">
+  <table>
+    <tr>
+      <td align="center" width="33%">
+        <img src="ui/cards/PROJ_01.png" alt="Lá Phổi Xanh — original environmental project card" width="190">
+        <br><strong>Lá Phổi Xanh</strong>
+        <br><sub>Environmental project</sub>
+      </td>
+      <td align="center" width="33%">
+        <img src="ui/cards/PROJ_11.png" alt="Rừng Ngập Mặn Ven Biển — original environmental project card" width="190">
+        <br><strong>Rừng Ngập Mặn Ven Biển</strong>
+        <br><sub>Environmental restoration</sub>
+      </td>
+      <td align="center" width="33%">
+        <img src="ui/cards/PROJ_25.png" alt="Băng Chuyền Phân Loại Vứt Rác Thông Minh Hỗ Trợ AI — original project card" width="190">
+        <br><strong>Băng Chuyền Phân Loại Rác</strong>
+        <br><sub>AI-assisted recycling</sub>
+      </td>
+    </tr>
+  </table>
+</div>
+
+### Different roles. Different information.
+
+<div align="center">
+  <table>
+    <tr>
+      <td align="center" width="50%">
+        <img src="ui/cards/ROLE_PROTECTOR.png" alt="Người Bảo Vệ role card" width="210">
+        <br><strong>NGƯỜI BẢO VỆ</strong>
+        <br><sub>Protect environmental projects.</sub>
+      </td>
+      <td align="center" width="50%">
+        <img src="ui/cards/ROLE_SABOTEUR.png" alt="Người Phá Hoại role card" width="210">
+        <br><strong>NGƯỜI PHÁ HOẠI</strong>
+        <br><sub>Hide your motives and influence decisions.</sub>
+      </td>
+    </tr>
+  </table>
+</div>
+
+## How a match works
+
+<img src="docs/assets/game-flow.svg" alt="Game lifecycle: debate, blind action, reveal, then next round or game over" width="100%">
+
+1. **Debate** — players submit public statements about the current project.
+2. **Blind action** — players privately lock an investment decision and an optional bank action.
+3. **Reveal** — the round outcome and project verdict become public.
+4. **Next round** — the match continues until the game reaches its final state.
+
+The server owns the phase clock, deadlines, validation, and transitions. The browser renders the state it receives; it does not decide the outcome.
+
+## Architecture
+
+<img src="docs/assets/architecture.svg" alt="System architecture: browser, HTTP and SSE, room manager, game engine, player projection, and file room store" width="100%">
+
+| Component | Responsibility |
+| --- | --- |
+| Browser client | Session handling, responsive UI, card presentation, and player interactions |
+| HTTP + SSE | Authenticated API requests, input validation, rate limits, and live snapshots |
+| Room manager | Room lifecycle, player sessions, deadlines, and host permissions |
+| Game engine | Game setup, rules, action validation, round resolution, and win conditions |
+| Player projection | Sends each authenticated player only the private information they are allowed to see |
+| File room store | Validates and atomically replaces room snapshots |
+
+**Security principle:** hiding private information in the UI is not enough. The server builds a viewer-specific projection before state is sent over HTTP or SSE.
+
+Read [the architecture guide](docs/ARCHITECTURE.md) for module responsibilities, trust boundaries, persistence, and deployment limitations.
 
 ## Technology
 
-| Layer | Technology |
+<div align="center">
+  <img src="https://img.shields.io/badge/Node.js-20%2B-43853d?logo=node.js&logoColor=white" alt="Node.js">
+  <img src="https://img.shields.io/badge/JavaScript-Vanilla-f0db4f?logo=javascript&logoColor=222" alt="JavaScript">
+  <img src="https://img.shields.io/badge/HTML5-Markup-e76f42?logo=html5&logoColor=white" alt="HTML5">
+  <img src="https://img.shields.io/badge/CSS3-Responsive-3977b8?logo=css3&logoColor=white" alt="CSS3">
+  <img src="https://img.shields.io/badge/GitHub_Actions-CI-2671e5?logo=githubactions&logoColor=white" alt="GitHub Actions">
+  <img src="https://img.shields.io/badge/Vercel-Frontend-111?logo=vercel&logoColor=white" alt="Vercel">
+</div>
+
+| Layer | Implementation |
 | --- | --- |
 | Runtime | Node.js 20+ |
 | HTTP server | Node.js built-in HTTP module |
-| Browser client | Vanilla JavaScript, HTML, CSS |
-| Realtime transport | Server-sent events (SSE) |
-| Game logic | JavaScript modules under engine/dist/ |
+| Frontend | Vanilla JavaScript, HTML, and CSS |
+| Realtime | Server-sent events (SSE) |
+| Game logic | JavaScript modules in `engine/dist/` |
 | Persistence | Validated JSON snapshots on the local filesystem |
-| Static deployment | Vercel build output in .web-dist/ |
-| Backend deployment | Node.js service; current Vercel rewrites are defined in vercel.json |
+| Static frontend | Vercel build output in `.web-dist/` |
 | Automated tests | Node.js built-in test runner |
-| CI | GitHub Actions |
+| CI | GitHub Actions on Node.js 20 and 22 |
 
-The current runtime has no third-party npm dependencies.
+The production runtime currently has **no third-party npm dependencies**.
 
-## Quick start
+## Run locally
 
 ### Requirements
 
-- Node.js 20 or later. The recommended local version is in .nvmrc.
-- Git.
+- Node.js 20 or later
+- Git
 
-### Run locally
+### Start the application
 
 ~~~bash
 git clone https://github.com/ryankn07/ee.git
@@ -52,86 +145,95 @@ npm ci
 npm start
 ~~~
 
-Open http://localhost:3000.
+Open [http://localhost:3000](http://localhost:3000).
 
-No environment file is required for the default local setup. The start lifecycle checks the compatibility bundle and restores only missing runtime files; existing source files are not overwritten.
+The default local setup does not require an environment file. The start lifecycle checks the compatibility bundle and restores only missing runtime files.
 
 ## Quality checks
 
-Run these commands before submitting a change:
+Run these before submitting a change:
 
-| Command | Purpose |
+~~~bash
+npm run check
+npm test
+npm run bundle:check
+npm run build:web
+~~~
+
+| Check | What it covers |
 | --- | --- |
-| npm run check | Check JavaScript syntax, project records, manifest consistency, and required card assets |
-| npm test | Run the automated Node.js test suite |
-| npm run bundle:check | Verify that the compatibility archive matches its source files |
-| npm run build:web | Build the static frontend into .web-dist/ |
-| npm run bundle:pack | Regenerate the compatibility archive after changing bundled source files or the project catalog |
+| `npm run check` | JavaScript syntax, project catalog, Canva manifest, and required assets |
+| `npm test` | Unit, integration, HTTP security, persistence, and regression tests |
+| `npm run bundle:check` | Runtime compatibility bundle parity |
+| `npm run build:web` | Static frontend build |
 
-GitHub Actions runs the quality gates on Node.js 20 and 22 for pushes and pull requests targeting main.
+GitHub Actions runs the repository checks on **Node.js 20 and 22** for pushes and pull requests targeting `main`.
 
-The browser regression suite is optional and requires an existing Playwright installation. Set PLAYWRIGHT_MODULE_PATH to its module path and, if needed, BROWSER_CHANNEL to the installed browser. If Playwright is unavailable, browser tests are reported as skipped; they are not counted as executed browser coverage.
+The optional Playwright browser suite requires an existing Playwright installation via `PLAYWRIGHT_MODULE_PATH`. If it is unavailable, browser tests are skipped and are not counted as executed coverage.
 
-## Repository map
+## Repository structure
 
 ~~~text
 .
-├── .github/
-│   ├── ISSUE_TEMPLATE/       # Structured bug and feature reports
-│   ├── workflows/            # CI and reviewed asset-import automation
-│   └── PULL_REQUEST_TEMPLATE.md
-├── docs/                     # Architecture, development, and project records
-├── engine/dist/              # Game rules, setup, validation, and player projection
-├── public/                   # Browser application runtime
-├── scripts/                  # Checks, build, asset import, and bundle utilities
-├── server/                   # HTTP API, rooms, authentication, SSE, persistence
-├── test/                     # Unit, integration, security, and regression tests
+├── .github/              # CI, issue templates, PR template, Dependabot
+├── docs/
+│   ├── assets/           # Project banner and architecture diagrams
+│   ├── decisions/        # Architecture decision records
+│   ├── ARCHITECTURE.md
+│   ├── DEVELOPMENT.md
+│   └── AI_ASSISTED_DEVELOPMENT.md
+├── engine/dist/          # Game rules, setup, validation, player projection
+├── public/               # Browser application runtime
+├── scripts/              # Checks, build, asset import, bundle utilities
+├── server/               # HTTP API, rooms, authentication, SSE, persistence
+├── test/                 # Automated test suite
 ├── ui/
-│   ├── brand/                # Brand assets
-│   ├── cards/                # Original card artwork
-│   ├── cards-hd/             # High-resolution card artwork
-│   ├── fonts/                # Local font assets and licenses
-│   ├── index.html            # Frontend page shell
-│   ├── style.css             # Frontend styles
-│   └── card-ui.js            # Card and role-art integration
-├── runtime.bundle.part*      # Split compatibility archive
-├── AGENTS.md                 # Repository-specific engineering rules
-├── CONTRIBUTING.md           # Contribution workflow
-├── SECURITY.md               # Vulnerability reporting policy
+│   ├── brand/            # Brand assets
+│   ├── cards/            # Original card artwork
+│   ├── cards-hd/         # High-resolution card artwork
+│   └── fonts/            # Local font assets and licenses
+├── CONTRIBUTING.md
+├── SECURITY.md
+├── AGENTS.md
 └── README.md
 ~~~
 
-For a guided tour of each subsystem, see [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md). For local setup and operational configuration, see [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md). The full documentation index is in [docs/README.md](docs/README.md).
+## Engineering decisions and operational limits
 
-## Runtime configuration
+This project intentionally keeps its current lightweight runtime and documents its trade-offs.
 
-| Variable | Default | Description |
-| --- | --- | --- |
-| PORT | 3000 | HTTP listening port |
-| ROOM_STORE_PATH | data/rooms.json | Room snapshot file |
-| ROOM_MAX_PLAYERS | Unset | Optional room-specific player limit; integer of at least 3 |
-| PUBLIC_ORIGIN | Unset | Canonical allowed origin for write requests |
-| PUBLIC_ORIGINS | Unset | Comma-separated list of exact allowed origins |
-| TRUSTED_PROXY_IPS | Unset | Exact proxy IP addresses trusted for client-address resolution |
+- **Dependency-free runtime:** fewer runtime dependencies and a smaller supply-chain surface.
+- **Server-authoritative gameplay:** private game information is filtered before it reaches a player.
+- **Single-process persistence:** the current local file store and in-memory room state are not a distributed multi-instance architecture.
+- **Compatibility bundle:** retained for the existing recovery path and checked for source parity.
 
-See [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md) before changing production configuration. In particular, only trust forwarded client-address headers from verified proxy addresses.
+The current file-based persistence model requires a persistent filesystem for recovery across restarts. Multiple server replicas do not share room state, SSE subscriptions, or in-memory rate limits. These are documented constraints, not claims of horizontal scalability or DDoS protection.
 
-## Architecture and security
+See [SCALE_AND_SECURITY.md](docs/SCALE_AND_SECURITY.md) for the recorded implementation notes and test evidence.
 
-The game engine owns rules and state transitions. The room manager coordinates sessions and deadlines. The HTTP layer authenticates requests and validates input. The browser receives a projection created for the authenticated player.
+## Documentation
 
-The UI is not a security boundary. Private information must be excluded by the server before a snapshot is sent. Room snapshots contain session credentials and private game state, so they must remain outside public directories and version control.
-
-The current persistence and rate-limit model is **single-process**. Local snapshots can survive a process restart only when the backing filesystem survives. Multiple service replicas do not share room state, SSE subscriptions, or in-memory limits. These constraints are documented in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) and [docs/SCALE_AND_SECURITY.md](docs/SCALE_AND_SECURITY.md).
-
-## Contributing
-
-Read [CONTRIBUTING.md](CONTRIBUTING.md) and [AGENTS.md](AGENTS.md) before making changes. Use focused branches and small commits, run the relevant checks, and open a pull request with verification evidence.
+| Guide | Description |
+| --- | --- |
+| [Architecture](docs/ARCHITECTURE.md) | Components, data flow, trust boundaries, and scaling model |
+| [Development](docs/DEVELOPMENT.md) | Setup, configuration, commands, and local workflow |
+| [Architecture decisions](docs/decisions/) | Technical choices and trade-offs |
+| [Contributing](CONTRIBUTING.md) | Branches, commits, review, and pull requests |
+| [Security](SECURITY.md) | Security policy and vulnerability reporting |
+| [AI-assisted development](docs/AI_ASSISTED_DEVELOPMENT.md) | Transparent use of AI tools and review principles |
 
 ## AI-assisted development
 
-AI tools may assist with exploration, implementation suggestions, documentation, and test ideas. Changes still require human review and verification. The project documents its approach and suggested disclosure in [docs/AI_ASSISTED_DEVELOPMENT.md](docs/AI_ASSISTED_DEVELOPMENT.md).
+AI tools may assist with exploration, implementation suggestions, documentation, and test ideas. AI-generated changes are not treated as automatically correct: source code, tests, explicit requirements, and verified runtime behavior remain the sources of truth.
+
+See [AI-assisted development](docs/AI_ASSISTED_DEVELOPMENT.md) for the project's review principles and an accurate portfolio disclosure.
 
 ## License
 
 No open-source license is currently included. Public visibility does not by itself grant permission to reuse, modify, or redistribute this project.
+
+---
+
+<div align="center">
+  <sub>GREEN TRAP DETECTIVE · A project about green ideas, hidden motives, and better decisions.</sub>
+</div>
