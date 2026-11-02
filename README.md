@@ -1,4 +1,4 @@
-# GREEN TRAP DETECTIVE #
+# GREEN TRAP#
 
 GREEN TRAP DETECTIVE is a browser-based Vietnamese multiplayer social-deduction game about environmental projects. Players discuss a project, privately choose an investment and optional bank action, then review the round result.
 
