@@ -17,7 +17,7 @@ Use this page to find the right project document. The root [README](../README.md
 
 ## Engineering references
 
-- [Static delivery performance](PERFORMANCE.md) — gzip negotiation, cache behavior, and delivery verification for the Node server.
+- [Static delivery performance](PERFORMANCE.md) — gzip negotiation, lossless WebP delivery, cache behavior, and verification.
 
 - [Scale and security report](SCALE_AND_SECURITY.md) — implementation details, local load measurements, security controls, and operational limits. Read its dated scope note before using the measurements.
 - [Game glossary](GLOSSARY.md) — Vietnamese game terminology.

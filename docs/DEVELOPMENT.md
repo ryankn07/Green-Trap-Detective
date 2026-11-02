@@ -37,6 +37,17 @@ The browser regression suite is optional and requires an existing Playwright ins
 
 The Node server serves the page shell, JavaScript, and CSS with gzip when the client advertises support. Binary PNG and WOFF2 assets are sent unchanged. See [PERFORMANCE.md](PERFORMANCE.md) for the implementation and byte-for-byte verification coverage.
 
+## Native card WebP derivatives
+
+The original HD PNGs remain canonical. To verify the checked-in lossless WebP derivatives locally, install the image build tool and run:
+
+~~~bash
+python -m pip install Pillow==12.3.0
+python scripts/generate-card-webp.py --check
+~~~
+
+The generator checks every decoded RGBA pixel and only publishes a WebP file when it is smaller than its PNG. The GitHub Actions workflow regenerates the derivatives when a source HD PNG or the generator changes. Pillow is a build-time tool only; the game runtime remains dependency-free. Do not edit the generated manifest or WebP files manually.
+
 ## Runtime configuration
 
 | Variable | Default | Purpose |
