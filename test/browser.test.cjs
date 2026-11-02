@@ -16,7 +16,7 @@ test('desktop game adapts its card to the viewport and preserves protected layou
  await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));
  try{
   const {room,player}=manager.create('Desktop QA');
-  for(let i=1;i<8;i++)manager.join(room.code,'Player '+i);
+  for(let i=1;i<13;i++)manager.join(room.code,'Player '+i);
   for(const peer of room.players)manager.connected(room,peer);
   browser=await chromium.launch({channel:process.env.BROWSER_CHANNEL||'chrome',headless:true});
   const page=await browser.newPage({viewport:{width:1440,height:900}});
@@ -28,13 +28,16 @@ test('desktop game adapts its card to the viewport and preserves protected layou
    await page.setViewportSize({width,height});
    const geometry=await page.evaluate(()=>{
     const rect=selector=>document.querySelector(selector).getBoundingClientRect().toJSON();
-    return {frame:rect('.gi-area-project .gi-card-image-viewport'),project:rect('.gi-area-project'),actions:rect('.gi-area-actions'),players:rect('.gi-area-players'),overflow:document.documentElement.scrollWidth>innerWidth,font:getComputedStyle(document.querySelector('.phase')).fontFamily};
+    return {frame:rect('.gi-area-project .gi-card-image-viewport'),project:rect('.gi-area-project'),actions:rect('.gi-area-actions'),players:rect('.gi-area-players'),phase:rect('.gi-phase-header'),overflow:document.documentElement.scrollWidth>innerWidth,verticalOverflow:document.documentElement.scrollHeight>innerHeight,font:getComputedStyle(document.querySelector('.phase')).fontFamily};
    });
    assert.equal(geometry.overflow,false,'no horizontal overflow at '+width+'x'+height);
-   assert.ok(geometry.frame.height<=Math.max(320,Math.min(900,height-360))+2,'card height follows viewport');
+   assert.equal(geometry.verticalOverflow,false,'desktop does not require page scrolling');
+   assert.ok(geometry.phase.bottom<=64,'phase band is in the site header');
+   assert.ok(geometry.frame.bottom<=height,'full card fits window height');
+   assert.ok(geometry.frame.height>=height*.55,'card uses the available play area');
    assert.ok(Math.abs((geometry.frame.left+geometry.frame.right-geometry.project.left-geometry.project.right)/2)<2,'card centered on table');
    assert.ok(geometry.actions.left>=geometry.project.right,'controls beside card');
-   assert.ok(geometry.players.bottom<=geometry.project.top,'participants above board');
+   assert.ok(geometry.players.left>=geometry.actions.right,'compact participants are at the right');
    assert.ok(geometry.font.includes('Hanken'),'phase uses requested sans-serif font');
    if(width===1440)await screenshot(page,'DESKTOP_NEW_DEBATE.png');
   }
