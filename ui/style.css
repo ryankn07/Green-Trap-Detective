@@ -171,6 +171,7 @@ body:has(#form-create) .brand b{font-family:var(--font-editorial);font-size:30px
 .person:last-child{border-bottom:0}
 .avatar{width:34px;height:34px;display:grid;place-items:center;border:1px solid var(--border-strong);background:var(--surface-soft);color:var(--text);font-size:14px;font-weight:650}
 .person-info{min-width:0;overflow-wrap:anywhere}
+.gi-area-players .kick-player{grid-column:1/-1;min-height:32px;padding:5px 9px;font-size:11px;color:#a23627;border-color:#d7b5aa;background:transparent}
 .lobby-members .kick-player{grid-column:2/-1;justify-self:start;min-height:44px;padding:8px 10px;border:1px solid currentColor;border-radius:4px;background:transparent;color:var(--danger,#a23925);font:inherit;font-size:12px;line-height:1.4}
 .lobby-members .kick-player:hover{background:var(--surface)}
 .person-info b{font-size:14px;font-weight:650;display:block;line-height:1.4}

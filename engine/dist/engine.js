@@ -10,6 +10,7 @@ exports.lockAction = lockAction;
 exports.approvals = approvals;
 exports.resolveRound = resolveRound;
 exports.nextRound = nextRound;
+exports.removePlayer = removePlayer;
 const errors_1 = require("./errors");
 const faction = (value) => value === "PROTECTOR" || value === "SABOTEUR";
 const hasOwn = (obj, key) => Object.prototype.hasOwnProperty.call(obj, key);
@@ -114,7 +115,7 @@ function approvals(state) {
         return counts;
     }, { protector: 0, saboteur: 0 });
 }
-function finalOutcome(state) {
+function finalOutcome(state, includeRoundLimit = true) {
     const prot = state.players.filter(p => p.isAlive && p.role === "PROTECTOR").length;
     const sab = state.players.filter(p => p.isAlive && p.role === "SABOTEUR").length;
     if (!prot && !sab)
@@ -123,7 +124,7 @@ function finalOutcome(state) {
         return { winner: "PROTECTOR", reason: "FACTION_ELIMINATED" };
     if (!prot)
         return { winner: "SABOTEUR", reason: "FACTION_ELIMINATED" };
-    if (state.round === state.roundLimit) {
+    if (includeRoundLimit && state.round === state.roundLimit) {
         const scores = approvals(state);
         return {
             winner: scores.protector === scores.saboteur ? "DRAW" : scores.protector > scores.saboteur ? "PROTECTOR" : "SABOTEUR",
@@ -131,6 +132,15 @@ function finalOutcome(state) {
         };
     }
     return null;
+}
+/** Administrative removal retains records and finalized history, but stops future actions. */
+function removePlayer(state, playerId) {
+    (0, errors_1.rule)(state.phase !== 'GAME_OVER', 'GAME_OVER', 'Game already finished');
+    (0, errors_1.rule)(state.players.some(p => p.id === playerId), 'UNKNOWN_PLAYER', 'Unknown player');
+    const next = { ...state, players: state.players.map(p => p.id === playerId && p.isAlive ?
+        { ...p, isAlive: false, eliminatedReason: 'REMOVED_BY_HOST' } : p) };
+    const outcome = finalOutcome(next, false);
+    return outcome ? { ...next, phase: 'GAME_OVER', outcome } : next;
 }
 /** Resolve all locked commands atomically. No individual bank targets or investments are published. */
 function resolveRound(state) {

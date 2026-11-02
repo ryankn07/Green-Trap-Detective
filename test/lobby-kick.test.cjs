@@ -16,13 +16,14 @@ test('host can remove an offline lobby seat, revoke its token and start with rem
  assert.equal((await action(room,offline,{type:'start'})).status,401);
  assert.equal((await action(room,host,{type:'start'})).status,200);
 });
-test('kick is host-only, lobby-only and cannot target the host, another room or an absent seat',async()=>{
+test('kick is host-only and cannot target the host, another room or an absent seat',async()=>{
  const {room,host,guest,offline}=lobby();const elsewhere=manager.create('Khác');
  for(const [actor,targetId,code] of [[guest,offline.id,'HOST_ONLY'],[host,host.id,'INVALID_TARGET'],[host,elsewhere.player.id,'INVALID_TARGET'],[host,null,'INVALID_TARGET'],[host,{},'INVALID_TARGET']]){
   const revision=room.revision;const r=await action(room,actor,{type:'kick',targetId});assert.equal(r.status,400);assert.equal((await r.json()).error,code);assert.equal(room.revision,revision);
  }
  manager.connected(room,offline);manager.start(room,host);const revision=room.revision;
- const r=await action(room,host,{type:'kick',targetId:guest.id});assert.equal((await r.json()).error,'GAME_STARTED');assert.equal(room.revision,revision);
+ const r=await action(room,host,{type:'kick',targetId:guest.id});assert.equal(r.status,200);assert.ok(room.revision>revision);
+ assert.throws(()=>manager.authenticate(room.code,guest.secret),{code:'UNAUTHORIZED'});
 });
 test('online target receives kicked event and loses stream access; remaining roster is broadcast',async()=>{
  const {room,host,guest}=lobby(),a=new AbortController(),b=new AbortController();
@@ -42,6 +43,22 @@ test('failed persistence does not revoke or disconnect the target',async()=>{
  const {room,host,guest}=lobby(),previous=manager.store,revision=room.revision;manager.store={save(){throw Error('simulated disk failure');}};
  try{assert.equal((await action(room,host,{type:'kick',targetId:guest.id})).status,500);assert.equal(room.revision,revision);assert.equal(manager.authenticate(room.code,guest.secret).player.id,guest.id);assert.equal(guest.online,true);}
  finally{manager.store=previous;}
+});
+
+test('an active-game kick ends the target stream, revokes its token and publishes inactive status',async()=>{
+ const {room,host,guest,offline}=lobby();manager.connected(room,offline);manager.start(room,host);
+ const controller=new AbortController();let reader;
+ try{
+  const response=await fetch(base+'/api/stream?room='+room.code,{headers:headers(room,guest),signal:controller.signal});
+  reader=response.body.getReader();await reader.read();
+  assert.equal((await action(room,host,{type:'kick',targetId:guest.id})).status,200);
+  let text='';while(true){const {done,value}=await reader.read();if(done)break;text+=Buffer.from(value).toString();}
+  assert.match(text,/event: kicked/);
+  assert.equal((await fetch(base+'/api/stream?room='+room.code,{headers:headers(room,guest)})).status,401);
+  const view=await (await fetch(base+'/api/state?room='+room.code,{headers:headers(room,host)})).json();
+  assert.equal(view.room.players.find(p=>p.id===guest.id).removed,true);
+  assert.equal(view.game.players.find(p=>p.id===guest.id).isAlive,false);
+ }finally{controller.abort();if(reader)await reader.cancel().catch(()=>{});}
 });
 test('a kicked notification survives an already-backpressured response',async()=>{
  const {room,host,guest}=lobby();
