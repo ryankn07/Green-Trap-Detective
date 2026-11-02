@@ -9,6 +9,58 @@ async function screenshot(page,name){
   await page.screenshot({path:path.join(process.env.BROWSER_ARTIFACT_DIR,name),fullPage:true});
 }
 
+test('desktop game adapts its card to the viewport and preserves protected layouts', {skip: !playwrightPath}, async () => {
+ const {chromium}=require(playwrightPath),fs=require('node:fs'),path=require('node:path');
+ const {server,manager}=require('../server/server.cjs');
+ let browser,now=Date.now();manager.currentTime=()=>now;
+ await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));
+ try{
+  const {room,player}=manager.create('Desktop QA');
+  for(let i=1;i<8;i++)manager.join(room.code,'Player '+i);
+  for(const peer of room.players)manager.connected(room,peer);
+  browser=await chromium.launch({channel:process.env.BROWSER_CHANNEL||'chrome',headless:true});
+  const page=await browser.newPage({viewport:{width:1440,height:900}});
+  await page.addInitScript(session=>{performance.now=()=>0;sessionStorage.setItem('green-impact-multiplayer-session',JSON.stringify(session));},{roomCode:room.code,playerId:player.id,token:player.secret});
+  await page.goto('http://127.0.0.1:'+server.address().port);await page.locator('#start').click();
+  await page.locator('.gi-area-project img').waitFor();
+  await page.waitForFunction(()=>document.querySelector('.gi-area-project img')?.naturalWidth>0);
+  for(const [width,height] of [[1200,800],[1366,768],[1440,900],[1920,1080],[2560,1440],[2560,1080]]){
+   await page.setViewportSize({width,height});
+   const geometry=await page.evaluate(()=>{
+    const rect=selector=>document.querySelector(selector).getBoundingClientRect().toJSON();
+    return {frame:rect('.gi-area-project .gi-card-image-viewport'),project:rect('.gi-area-project'),actions:rect('.gi-area-actions'),players:rect('.gi-area-players'),overflow:document.documentElement.scrollWidth>innerWidth,font:getComputedStyle(document.querySelector('.phase')).fontFamily};
+   });
+   assert.equal(geometry.overflow,false,'no horizontal overflow at '+width+'x'+height);
+   assert.ok(geometry.frame.height<=Math.max(320,Math.min(900,height-360))+2,'card height follows viewport');
+   assert.ok(Math.abs((geometry.frame.left+geometry.frame.right-geometry.project.left-geometry.project.right)/2)<2,'card centered on table');
+   assert.ok(geometry.actions.left>=geometry.project.right,'controls beside card');
+   assert.ok(geometry.players.bottom<=geometry.project.top,'participants above board');
+   assert.ok(geometry.font.includes('Hanken'),'phase uses requested sans-serif font');
+   if(width===1440)await screenshot(page,'DESKTOP_NEW_DEBATE.png');
+  }
+  // Compare the exact same renderer/state with and without the appended desktop block.
+  const css=fs.readFileSync(path.join(__dirname,'../ui/style.css'),'utf8');
+  const baseline=css.split('/* Desktop game — Garden table.')[0];
+  const fingerprint=()=>page.evaluate(()=>[...document.querySelectorAll('.gi-phase-header,.gi-area-project,.gi-card-image-viewport,.gi-area-actions,.gi-area-discussion')].map(el=>{const box=el.getBoundingClientRect(),s=getComputedStyle(el);return [box.x,box.y,box.width,box.height,s.display,s.fontFamily,s.fontSize,s.backgroundColor,s.padding,s.borderRadius];}));
+  for(const width of [390,768,1199]){
+   await page.setViewportSize({width,height:900});await page.reload();await page.locator('.gi-card-image-viewport img').waitFor();await page.evaluate(()=>document.fonts.ready);
+   const redesigned=await fingerprint();
+   await page.route('**/style.css',route=>route.fulfill({contentType:'text/css',body:baseline}));
+   await page.reload();await page.locator('.gi-card-image-viewport img').waitFor();await page.evaluate(()=>document.fonts.ready);
+   assert.deepEqual(await fingerprint(),redesigned,'protected layout unchanged at '+width);
+   await page.unroute('**/style.css');
+  }
+  await page.setViewportSize({width:1440,height:900});await page.reload();
+  for(const phase of ['BLIND_ACTION','REVEAL']){
+   now=room.deadline;manager.tick();await page.waitForFunction(expected=>document.querySelector('.phase')?.textContent.includes(expected),phase==='BLIND_ACTION'?'HÀNH ĐỘNG':'CÔNG BỐ');
+   await screenshot(page,'DESKTOP_NEW_'+phase+'.png');
+  }
+  while(room.state.phase!=='GAME_OVER'){now=room.deadline;manager.tick();}
+  await page.waitForFunction(()=>document.querySelector('.phase')?.textContent.includes('KẾT THÚC'));
+  await screenshot(page,'DESKTOP_NEW_GAME_OVER.png');
+ }finally{if(browser)await browser.close();server.closeAllConnections();await new Promise(resolve=>server.close(resolve));}
+});
+
 test('unlocked investment and bank choices survive another player locking an action', {skip: !playwrightPath}, async () => {
   const {chromium} = require(playwrightPath);
   const {server, manager} = require('../server/server.cjs');
