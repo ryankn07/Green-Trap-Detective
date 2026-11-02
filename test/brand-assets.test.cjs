@@ -1,4 +1,6 @@
 'use strict';
+const fs=require('node:fs');
+const path=require('node:path');
 const test=require('node:test'),assert=require('node:assert/strict');
 const {server}=require('../server/server.cjs');
 let base;
