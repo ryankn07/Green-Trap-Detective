@@ -187,13 +187,13 @@ app.addEventListener('click',e=>{
  if(button?.dataset.stance){document.getElementById('stance').value=button.dataset.stance;app.querySelectorAll('[data-stance]').forEach(choice=>choice.setAttribute('aria-pressed',String(choice===button)));persistStatementDraft();}
  if(id==='edit-statement'){document.getElementById('statement-choice').close();document.getElementById('statement-text')?.focus();}
  if(id==='confirm-statement'&&!requesting&&document.getElementById('statement')?.reportValidity()){const payload={text:document.getElementById('statement-text').value,stance:document.getElementById('stance').value};document.getElementById('statement-choice').close();act('submit',payload);}
- if(id==='copy')copyRoom();if(id==='start')act('start');if(id==='next'&&remainingSeconds()===0)act('next');
+ if(id==='copy')copyRoom();if(id==='start')act('start');if(id==='next')act('next');
  if(id==='leave')act('leave').then(ok=>{if(!ok)return;session=null;save();aborter?.abort();location.assign('/')});
  if(id==='home'||id==='return-home'){session=null;save();clearStatementDraft();aborter?.abort();location.assign('/')}
 });
 app.addEventListener('pointerdown',e=>{if(['show-role','mobile-show-role'].includes(e.target.closest('button')?.id))showRoleText();});
 for(const ev of ['pointerup','pointercancel','pointerleave'])app.addEventListener(ev,e=>{if(['show-role','mobile-show-role'].includes(e.target.closest('button')?.id))hideRoleText();});
-clock=setInterval(()=>{if(snapshot?.deadline){const el=document.getElementById('clock');if(el)el.textContent=remainingSeconds()+'s';const progress=document.getElementById('phase-progress');if(progress)progress.value=remainingSeconds();const next=document.getElementById('next');if(next)next.disabled=remainingSeconds()>0;}},300);
+clock=setInterval(()=>{if(snapshot?.deadline){const el=document.getElementById('clock');if(el)el.textContent=remainingSeconds()+'s';const progress=document.getElementById('phase-progress');if(progress)progress.value=remainingSeconds();}},300);
 function showRoleText(){const node=document.getElementById('role-value'),mobile=document.getElementById('mobile-role-value');if(node)node.textContent=labelRole(snapshot.game.myPlayer.role);if(mobile){mobile.textContent=labelRole(snapshot.game.myPlayer.role);mobile.hidden=false;}document.getElementById('mobile-show-role')?.setAttribute('aria-pressed','true');}
 function hideRoleText(){const node=document.getElementById('role-value'),mobile=document.getElementById('mobile-role-value');if(node)node.textContent='••••••';if(mobile){mobile.hidden=true;mobile.textContent='';}document.getElementById('mobile-show-role')?.setAttribute('aria-pressed','false');}
 document.addEventListener('pointerup',hideRoleText,true);document.addEventListener('pointercancel',hideRoleText,true);window.addEventListener('blur',hideRoleText);
