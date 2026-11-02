@@ -3,7 +3,7 @@
 
   <br>
 
-  <a href="https://greentrap.vercel.app/"><strong>CHƠI BẢN DEMO</strong></a>
+  <a href="https://greentrap.vercel.app/"><strong>CHƠI NGAY</strong></a>
   &nbsp; · &nbsp;
   <a href="https://github.com/ryankn07/ee/issues">Báo lỗi</a>
   &nbsp; · &nbsp;
