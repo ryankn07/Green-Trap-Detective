@@ -15,8 +15,8 @@ test('Vercel build includes the shared client and HD cards but no private server
  for(const id of ['PROJ_11','PROJ_25']){
   assert.match(home,new RegExp('<img src="\\/cards\\/'+id+'\\.png"[^>]*loading="lazy"[^>]*fetchpriority="low"'),id+' side hero card uses a lazy low-bandwidth thumbnail');
  }
- assert.match(home,/href="\/cards-hd\/PROJ_11\.png"[^>]*<img src="\/cards\/PROJ_11\.png"/,'opening a side card still targets its native HD artwork');
- assert.match(home,/href="\/cards-hd\/PROJ_25\.png"[^>]*<img src="\/cards\/PROJ_25\.png"/,'opening a side card still targets its native HD artwork');
+ assert.match(home,/href="\/cards-hd\/PROJ_11\.png"[^>]*><img src="\/cards\/PROJ_11\.png"/,'opening a side card still targets its native HD artwork');
+ assert.match(home,/href="\/cards-hd\/PROJ_25\.png"[^>]*><img src="\/cards\/PROJ_25\.png"/,'opening a side card still targets its native HD artwork');
  const cardUi=fs.readFileSync(path.join(output,'card-ui.js'),'utf8');
  assert.ok(cardUi.includes('cards(?:-hd)?'),'card preview accepts original and HD paths');
 });
