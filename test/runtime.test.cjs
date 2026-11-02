@@ -3,6 +3,8 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
+const http = require('node:http');
+const zlib = require('node:zlib');
 const path = require('node:path');
 const { spawnSync } = require('node:child_process');
 const { server, manager } = require('../server/server.cjs');
@@ -28,6 +30,21 @@ async function post(url, body) {
     body: JSON.stringify(body)
   });
   return { response, body: await response.json() };
+}
+
+function getRaw(pathname, headers = {}) {
+  return new Promise((resolve, reject) => {
+    const request = http.get(new URL(pathname, baseUrl), { headers }, response => {
+      const chunks = [];
+      response.on('data', chunk => chunks.push(chunk));
+      response.on('end', () => resolve({
+        status: response.statusCode,
+        headers: response.headers,
+        body: Buffer.concat(chunks)
+      }));
+    });
+    request.on('error', reject);
+  });
 }
 
 test('runtime bundle can restore/validate the original client and project data', () => {
@@ -63,6 +80,30 @@ test('runtime bundle can restore/validate the original client and project data',
   } finally {
     if (fs.existsSync(stylePath)) fs.unlinkSync(stylePath);
     if (fs.existsSync(backupPath)) fs.renameSync(backupPath, stylePath);
+  }
+});
+
+test('static text assets use gzip when accepted and preserve exact identity responses', async () => {
+  const assets = [
+    ['/','ui/index.html'],
+    ['/app.js','public/app.js'],
+    ['/style.css','ui/style.css'],
+    ['/card-ui.js','ui/card-ui.js']
+  ];
+  for (const [url, sourcePath] of assets) {
+    const compressed = await getRaw(url, { 'Accept-Encoding': 'gzip' });
+    assert.equal(compressed.status, 200, url);
+    assert.equal(compressed.headers['content-encoding'], 'gzip', url);
+    assert.match(compressed.headers.vary || '', /accept-encoding/i, url);
+    const decoded = zlib.gunzipSync(compressed.body);
+    const source = fs.readFileSync(path.join(__dirname, '..', sourcePath));
+    assert.deepEqual(decoded, source, url + ' must decompress to the exact source bytes');
+    assert.ok(compressed.body.length < decoded.length, url + ' gzip response should be smaller');
+
+    const identity = await getRaw(url, { 'Accept-Encoding': 'identity' });
+    assert.equal(identity.status, 200, url);
+    assert.equal(identity.headers['content-encoding'], undefined, url);
+    assert.deepEqual(identity.body, source, url + ' identity response must remain unchanged');
   }
 });
 

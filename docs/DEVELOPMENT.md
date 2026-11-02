@@ -33,6 +33,10 @@ Run these before opening a pull request:
 
 The browser regression suite is optional and requires an existing Playwright installation. Set PLAYWRIGHT_MODULE_PATH to that installation's module path. BROWSER_CHANNEL can select the installed browser; it defaults to msedge. Tests that are skipped because Playwright is unavailable must be reported as skipped, not passed.
 
+## Static response compression
+
+The Node server serves the page shell, JavaScript, and CSS with gzip when the client advertises support. Binary PNG and WOFF2 assets are sent unchanged. See [PERFORMANCE.md](PERFORMANCE.md) for the implementation and byte-for-byte verification coverage.
+
 ## Runtime configuration
 
 | Variable | Default | Purpose |

@@ -7,6 +7,7 @@ This project follows a lightweight Keep a Changelog structure. Entries describe 
 ## [Unreleased]
 
 ### Changed
+- Negotiate and cache gzip-compressed static text responses on the Node server while preserving byte-identical identity responses.
 - Reduce homepage hero image transfer by using lazy low-resolution thumbnails for the two decorative side cards while retaining native HD previews and the full gameplay HD catalog.
 
 - Align maintainer instructions with the current Green Trap Detective design and runtime boundaries.

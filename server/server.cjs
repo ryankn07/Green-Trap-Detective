@@ -3,6 +3,7 @@ const http=require('node:http');
 const {createHash}=require('node:crypto');
 const fs=require('node:fs');
 const path=require('node:path');
+const zlib=require('node:zlib');
 const {RoomManager}=require('./rooms.cjs');
 const {FileRoomStore,serializeRoom,validateSnapshot}=require('./room-store.cjs');
 const {SupabaseSnapshotStore}=require('./supabase-snapshot.cjs');
@@ -69,6 +70,39 @@ const transaction=fn=>remote?coordinator.run(fn):Promise.resolve().then(fn);
 const MIME={'.html':'text/html; charset=utf-8','.js':'text/javascript; charset=utf-8','.css':'text/css; charset=utf-8','.svg':'image/svg+xml','.ico':'image/x-icon'};
 const HEADERS={'X-Content-Type-Options':'nosniff','Referrer-Policy':'no-referrer','X-Frame-Options':'DENY','Content-Security-Policy':"default-src 'self'; connect-src 'self'; img-src 'self' data:; style-src 'self'; script-src 'self'; object-src 'none'; base-uri 'none'; frame-ancestors 'none'"};
 const allowedPaths=new Set(['/','/index.html','/app.js','/style.css']);
+const staticAssetCache=new Map();
+function acceptsGzip(req){
+  const header=req.headers['accept-encoding'];
+  if(typeof header!=='string')return false;
+  const entries=header.split(',').map(part=>{
+    const [name,...params]=part.trim().toLowerCase().split(';');
+    const qParam=params.find(value=>value.trim().startsWith('q='));
+    const q=qParam?Number(qParam.trim().slice(2)):1;
+    return {name,q:Number.isFinite(q)?Math.max(0,Math.min(1,q)):0};
+  }).filter(entry=>entry.name);
+  const explicit=entries.find(entry=>entry.name==='gzip');
+  const wildcard=entries.find(entry=>entry.name==='*');
+  return Boolean((explicit||wildcard)?.q>0);
+}
+async function serveStatic(req,res,filepath){
+  let asset=staticAssetCache.get(filepath);
+  if(!asset){
+    const data=await fs.promises.readFile(filepath);
+    asset={data,gzip:data.length>=1024?zlib.gzipSync(data,{level:zlib.constants.Z_BEST_SPEED}):null};
+    staticAssetCache.set(filepath,asset);
+  }
+  const compressed=Boolean(asset.gzip&&acceptsGzip(req));
+  const body=compressed?asset.gzip:asset.data;
+  const headers={
+    'Content-Type':MIME[path.extname(filepath)]||'application/octet-stream',
+    'Cache-Control':'no-store',
+    'Vary':'Accept-Encoding',
+    'Content-Length':String(body.length)
+  };
+  if(compressed)headers['Content-Encoding']='gzip';
+  res.writeHead(200,headers);
+  return res.end(body);
+}
 
 const canvaManifest=require('../ui/cards-manifest.json').cards;
 const cardDir=path.join(uiDir,'cards');
@@ -112,8 +146,7 @@ const server=http.createServer(async(req,res)=>{
     if(req.method==='GET' && allowedPaths.has(url.pathname)) {
       const filename=url.pathname==='/'?'index.html':url.pathname.slice(1);
       const filepath=(filename==='index.html'||filename==='style.css')?path.join(uiDir,filename):path.join(publicDir,filename);
-      const data=await fs.promises.readFile(filepath);
-      res.writeHead(200,{'Content-Type':MIME[path.extname(filepath)]||'application/octet-stream','Cache-Control':'no-store'});return res.end(data);
+      return serveStatic(req,res,filepath);
     }
 
     if(req.method==='GET' && url.pathname==='/brand/green-trap-detective.png'){
@@ -145,9 +178,7 @@ const server=http.createServer(async(req,res)=>{
       }catch(e){return json(res,404,{error:'CARD_UNAVAILABLE'});}
     }
     if(req.method==='GET' && url.pathname==='/card-ui.js'){
-      const data=await fs.promises.readFile(path.join(uiDir,'card-ui.js'));
-      res.writeHead(200,{'Content-Type':MIME['.js'],'Cache-Control':'no-store'});
-      return res.end(data);
+      return serveStatic(req,res,path.join(uiDir,'card-ui.js'));
     }
 
     if(req.method==='POST' && url.pathname==='/api/create') {
