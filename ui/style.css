@@ -726,12 +726,12 @@ body.copy-confirmed::after{content:"";position:fixed;z-index:99;inset:0;pointer-
  body.gi-gameplay .gi-area-players {grid-template-columns:115px minmax(0,1fr);gap:20px;padding:0;border:0;background:transparent}
  body.gi-gameplay .gi-area-players h2 {font-family:var(--font-editorial);font-size:19px;font-weight:500;line-height:1.25}
  body.gi-gameplay .gi-area-players .people {gap:clamp(8px,.7vw,18px);padding:3px 2px 9px;border:0;border-radius:0;background:transparent;grid-auto-columns:clamp(150px,11vw,230px);scrollbar-color:var(--entry-rule) transparent}
- body.gi-gameplay .gi-area-players .person {position:relative;grid-template-columns:30px minmax(0,1fr);gap:3px 9px;align-content:start;min-height:82px;padding:10px;background:var(--entry-surface);border:1px solid var(--entry-rule);border-radius:14px}
- body.gi-gameplay .gi-area-players .avatar {width:30px;height:30px;background:var(--entry-soft);border:0;font-size:12px;font-weight:700}
+ body.gi-gameplay .gi-area-players .person {position:relative;grid-template-columns:26px minmax(0,1fr);gap:2px 8px;align-content:start;min-height:72px;padding:9px 10px;background:var(--entry-surface);border:1px solid var(--entry-rule);border-radius:12px}
+ body.gi-gameplay .gi-area-players .avatar {width:26px;height:26px;background:var(--entry-soft);border:0;font-size:11px;font-weight:700}
  body.gi-gameplay .gi-area-players .person-info b {display:block;font-size:12px;line-height:1.45;overflow-wrap:anywhere}
  body.gi-gameplay .gi-area-players .person-info small {font-size:11px;margin-top:3px;color:var(--muted)}
- body.gi-gameplay .gi-area-players .pill {grid-column:2;font-size:10px;color:var(--green);margin:1px 0 0}
- body.gi-gameplay .gi-area-players .kick-player {position:absolute;right:8px;bottom:8px;grid-column:2;justify-self:start;min-height:26px;width:auto;padding:1px 9px;margin-top:4px;background:transparent;border-color:var(--border);border-radius:99px;font-size:10px;line-height:1.5}
+ body.gi-gameplay .gi-area-players .pill {grid-column:2;font-size:10px;color:var(--green);margin:1px 0 0;padding-right:34px}
+ body.gi-gameplay .gi-area-players .kick-player {position:absolute;right:7px;bottom:7px;min-height:22px;width:auto;padding:2px 6px;margin:0;background:transparent;border-color:var(--border);border-radius:7px;font-size:10px;line-height:1.3}
  body.gi-gameplay .gi-area-players .dead {opacity:.6}
  body.gi-gameplay .gi-area-project {position:relative;isolation:isolate;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;align-self:stretch;min-width:0;padding:22px 28px 28px;border:1px solid var(--entry-rule);border-radius:24px;background:var(--entry-soft)}
  body.gi-gameplay .gi-area-project::before {content:"";position:absolute;inset:12px;z-index:-1;pointer-events:none;border:1px solid #9aaf7245;border-radius:16px;background:radial-gradient(ellipse at 50% 100%,#c5d1aa70,transparent 65%)}
@@ -786,4 +786,51 @@ body.copy-confirmed::after{content:"";position:fixed;z-index:99;inset:0;pointer-
  body.gi-gameplay .gi-history summary {font-family:var(--font-editorial);font-size:22px;font-weight:500;color:var(--entry-ink)}
  body.gi-gameplay .gi-history .hist {font-size:12px;line-height:1.8;margin-top:15px}
  body.gi-gameplay .gi-history .hist>div {padding:12px 0;border-bottom:1px solid var(--border)}
+ /* Fit the desktop play surface to the window; only dense panels scroll. */
+ body.gi-gameplay {height:100dvh;overflow:hidden}
+ body.gi-gameplay .top {height:64px;min-height:64px;padding-block:7px}
+ body.gi-gameplay .brand-logo {height:44px}
+ body.gi-gameplay .brand b {font-size:23px}
+ body.gi-gameplay .brand small {font-size:12px}
+ body.gi-gameplay #app {height:calc(100dvh - 64px);padding:12px clamp(20px,2vw,60px)}
+ body.gi-gameplay .gi-game-grid {height:100%;min-height:0;grid-template-columns:minmax(0,1.12fr) minmax(330px,1fr) clamp(172px,15vw,240px);grid-template-rows:minmax(0,1fr) minmax(130px,.4fr);grid-template-areas:"project actions players" "project discussion players";gap:12px 16px}
+ body.gi-gameplay .gi-phase-header {position:fixed;z-index:20;top:7px;left:clamp(370px,30vw,680px);right:clamp(20px,2vw,60px);height:50px;padding:5px 16px 6px;border-radius:12px;gap:3px 16px;grid-area:auto}
+ body.gi-gameplay .gi-phase-header .phase {font-size:clamp(17px,1.35vw,22px)}
+ body.gi-gameplay .gi-phase-header .countdown {padding:2px 8px;font-size:18px}
+ body.gi-gameplay .gi-phase-header>.flex:not(.muted) {gap:16px}
+ body.gi-gameplay .gi-phase-header>.muted {font-size:10px;gap:7px}
+ body.gi-gameplay .gi-phase-header>.muted>span {padding:4px 8px}
+ body.gi-gameplay .gi-area-project {min-height:0;height:100%;padding:12px;gap:8px;border-radius:20px}
+ body.gi-gameplay .gi-area-project::before {inset:7px;border-radius:14px}
+ body.gi-gameplay .gi-area-project>.eyebrow {flex:none;font-size:9px;line-height:16px}
+ body.gi-gameplay .gi-area-project .project {display:flex;align-items:center;justify-content:center;flex:1;min-height:0;container-type:size}
+ body.gi-gameplay .gi-area-project .gi-card-preview {width:min(100cqw,calc(100cqh * (var(--card-frame-ratio,794 / 1123))));flex:none}
+ body.gi-gameplay .gi-area-actions {display:flex;flex-direction:column;height:100%;min-height:0;overflow:auto;gap:10px;overscroll-behavior:contain;scrollbar-width:thin}
+ body.gi-gameplay .gi-area-actions>.card {flex:none;padding:16px 18px;border-radius:16px}
+ body.gi-gameplay .gi-area-actions .gi-profile-panel {padding:10px 16px;gap:6px 12px}
+ body.gi-gameplay .gi-profile-panel>.flex {grid-column:2;grid-row:1;justify-content:flex-end}
+ body.gi-gameplay .gi-profile-panel>.flex h2 {display:none}
+ body.gi-gameplay .gi-profile-panel>p {grid-column:1;grid-row:1;align-self:center;font-size:12px}
+ body.gi-gameplay .gi-profile-panel>.flex .coins {padding:4px 9px;font-size:17px}
+ body.gi-gameplay .gi-area-actions #role {grid-row:2;margin:0;padding:5px 9px}
+ body.gi-gameplay .gi-area-actions #show-role {min-height:28px;padding:4px 10px}
+ body.gi-gameplay .gi-action-panel>h2 {font-size:26px}
+ body.gi-gameplay .gi-action-panel>p {margin-top:7px;font-size:12px;line-height:1.5}
+ body.gi-gameplay .gi-action-panel form {gap:8px;margin-top:12px}
+ body.gi-gameplay .gi-action-panel label {gap:5px;font-size:12px}
+ body.gi-gameplay .gi-action-panel textarea,body.gi-gameplay .gi-action-panel select {padding:9px 11px;font-size:14px}
+ body.gi-gameplay .gi-action-panel textarea {min-height:76px}
+ body.gi-gameplay .gi-action-panel form>button {min-height:40px;padding:9px 16px;font-size:13px}
+ body.gi-gameplay .gi-area-players {display:flex;flex-direction:column;align-items:stretch;align-self:stretch;height:100%;min-height:0;overflow:hidden;gap:10px;padding:12px;background:var(--entry-surface);border:1px solid var(--entry-rule);border-radius:16px}
+ body.gi-gameplay .gi-area-players h2 {flex:none;font-size:17px}
+ body.gi-gameplay .gi-area-players .people {display:flex;flex-direction:column;flex:1;min-height:0;overflow:auto;gap:8px;padding:0;overscroll-behavior:contain;scrollbar-width:thin}
+ body.gi-gameplay .gi-area-players .person {flex:none;min-height:70px;width:100%;border-radius:10px}
+ body.gi-gameplay .gi-area-discussion {display:flex;flex-direction:column;height:100%;min-height:0;overflow:auto;gap:8px;scrollbar-width:thin}
+ body.gi-gameplay .gi-area-discussion>.card {padding:12px 16px;border-radius:14px}
+ body.gi-gameplay .gi-area-discussion>.card:first-child {flex:1;min-height:0;display:flex;flex-direction:column}
+ body.gi-gameplay .gi-area-discussion h2 {font-size:18px;flex:none}
+ body.gi-gameplay .gi-area-discussion>.card:first-child>.hist {display:block;min-height:0;max-height:none;overflow:auto;margin-top:8px}
+ body.gi-gameplay .gi-area-discussion .gi-statement {margin-bottom:8px}
+ body.gi-gameplay .gi-history {flex:none;width:100%}
+ body.gi-gameplay .gi-history summary {font-size:16px}
 }
