@@ -173,7 +173,10 @@ async function run(input) {
       await pool(sessions, config.concurrency, poll);
       const remaining = deadline - performance.now();
       if (remaining <= 0) break;
-      await sleep(Math.min(Math.max(0, pollStarted + config.intervalMs - performance.now()), remaining));
+      // Timers may wake slightly early. Do not start another poll (which can
+      // wait a full interval) just before the requested steady window ends.
+      const wakeAt = Math.min(pollStarted + config.intervalMs, deadline);
+      while (performance.now() < wakeAt) await sleep(wakeAt - performance.now());
     } while (performance.now() < deadline);
     report.steadySeconds = (performance.now() - steadyStart) / 1000;
     if (report.steadySeconds < config.seconds) fail('DURATION_NOT_REACHED');
