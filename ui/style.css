@@ -669,9 +669,8 @@ body.copy-confirmed::after{content:"";position:fixed;z-index:99;inset:0;pointer-
  .gi-gameplay .gi-area-project{max-width:none;width:100%;padding:10px;border:1px solid #dce5d8;border-radius:18px;background:#fffef8;box-shadow:0 8px 24px rgba(21,57,35,.06)}
  .gi-area-project>.eyebrow{display:block;margin:0 3px 8px;font-size:9px;letter-spacing:.1em;color:#718075}
  .gi-gameplay .gi-card-button{padding:0;border:0;background:transparent}
- .gi-gameplay .gi-card-image-viewport{height:min(46dvh,410px);width:100%;aspect-ratio:auto}
- .gi-gameplay .gi-card-image-viewport picture{display:flex;justify-content:center;width:100%;height:100%}
- .gi-gameplay .gi-card-image-viewport img{width:auto;max-width:100%;height:100%;object-fit:contain}
+ .gi-gameplay .gi-card-image-viewport{height:auto;width:min(100%,calc(min(46dvh,410px) * (var(--card-frame-ratio,794 / 1123))));margin-inline:auto;aspect-ratio:var(--card-frame-ratio,794 / 1123)}
+ .gi-gameplay .gi-card-image-viewport picture{display:contents}
  .gi-area-actions{gap:12px}
  .gi-gameplay .gi-profile-panel{display:none}
  .gi-gameplay .gi-profile-panel.gi-has-inspections{display:block}
