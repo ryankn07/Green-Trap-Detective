@@ -39,4 +39,3 @@ test('claim and CAS never retry transient failures',async()=>{
  let attempts=0;const fetch=async()=>{attempts++;return new Response('',{status:503});};const a=new SupabaseSnapshotStore({url:'https://example.test',key:'secret',fetch});await assert.rejects(a.load());assert.equal(attempts,1);
  const b=new SupabaseSnapshotStore({url:'https://example.test',key:'secret',fetch});b.revision=0;await assert.rejects(b.commit({version:1,rooms:[]}));assert.equal(attempts,2);
 });
-
