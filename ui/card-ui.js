@@ -178,19 +178,22 @@
     const img = document.createElement("img");
     img.src = "/cards/ROLE_" + code + ".png";
     img.alt = "Thẻ vai trò riêng của bạn";
-    img.loading = "lazy";
+    img.loading = holder.id === "mobile-role-value" ? "eager" : "lazy";
+    img.decoding = "async";
     picture.append(hdSource, img);
     bindCardPicture(picture);
     preview.appendChild(picture);
     holder.appendChild(preview);
     trigger.addEventListener("pointerdown", () => { preview.hidden = false; });
     trigger.addEventListener("pointerleave", hidePrivateRole);
+    trigger.addEventListener("blur", hidePrivateRole);
     });
   }
   function hidePrivateRole() {
     app.querySelectorAll(".gi-private-role-card").forEach(preview => { preview.hidden = true; });
     const mobile = app.querySelector("#mobile-role-value");
     if (mobile) mobile.hidden = true;
+    app.querySelector("#mobile-show-role")?.setAttribute("aria-pressed", "false");
   }
   document.addEventListener("pointerup", hidePrivateRole, true);
   document.addEventListener("pointercancel", hidePrivateRole, true);
