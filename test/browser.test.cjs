@@ -65,6 +65,17 @@ test('mobile gameplay follows server time, validates costs and completes ten rou
       const realNow=Date.now;Date.now=()=>realNow()+3600000;
     },{roomCode:room.code,playerId:player.id,token:player.secret});
     await page.goto(base);await page.locator('#start').click();
+    const projectCard=page.locator('.gi-area-project .gi-card-image-viewport img');
+    await projectCard.waitFor();
+    await page.waitForFunction(()=>{const image=document.querySelector('.gi-area-project .gi-card-image-viewport img');return image?.complete&&image.naturalWidth>0;});
+    const cardGeometry=await projectCard.evaluate(image=>{
+      const frame=image.closest('.gi-card-image-viewport'),box=frame.getBoundingClientRect(),button=frame.closest('button').getBoundingClientRect();
+      const ratio=getComputedStyle(frame).aspectRatio.split('/').map(Number);
+      return {center:(box.left+box.right)/2,buttonCenter:(button.left+button.right)/2,ratio:box.width/box.height,expected:ratio[0]/ratio[1]};
+    });
+    assert.ok(Math.abs(cardGeometry.center-cardGeometry.buttonCenter)<1,'mobile project card must stay centered');
+    assert.ok(Math.abs(cardGeometry.ratio-cardGeometry.expected)<.002,'mobile crop frame must retain its measured artwork ratio');
+    await screenshot(page,'EE_MOBILE_CARD_FIXED.png');
     await page.locator('#statement-text').fill('Giữ nguyên nội dung chưa gửi');
     manager.submit(room,room.players[1],{text:'Ý kiến công khai',stance:'SUPPORT'});
     await page.waitForFunction(()=>document.querySelector('.gi-statement')?.textContent.includes('Ý kiến công khai'));
@@ -73,6 +84,10 @@ test('mobile gameplay follows server time, validates costs and completes ten rou
     for(const width of [320,390,768,1440]){
       await page.setViewportSize({width,height:900});
       assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),'no horizontal overflow at '+width);
+      if(width<760){
+        const frame=await page.locator('.gi-area-project .gi-card-image-viewport').evaluate(el=>{const box=el.getBoundingClientRect(),ratio=getComputedStyle(el).aspectRatio.split('/').map(Number);return {actual:box.width/box.height,expected:ratio[0]/ratio[1]};});
+        assert.ok(Math.abs(frame.actual-frame.expected)<.002,'card aspect ratio preserved at '+width);
+      }
     }
     await page.setViewportSize({width:390,height:844});
     await page.locator('#toggle-players').click();
