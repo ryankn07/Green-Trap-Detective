@@ -94,3 +94,99 @@ test('expired deadlines catch up without a background process, and dead sessions
   store.time += 46000;
   assert.equal((await request('/api/action', { type: 'start' }, host)).value.error, 'PLAYERS_OFFLINE');
 });
+test('an expired peer presence changes the public revision while the viewer keeps polling', async t => {
+  const { request, store } = await fixture(t);
+  const host = (await request('/api/create', { name: 'Host' })).value;
+  const guest = (await request('/api/join', { roomCode: host.roomCode, name: 'Guest' })).value;
+  const initial = (await request('/api/state?room=' + host.roomCode, null, host)).value;
+  store.time += 30000;
+  await request('/api/state?room=' + host.roomCode, null, host);
+  store.time += 16000;
+  const current = (await request('/api/state?room=' + host.roomCode, null, host)).value;
+  assert.equal(current.room.players.find(player => player.id === guest.playerId).online, false);
+  assert.ok(current.room.revision > initial.room.revision, 'polling clients must be able to observe that a peer went offline');
+});
+test('a committed join survives one TypeError and retries without duplicating the player', async t => {
+  const { store, request } = await fixture(t);
+  const host = (await request('/api/create', { name: 'Host' })).value;
+  const command = {
+    requestId: randomUUID(),
+    roomCode: host.roomCode,
+    name: 'Guest'
+  };
+
+  const originalCommit = store.commit.bind(store);
+  let injected = false;
+  store.commit = async function (args) {
+    const result = await originalCommit(args);
+    if (!injected && args.requestId === command.requestId && result.receipt) {
+      injected = true;
+      throw new TypeError('Connection lost after durable commit');
+    }
+    return result;
+  };
+
+  const failed = await request('/api/join', command);
+  assert.equal(failed.status, 503);
+  assert.equal(injected, true);
+
+  const retry = await request('/api/join', command);
+  assert.equal(retry.status, 200);
+
+  const replay = await request('/api/join', command);
+  assert.deepEqual(replay, retry);
+
+  const state = await request('/api/state?room=' + host.roomCode, null, host);
+  assert.equal(state.status, 200);
+  assert.deepEqual(
+    state.value.room.players.map(player => player.name).sort(),
+    ['Guest', 'Host']
+  );
+  assert.equal(
+    state.value.room.players.filter(player => player.id === retry.value.playerId).length,
+    1
+  );
+});
+
+test('an existing token reconnects through another handler without leaking peer tokens', async t => {
+  const { request } = await fixture(t);
+  const host = (await request('/api/create', { name: 'Host' })).value;
+  const guest = (await request('/api/join', {
+    roomCode: host.roomCode,
+    name: 'Guest'
+  })).value;
+  const peer = (await request('/api/join', {
+    roomCode: host.roomCode,
+    name: 'Peer'
+  })).value;
+
+  await request('/health'); // Reconnect through the other Function handler.
+  const reconnect = await request(
+    '/api/state?room=' + guest.roomCode,
+    null,
+    guest
+  );
+
+  assert.equal(reconnect.status, 200);
+  assert.equal(guest.roomCode, host.roomCode);
+  assert.equal(reconnect.value.room.players.length, 3);
+  assert.ok(reconnect.value.room.players.some(
+    player => player.id === guest.playerId
+  ));
+
+  const serialized = JSON.stringify(reconnect.value);
+  assert.ok(!serialized.includes(host.token));
+  assert.ok(!serialized.includes(peer.token));
+
+  const hostState = await request(
+    '/api/state?room=' + host.roomCode,
+    null,
+    host
+  );
+  assert.equal(hostState.status, 200);
+  assert.ok(hostState.value.room.players.some(
+    player => player.id === host.playerId
+  ));
+  assert.ok(!JSON.stringify(hostState.value).includes(guest.token));
+  assert.ok(!JSON.stringify(hostState.value).includes(peer.token));
+});

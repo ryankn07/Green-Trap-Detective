@@ -32,11 +32,17 @@ function hydrate(record, now) {
   if (payload) validateSnapshot(payload);
   const manager = new RoomManager({ currentTime: () => now, store: { load: () => payload?.rooms || [], save() {} } });
   const presence = { ...(payload?.presence || {}) };
+  let presenceChanged = false;
   for (const room of manager.rooms.values()) {
-    for (const player of room.players) player.online = !player.removed && Number(presence[player.id] || 0) > now - PRESENCE_MS;
+    for (const player of room.players) {
+      const online = !player.removed && Number(presence[player.id] || 0) > now - PRESENCE_MS;
+      const previous = payload?.online?.[player.id] ?? (!player.removed && Number(presence[player.id] || 0) > 0);
+      if (previous !== online) presenceChanged = true;
+      player.online = online;
+    }
     manager.remember(room);
   }
-  return { manager, presence };
+  return { manager, presence, presenceChanged };
 }
 function catchUp(manager, room, now) {
   // Preserve original deadlines when an invocation arrives after an idle period.
@@ -81,13 +87,14 @@ function createServerlessHandler({ store } = {}) {
         const loaded = await store.read(code, scope, body.requestId);
         const now = loaded.now;
         if (!Number.isFinite(now)) throw unavailable();
-        const { manager, presence } = hydrate(loaded.record, now);
+        const { manager, presence, presenceChanged } = hydrate(loaded.record, now);
         let room, player;
         if (authenticated && loaded.record) ({ room, player } = manager.authenticate(code, token));
         if (loaded.receipt) return reply(res, 200, receiptValue(loaded.receipt, requestHash));
         if (authenticated && !loaded.record) throw new HttpError('ROOM_NOT_FOUND', 'Không tìm thấy phòng.', 404);
         let result, operation = 'write';
         const oldRevision = room?.revision;
+        if (room && presenceChanged) manager.changed(room);
         if (path === '/api/create') {
           ({ room, player } = manager.create(body.name, source));
           code = room.code; operation = 'create';
@@ -113,7 +120,7 @@ function createServerlessHandler({ store } = {}) {
           if (!freshPresence && room.revision === oldRevision) return reply(res, 200, result);
         } else result = { roomCode: room.code, playerId: player.id, token: player.secret, transport: 'poll' };
         const exists = manager.rooms.has(room.code);
-        const payload = exists ? { version: 1, rooms: [serializeRoom(room)], presence } : null;
+        const payload = exists ? { version: 1, rooms: [serializeRoom(room)], presence, online: Object.fromEntries(room.players.map(member => [member.id, member.online])) } : null;
         const committed = await store.commit({ code: room.code, expectedVersion: loaded.record?.version || 0, payload, scope: writing ? scope : null, requestId: body.requestId || null, requestHash: writing ? requestHash : null, response: writing ? result : null, source, operation });
         if (committed.receipt) return reply(res, 200, receiptValue(committed.receipt, requestHash));
         if (committed.committed) return reply(res, 200, result);
