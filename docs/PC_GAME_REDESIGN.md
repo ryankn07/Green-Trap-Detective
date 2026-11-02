@@ -1,5 +1,7 @@
 # PC gameplay redesign — 2026-11-01
 
+Superseded for desktop presentation by [the 3 November release](DESKTOP_GAME_RELEASE_20261103.md). The original record below is retained as history.
+
 ## Scope and acceptance
 
 Owner request: redesign the PC gameplay layout and visual treatment; mobile must not be changed. The earlier four-column arrangement is superseded by this request. Existing game rules, actions, privacy, artwork, homepage and lobby remain outside this change.
