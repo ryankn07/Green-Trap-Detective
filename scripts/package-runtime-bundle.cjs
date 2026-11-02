@@ -16,5 +16,7 @@ function entry(name){
 const archive=Buffer.concat([...names.map(entry),Buffer.alloc(1024)]);
 const encoded=zlib.gzipSync(archive,{level:9}).toString('base64');
 const width=Math.ceil(encoded.length/3);
-for(let i=0;i<3;i++)fs.writeFileSync(path.join(root,'runtime.bundle.part0'+(i+1)),encoded.slice(i*width,(i+1)*width)+'\n');
+const bundleDir=path.join(root,'runtime','compatibility');
+fs.mkdirSync(bundleDir,{recursive:true});
+for(let i=0;i<3;i++)fs.writeFileSync(path.join(bundleDir,'part0'+(i+1)+'.b64'),encoded.slice(i*width,(i+1)*width)+'\n');
 console.log('Packaged current runtime sources and original project catalog.');

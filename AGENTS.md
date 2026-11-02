@@ -36,7 +36,7 @@ Before changing gameplay UI, read `docs/UI_REFACTOR_BRIEF.md`. It is the task-sp
 - `package.json`: Node version and available npm scripts.
 - `scripts/restore-runtime-bundle.cjs`: portable Node-only recovery for missing bundled runtime files.
 
-The page shell loads `/app.js`, served from `public/app.js`. The room manager imports `engine/dist/data/projects.json`. These original files are restored from the checked-in `runtime.bundle.part*` archive and are tracked. `npm start` runs `scripts/restore-runtime-bundle.cjs` first; it restores only missing files and never overwrites existing source unless explicitly invoked with `--force`. Use `--check` to validate the archive without writing.
+The page shell loads `/app.js`, served from `public/app.js`. The room manager imports `engine/dist/data/projects.json`. These original files are restored from the checked-in `runtime/compatibility/part*.b64` archive and are tracked. `npm start` runs `scripts/restore-runtime-bundle.cjs` first; it restores only missing files and never overwrites existing source unless explicitly invoked with `--force`. Use `--check` to validate the archive without writing.
 
 ## Verified gameplay contract
 

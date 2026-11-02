@@ -48,7 +48,7 @@ Do not set TRUSTED_PROXY_IPS until the actual proxy chain has been verified. Do 
 
 ## Runtime bundle maintenance
 
-The compatibility archive is split across runtime.bundle.part01, runtime.bundle.part02, and runtime.bundle.part03. It contains the legacy runtime files and the project catalog.
+The compatibility archive is split across `runtime/compatibility/part01.b64`, `runtime/compatibility/part02.b64`, and `runtime/compatibility/part03.b64`. It contains the legacy runtime files and the project catalog.
 
 When changing one of the bundled source files or the project catalog, regenerate the archive:
 

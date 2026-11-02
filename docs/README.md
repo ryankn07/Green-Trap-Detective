@@ -19,7 +19,7 @@ This page is the entry point for repository documentation.
 
 - docs/SCALE_AND_SECURITY.md — implementation notes, capacity boundaries, security controls, and test evidence.
 - docs/UI_REFACTOR_BRIEF.md — task-specific UI requirements; verify against the current engine and server before making changes.
-- GLOSSARY.md — Vietnamese game terminology.
+- docs/GLOSSARY.md — Vietnamese game terminology.
 - docs/PRODUCT_FINISH.md — recorded product and deployment decisions at the time it was written.
 
 ## Design and implementation history

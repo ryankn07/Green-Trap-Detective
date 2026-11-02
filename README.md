@@ -195,9 +195,12 @@ Bộ kiểm thử trình duyệt Playwright là tùy chọn và yêu cầu đã 
 │   ├── decisions/        # Hồ sơ quyết định kiến trúc
 │   ├── ARCHITECTURE.md
 │   ├── DEVELOPMENT.md
+│   ├── GLOSSARY.md
 │   └── AI_ASSISTED_DEVELOPMENT.md
 ├── engine/dist/          # Luật chơi, khởi tạo, kiểm tra và phân tách dữ liệu người chơi
 ├── public/               # Mã chạy ứng dụng trên trình duyệt
+├── runtime/
+│   └── compatibility/    # Generated runtime recovery bundle
 ├── scripts/              # Công cụ kiểm tra, dựng ứng dụng, nhập tài nguyên và tạo gói
 ├── server/               # API HTTP, phòng chơi, xác thực, SSE và lưu trữ
 ├── test/                 # Bộ kiểm thử tự động
@@ -231,6 +234,7 @@ Xem [SCALE_AND_SECURITY.md](docs/SCALE_AND_SECURITY.md) để biết ghi chú tr
 | --- | --- |
 | [Kiến trúc](docs/ARCHITECTURE.md) | Thành phần, luồng dữ liệu, ranh giới tin cậy và mô hình mở rộng |
 | [Phát triển](docs/DEVELOPMENT.md) | Cài đặt, cấu hình, câu lệnh và quy trình làm việc cục bộ |
+| [Thuật ngữ](docs/GLOSSARY.md) | Bảng thuật ngữ tiếng Việt |
 | [Các quyết định kiến trúc](docs/decisions/) | Lựa chọn kỹ thuật và những đánh đổi |
 | [Đóng góp cho dự án](CONTRIBUTING.md) | Nhánh, commit, đánh giá thay đổi và pull request |
 | [Bảo mật](SECURITY.md) | Chính sách bảo mật và cách báo cáo lỗ hổng |
@@ -425,9 +429,12 @@ The optional Playwright browser suite requires an existing Playwright installati
 │   ├── decisions/        # Architecture decision records
 │   ├── ARCHITECTURE.md
 │   ├── DEVELOPMENT.md
+│   ├── GLOSSARY.md
 │   └── AI_ASSISTED_DEVELOPMENT.md
 ├── engine/dist/          # Game rules, setup, validation, player projection
 ├── public/               # Browser application runtime
+├── runtime/
+│   └── compatibility/    # Generated runtime recovery bundle
 ├── scripts/              # Checks, build, asset import, bundle utilities
 ├── server/               # HTTP API, rooms, authentication, SSE, persistence
 ├── test/                 # Automated test suite
@@ -461,6 +468,7 @@ See [SCALE_AND_SECURITY.md](docs/SCALE_AND_SECURITY.md) for the recorded impleme
 | --- | --- |
 | [Architecture](docs/ARCHITECTURE.md) | Components, data flow, trust boundaries, and scaling model |
 | [Development](docs/DEVELOPMENT.md) | Setup, configuration, commands, and local workflow |
+| [Glossary](docs/GLOSSARY.md) | Vietnamese game terminology |
 | [Architecture decisions](docs/decisions/) | Technical choices and trade-offs |
 | [Contributing](CONTRIBUTING.md) | Branches, commits, review, and pull requests |
 | [Security](SECURITY.md) | Security policy and vulnerability reporting |

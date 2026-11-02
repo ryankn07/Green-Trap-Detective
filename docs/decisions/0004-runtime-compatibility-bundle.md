@@ -5,7 +5,7 @@
 
 ## Context
 
-The repository retains split runtime bundle files for compatibility with an existing hosting build path. The archive contains selected runtime source files and the project catalog. A stale archive could otherwise restore outdated code over a deployment's expected runtime.
+The repository retains a split runtime compatibility bundle for an existing hosting recovery path. Its three base64 segments live in `runtime/compatibility/`, separate from application source and root-level project files. The archive contains selected runtime source files and the project catalog. A stale archive could otherwise restore outdated code over a deployment's expected runtime.
 
 ## Decision
 
