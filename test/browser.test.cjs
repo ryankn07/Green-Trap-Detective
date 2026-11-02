@@ -91,7 +91,7 @@ test('mobile gameplay follows server time, validates costs and completes ten rou
     assert.equal(await full.evaluate(i=>i.currentSrc),await image.evaluate(i=>i.currentSrc),'enlarged card uses the same image');
     await page.locator('.gi-card-dialog button').click();
 
-    const hdImageRoute=/\/cards-hd\/PROJ_\d{2}\.png/;
+    const hdImageRoute=/\/cards-hd(?:-webp)?\/PROJ_\d{2}\.(?:png|webp)/;
     await page.route(hdImageRoute,route=>route.abort());
     await page.reload();
     const fallback=page.locator('.gi-card-preview .gi-card-image-viewport img');
@@ -104,7 +104,7 @@ test('mobile gameplay follows server time, validates costs and completes ten rou
     assert.notEqual(await fallbackFull.evaluate(i=>getComputedStyle(i).clipPath),'none');
     await page.locator('.gi-card-dialog button').click();
     await page.unroute(hdImageRoute);
-    const projectImageRoute=/\/cards(?:-hd)?\/PROJ_\d{2}\.png/;
+    const projectImageRoute=/\/cards(?:-hd(?:-webp)?)?\/PROJ_\d{2}\.(?:png|webp)/;
     await page.route(projectImageRoute,route=>route.abort());
     await page.reload();
     await page.locator('.gi-project-card-failed').waitFor();
