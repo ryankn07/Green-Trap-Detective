@@ -40,8 +40,12 @@ Read the current design record that matches the surface being changed:
 - `ui/style.css`: current visual system and responsive styling.
 - `ui/card-ui.js`: Canva-card integration, private role-card presentation, and current DOM/layout enhancement logic.
 - `ui/cards/PROJ_01.png` … `PROJ_25.png`: original project-card images.
+- `ui/cards-hd/`: canonical native-resolution PNG artwork; never modify it as part of WebP conversion.
+- `ui/cards-hd-webp/`: generated pixel-exact WebP derivatives; retain the PNG fallback.
 - `ui/cards/ROLE_PROTECTOR.png`, `ROLE_SABOTEUR.png`: original role-card images.
 - `ui/cards-manifest.json`: Canva source metadata.
+- `ui/cards-hd-webp/` and `ui/card-webp-manifest.js`: generated lossless derivatives, advertised only when smaller than the source PNG.
+- `scripts/generate-card-webp.py`: build-time generator and byte-for-byte RGBA verification for the HD derivatives.
 - `package.json`: Node version and available npm scripts.
 - `scripts/restore-runtime-bundle.cjs`: portable Node-only recovery for missing bundled runtime files.
 

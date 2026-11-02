@@ -88,7 +88,8 @@ test('static text assets use gzip when accepted and preserve exact identity resp
     ['/','ui/index.html'],
     ['/app.js','public/app.js'],
     ['/style.css','ui/style.css'],
-    ['/card-ui.js','ui/card-ui.js']
+    ['/card-ui.js','ui/card-ui.js'],
+    ['/card-webp-manifest.js','ui/card-webp-manifest.js']
   ];
   for (const [url, sourcePath] of assets) {
     const compressed = await getRaw(url, { 'Accept-Encoding': 'gzip' });
@@ -128,7 +129,23 @@ test('server starts and serves the real client and Canva project artwork', async
   const card = await fetch(baseUrl + '/cards/PROJ_01.png');
   assert.equal(card.status, 200);
   assert.match(card.headers.get('content-type'), /image\/png/);
-  assert.ok((await card.arrayBuffer()).byteLength > 1000);
+  const originalPng = Buffer.from(await card.arrayBuffer());
+  assert.ok(originalPng.byteLength > 1000);
+
+  const webpManifest = await fetch(baseUrl + '/card-webp-manifest.js');
+  assert.equal(webpManifest.status, 200);
+  assert.match(await webpManifest.text(), /window\.GREEN_TRAP_WEBP_CARDS/);
+
+  const webp = await fetch(baseUrl + '/cards-hd-webp/PROJ_01.webp');
+  assert.equal(webp.status, 200);
+  assert.match(webp.headers.get('content-type'), /image\/webp/);
+  const webpBytes = Buffer.from(await webp.arrayBuffer());
+  const hdPng = await fetch(baseUrl + '/cards-hd/PROJ_01.png');
+  assert.equal(hdPng.status, 200);
+  const hdPngBytes = Buffer.from(await hdPng.arrayBuffer());
+  assert.ok(webpBytes.length < hdPngBytes.length, 'lossless WebP is smaller than the native HD PNG');
+  assert.equal(webpBytes.subarray(8, 12).toString(), 'WEBP');
+  assert.equal(hdPngBytes.subarray(1, 4).toString(), 'PNG');
 });
 
 test('restored project data lets a three-player room start with the real engine', async () => {

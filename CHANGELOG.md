@@ -7,6 +7,7 @@ This project follows a lightweight Keep a Changelog structure. Entries describe 
 ## [Unreleased]
 
 ### Changed
+- Serve all 32 native HD cards through pixel-exact lossless WebP derivatives when supported, retaining the original PNG assets as fallback.
 - Negotiate and cache gzip-compressed static text responses on the Node server while preserving byte-identical identity responses.
 - Reduce homepage hero image transfer by using lazy low-resolution thumbnails for the two decorative side cards while retaining native HD previews and the full gameplay HD catalog.
 

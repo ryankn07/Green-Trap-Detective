@@ -69,7 +69,7 @@ if(remote){
 const transaction=fn=>remote?coordinator.run(fn):Promise.resolve().then(fn);
 const MIME={'.html':'text/html; charset=utf-8','.js':'text/javascript; charset=utf-8','.css':'text/css; charset=utf-8','.svg':'image/svg+xml','.ico':'image/x-icon'};
 const HEADERS={'X-Content-Type-Options':'nosniff','Referrer-Policy':'no-referrer','X-Frame-Options':'DENY','Content-Security-Policy':"default-src 'self'; connect-src 'self'; img-src 'self' data:; style-src 'self'; script-src 'self'; object-src 'none'; base-uri 'none'; frame-ancestors 'none'"};
-const allowedPaths=new Set(['/','/index.html','/app.js','/style.css']);
+const allowedPaths=new Set(['/','/index.html','/app.js','/style.css','/card-webp-manifest.js']);
 const staticAssetCache=new Map();
 function acceptsGzip(req){
   const header=req.headers['accept-encoding'];
@@ -145,12 +145,13 @@ const server=http.createServer(async(req,res)=>{
     if(req.method==='GET' && url.pathname==='/health')return json(res,200,await transaction(()=>({status:'ok',activeRooms:manager.rooms.size})));
     if(req.method==='GET' && allowedPaths.has(url.pathname)) {
       const filename=url.pathname==='/'?'index.html':url.pathname.slice(1);
-      const filepath=(filename==='index.html'||filename==='style.css')?path.join(uiDir,filename):path.join(publicDir,filename);
+      const filepath=(filename==='index.html'||filename==='style.css'||filename==='card-webp-manifest.js')?path.join(uiDir,filename):path.join(publicDir,filename);
       return serveStatic(req,res,filepath);
     }
 
-    if(req.method==='GET' && url.pathname==='/brand/green-trap-detective.png'){
-      const bytes=await fs.promises.readFile(path.join(uiDir,'brand','green-trap-detective.png'));
+    if(req.method==='GET' && (url.pathname==='/brand/green-trap-detective.png'||url.pathname==='/brand/green-coin.png')){
+      const filename=url.pathname==='/brand/green-coin.png'?'green-coin.png':'green-trap-detective.png';
+      const bytes=await fs.promises.readFile(path.join(uiDir,'brand',filename));
       res.writeHead(200,{'Content-Type':'image/png','Cache-Control':'public, max-age=86400'});
       return res.end(bytes);
     }
@@ -169,6 +170,14 @@ const server=http.createServer(async(req,res)=>{
         return res.end(bytes);
       }catch(e){if(e.code==='ENOENT')return json(res,404,{error:'CARD_UNAVAILABLE'});throw e;}
     }
+    const webpCardMatch=req.method==='GET'?url.pathname.match(/^\/cards-hd-webp\/(PROJ_(?:0[1-9]|1\d|2[0-5])|ROLE_PROTECTOR|ROLE_SABOTEUR|GREENCOIN|BACK_0[1-4])\.webp$/):null;
+    if(webpCardMatch){
+      try{
+        const bytes=await fs.promises.readFile(path.join(uiDir,'cards-hd-webp',webpCardMatch[1]+'.webp'));
+        res.writeHead(200,{'Content-Type':'image/webp','Cache-Control':'public, max-age=3600'});
+        return res.end(bytes);
+      }catch(e){if(e.code==='ENOENT')return json(res,404,{error:'CARD_UNAVAILABLE'});throw e;}
+    }
     const cardMatch=req.method==='GET'?url.pathname.match(cardPattern):null;
     if(cardMatch){
       try{
@@ -179,6 +188,9 @@ const server=http.createServer(async(req,res)=>{
     }
     if(req.method==='GET' && url.pathname==='/card-ui.js'){
       return serveStatic(req,res,path.join(uiDir,'card-ui.js'));
+    }
+    if(req.method==='GET' && url.pathname==='/card-webp-manifest.js'){
+      return serveStatic(req,res,path.join(uiDir,'card-webp-manifest.js'));
     }
 
     if(req.method==='POST' && url.pathname==='/api/create') {

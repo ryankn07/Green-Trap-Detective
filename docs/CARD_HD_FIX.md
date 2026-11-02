@@ -24,3 +24,10 @@ Evidence in ../outputs: CARD_HD_BOTH_CHECKS.json, CARD_HD_FINAL.png, CARD_SHARPN
 The homepage keeps the front hero card (PROJ_01) at native HD resolution and gives the two angled side cards (PROJ_11 and PROJ_25) their original 376 × 532 thumbnails for the initial page view. Both side-card links still open their untouched native HD PNGs in the preview dialog. The side thumbnails are lazy-loaded at low fetch priority; the front card is eager and high priority. Gameplay card rendering and all 25 native HD source files are unchanged.
 
 Based on the current repository file sizes, the three hero images fall from 5,558,276 bytes to 2,694,733 bytes when all three are loaded — a 2,863,543-byte (about 51.5%) reduction before HTTP compression or cache effects. This is a source-size estimate, not a measured browser network trace.
+
+
+## Pixel-exact WebP derivatives — 2 November 2026
+
+The 32 native HD PNGs remain the canonical source artwork and were not modified. A lossless WebP derivative was generated for every project card, role card, card back, and Green Coin. All 32 derivatives are smaller than their PNG source: the full HD set decreases from 46,494,252 bytes to 29,804,754 bytes, saving 16,689,498 bytes (35.9%) if the complete set is transferred. This total is an asset-library comparison, not a claim that every page view downloads all 32 images.
+
+Each WebP was reopened and decoded to RGBA, then compared byte-for-byte with its source PNG at the same dimensions. Transparent-pixel RGB values and available ICC/EXIF/XMP metadata are preserved. The browser manifest only advertises derivatives smaller than their source. The active page uses WebP where available and retains the original HD PNG or thumbnail as its fallback. Vercel's static build and the Node server both include the WebP assets; gameplay rules and card pixels are unchanged.
