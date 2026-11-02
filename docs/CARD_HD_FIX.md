@@ -24,3 +24,7 @@ Evidence in ../outputs: CARD_HD_BOTH_CHECKS.json, CARD_HD_FINAL.png, CARD_SHARPN
 The homepage keeps the front hero card (PROJ_01) at native HD resolution and gives the two angled side cards (PROJ_11 and PROJ_25) their original 376 × 532 thumbnails for the initial page view. Both side-card links still open their untouched native HD PNGs in the preview dialog. The side thumbnails are lazy-loaded at low fetch priority; the front card is eager and high priority. Gameplay card rendering and all 25 native HD source files are unchanged.
 
 Based on the current repository file sizes, the three hero images fall from 5,558,276 bytes to 2,694,733 bytes when all three are loaded — a 2,863,543-byte (about 51.5%) reduction before HTTP compression or cache effects. This is a source-size estimate, not a measured browser network trace.
+
+## Small-icon asset selection — 2 November 2026
+
+The mobile wallet renders Green Coin at 24 × 24 CSS pixels. It now uses the original compact `ui/cards/GREENCOIN.png` (27,100 bytes) instead of the 164,288-byte HD export. The HD source remains untouched and available for full-size card contexts. This saves 137,188 bytes (about 83.5%) whenever the wallet icon is requested; the gameplay state and displayed dimensions are unchanged.
