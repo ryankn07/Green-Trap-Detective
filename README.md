@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="docs/assets/hero-banner.svg" alt="Green Trap Detective — One green project. Many hidden motives." width="100%">
+  <img src="docs/assets/brand-banner.webp" alt="Green Trap Detective project banner featuring the team logo and in-game Green Coin" width="100%">
 
   <br>
 
@@ -24,6 +24,10 @@
 GREEN TRAP DETECTIVE is a Vietnamese-language, browser-based multiplayer social-deduction game about environmental projects. Players discuss a project, submit private decisions, and uncover the outcome together — while trying to work out who is protecting the environment and who is sabotaging it.
 
 The project combines a custom card-based game experience with a server-authoritative Node.js backend, real-time updates, private player-state projections, and a lightweight browser client.
+
+## Brand identity
+
+The project banner brings together the team’s **Green Trap** logo and the game’s **Green Coin** identity. Original project and role cards remain in `ui/cards/`.
 
 ## At a glance
 
@@ -177,7 +181,7 @@ The optional Playwright browser suite requires an existing Playwright installati
 .
 ├── .github/              # CI, issue templates, PR template, Dependabot
 ├── docs/
-│   ├── assets/           # Project banner and architecture diagrams
+│   ├── assets/           # Brand banner and architecture diagrams
 │   ├── decisions/        # Architecture decision records
 │   ├── ARCHITECTURE.md
 │   ├── DEVELOPMENT.md
