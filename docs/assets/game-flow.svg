@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="430" viewBox="0 0 1440 430" role="img" aria-labelledby="title desc">
+<title id="title">Green Trap Detective game round lifecycle</title>
+<desc id="desc">Four game phases: debate, blind action, reveal, and the next round or game over. Deadlines and transitions are server-owned.</desc>
+<defs><marker id="arr" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0 0L9 3 0 6" fill="none" stroke="#53795b" stroke-width="1.7"/></marker></defs>
+<rect width="1440" height="430" rx="24" fill="#f5f2e7"/>
+<text x="72" y="70" fill="#173c2b" font-family="Georgia,serif" font-size="34" font-weight="700">A round, from discussion to reveal</text>
+<text x="72" y="104" fill="#69745f" font-family="Arial,sans-serif" font-size="16">The server owns phase transitions and deadlines; clients render the current snapshot.</text>
+<g font-family="Arial,sans-serif">
+ <rect x="70" y="170" width="275" height="155" rx="20" fill="#e6efdf" stroke="#93b18b" stroke-width="2"/>
+ <circle cx="112" cy="213" r="20" fill="#4d8055"/><text x="112" y="220" text-anchor="middle" fill="white" font-size="18" font-weight="700">1</text>
+ <text x="145" y="220" fill="#1c452e" font-size="23" font-weight="700">DEBATE</text>
+ <text x="95" y="267" fill="#5c6e58" font-size="16">Public statements</text><text x="95" y="293" fill="#5c6e58" font-size="16">One view per player</text>
+ <rect x="415" y="170" width="275" height="155" rx="20" fill="#f4e9ce" stroke="#d7bb7d" stroke-width="2"/>
+ <circle cx="457" cy="213" r="20" fill="#b28a42"/><text x="457" y="220" text-anchor="middle" fill="white" font-size="18" font-weight="700">2</text>
+ <text x="490" y="220" fill="#5b4520" font-size="23" font-weight="700">BLIND ACTION</text>
+ <text x="440" y="267" fill="#796748" font-size="16">Private investment</text><text x="440" y="293" fill="#796748" font-size="16">Optional bank action</text>
+ <rect x="760" y="170" width="275" height="155" rx="20" fill="#e4e9f0" stroke="#a7b4c5" stroke-width="2"/>
+ <circle cx="802" cy="213" r="20" fill="#637c9a"/><text x="802" y="220" text-anchor="middle" fill="white" font-size="18" font-weight="700">3</text>
+ <text x="835" y="220" fill="#344b67" font-size="23" font-weight="700">REVEAL</text>
+ <text x="785" y="267" fill="#667489" font-size="16">Round outcome</text><text x="785" y="293" fill="#667489" font-size="16">Project verdict</text>
+ <rect x="1105" y="170" width="265" height="155" rx="20" fill="#e8e5ed" stroke="#b8aec6" stroke-width="2"/>
+ <circle cx="1147" cy="213" r="20" fill="#817394"/><text x="1147" y="220" text-anchor="middle" fill="white" font-size="18" font-weight="700">4</text>
+ <text x="1180" y="220" fill="#453d55" font-size="23" font-weight="700">NEXT ROUND</text>
+ <text x="1130" y="267" fill="#6e667b" font-size="16">Repeat or end game</text><text x="1130" y="293" fill="#6e667b" font-size="16">Up to 10 rounds</text>
+</g>
+<g fill="none" stroke="#53795b" stroke-width="3" marker-end="url(#arr)"><path d="M345 247H408"/><path d="M690 247H753"/><path d="M1035 247H1098"/><path d="M1235 325V365H205V332"/></g>
+<text x="720" y="397" text-anchor="middle" fill="#6c7866" font-family="Arial,sans-serif" font-size="14">REPEAT WHILE THE GAME CONTINUES · GAME_OVER ENDS THE MATCH</text>
+</svg>
