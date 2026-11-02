@@ -64,16 +64,16 @@ UI hiding is not a security boundary. Any private-information rule must be enfor
 
 ## Persistence and scaling model
 
-The current room store writes snapshots to a local file using a temporary file, fsync, and atomic rename. It is designed for one server process.
+By default, the room store writes snapshots to a local file using a temporary file, fsync, and atomic rename. With `GAME_SUPABASE_URL` and `GAME_SUPABASE_SERVICE_KEY`, it uses a private Supabase snapshot with commit-before-acknowledgment and writer fencing. Both modes serve one active server process. See [durable room configuration](DURABLE_ROOMS.md).
 
 This has important operational limits:
 
-- A process restart can recover rooms only if the backing filesystem survives.
-- Ephemeral hosting filesystems do not provide durable recovery across redeploys.
+- Local file mode can recover rooms only if the backing filesystem survives; ephemeral files do not survive redeploys.
+- Remote mode loads validated database state before listening and refuses to serve uncertain state after a failed commit.
 - Multiple server replicas do not share in-memory rooms, SSE subscriptions, or rate-limit state.
 - The current design is not a distributed database or a multi-region deployment.
 
-Use a persistent volume or replace the store with a shared datastore before promising durable recovery or horizontal scaling. Do not describe configured safety ceilings as measured hosting capacity.
+Use the configured remote store or a persistent volume for durable recovery. Horizontal scaling still requires additional coordination. Do not describe configured safety ceilings as measured hosting capacity.
 
 ## Deployment shape
 

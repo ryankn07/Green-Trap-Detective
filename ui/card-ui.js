@@ -58,13 +58,25 @@
     close.textContent = "Đóng ✕";
     close.addEventListener("click", () => dlg.close());
     top.append(label, close);
-    const full = document.createElement("img");
-    full.src = src;
-    full.alt = "Hình thẻ Canva — " + title;
-    full.className = "gi-card-full";
     const fullWrap = document.createElement("div");
-    fullWrap.className = "gi-card-full-wrap";
-    fullWrap.appendChild(full);
+    fullWrap.className = "gi-card-preview gi-card-full-wrap";
+    const viewport = document.createElement("span");
+    viewport.className = "gi-card-image-viewport";
+    const picture = document.createElement("picture");
+    const full = document.createElement("img");
+    const cardPath = new URL(src, location.href).pathname;
+    const original = cardPath.replace("/cards-hd/", "/cards/");
+    full.src = original;
+    full.alt = "Hình thẻ Canva — " + title;
+    if (cardPath.includes("/cards-hd/")) {
+      const source = document.createElement("source");
+      source.srcset = cardPath;
+      picture.appendChild(source);
+      full.addEventListener("error", () => { source.remove(); full.src = original; }, { once: true });
+    }
+    picture.appendChild(full);
+    viewport.appendChild(picture);
+    fullWrap.appendChild(viewport);
     dlg.append(top, fullWrap);
     dlg.addEventListener("close", () => dlg.remove(), { once: true });
     dlg.addEventListener("click", e => { if (e.target === dlg) dlg.close(); });
@@ -83,7 +95,8 @@
     preview.className = "gi-private-role-card";
     preview.hidden = true;
     const img = document.createElement("img");
-    img.src = "/cards/ROLE_" + code + ".png";
+    img.src = "/cards-hd/ROLE_" + code + ".png";
+    img.addEventListener("error", () => { img.src = "/cards/ROLE_" + code + ".png"; }, { once: true });
     img.alt = "Thẻ vai trò riêng của bạn";
     img.loading = "lazy";
     preview.appendChild(img);

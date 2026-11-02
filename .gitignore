@@ -9,5 +9,12 @@ node_modules/
 /test-results/
 *.log
 *.test-backup
+
+.env
+.env.*
+!.env.example
+*.local
+playwright-report/
+test-results/
 .DS_Store
 Thumbs.db

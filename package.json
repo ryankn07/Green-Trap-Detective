@@ -1,8 +1,8 @@
 {
-  "name": "green-impact-multiplayer",
+  "name": "green-trap-detective",
   "version": "1.0.0",
   "private": true,
-  "description": "A Vietnamese-language multiplayer social-deduction game about environmental projects.",
+  "description": "Green Trap Detective: trò chơi suy luận xã hội trực tuyến về môi trường",
   "repository": {
     "type": "git",
     "url": "https://github.com/ryankn07/ee.git"

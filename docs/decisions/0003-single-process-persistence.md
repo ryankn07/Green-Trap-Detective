@@ -1,6 +1,6 @@
 # ADR 0003: Keep file-based persistence single-process
 
-- Status: Accepted
+- Status: Local-mode decision; extended by [durable room storage](../DURABLE_ROOMS.md)
 - Recorded: 2026-11-02
 
 ## Context
