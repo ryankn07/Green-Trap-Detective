@@ -71,11 +71,28 @@ function recoverSession(error){
  app.innerHTML=`<section class="card welcome"><h1>${kicked?'Bạn đã được đưa ra khỏi phòng':expiredRoom?'Phòng đã kết thúc hoặc hết hạn':'Phiên chơi không còn hợp lệ'}.</h1><p>${kicked?'Chủ phòng đã kích bạn khỏi phòng.':expiredRoom?'Phòng này không còn trên máy chủ. Phòng có thể đã bị đóng hoặc hết thời gian lưu.':'Phiên xác thực đã hết hạn hoặc không còn hợp lệ.'} Bạn có thể quay về trang đầu để tạo phòng mới hoặc nhập mã phòng khác.</p><div class="actions"><button id="return-home" class="primary">Tạo hoặc tham gia phòng khác <span aria-hidden="true">→</span></button></div></section>`;
 }
 function handleSessionError(error){if(error?.code==='ROOM_NOT_FOUND'||error?.code==='UNAUTHORIZED'){recoverSession(error);return;}gameError(error);}
+const pendingRequests=new Map();
 const api=async(path,data,authenticated=false)=>{const headers={'Content-Type':'application/json'};if(authenticated){headers.Authorization=`Bearer ${session.token}`;headers['x-room-code']=session.roomCode;}
- const r=await fetch(path,{method:'POST',headers,body:JSON.stringify(data)});const value=await r.json().catch(()=>({}));if(!r.ok){const error=Error(value.message||value.error||`HTTP ${r.status}`);error.code=value.error;error.status=r.status;throw error;}return value;};
-const readState=async()=>{const r=await fetch(`/api/state?room=${session.roomCode}`,{headers:{Authorization:`Bearer ${session.token}`},cache:'no-store'});const value=await r.json().catch(()=>({}));if(!r.ok){const error=Error(value.message||value.error||'Không thể tải trạng thái phòng');error.code=value.error;error.status=r.status;throw error;}acceptSnapshot(value);};
+ const key=JSON.stringify([authenticated?session.playerId:'entry',path,data]);
+ const requestId=pendingRequests.get(key)||crypto.randomUUID();pendingRequests.set(key,requestId);
+ if(pendingRequests.size>20)pendingRequests.delete(pendingRequests.keys().next().value);
+ const r=await fetch(path,{method:'POST',headers,body:JSON.stringify({...data,requestId}),signal:AbortSignal.timeout(15000)});const value=await r.json().catch(()=>({}));if(r.ok||r.status<500)pendingRequests.delete(key);if(!r.ok){const error=Error(value.message||value.error||`HTTP ${r.status}`);error.code=value.error;error.status=r.status;throw error;}return value;};
+const readState=async(signal)=>{const current=session;if(!current)return;const r=await fetch(`/api/state?room=${current.roomCode}`,{headers:{Authorization:`Bearer ${current.token}`},cache:'no-store',signal:signal||AbortSignal.timeout(12000)});const value=await r.json().catch(()=>({}));if(!r.ok){const error=Error(value.message||value.error||'Không thể tải trạng thái phòng');error.code=value.error;error.status=r.status;throw error;}if(session!==current)return;if(current.transport==='poll'&&snapshot?.room.code===value.room.code&&snapshot.room.revision===value.room.revision){snapshot.serverTime=value.serverTime;snapshot.deadline=value.deadline;snapshotReceivedAt=performance.now();}else acceptSnapshot(value);return value;};
 const copyRoom=async()=>{const url=`${location.origin}/?room=${session.roomCode}`;try{await navigator.clipboard.writeText(url);showToast('Đã sao chép','success',3000);}catch{gameError({message:'Không thể sao chép. Hãy thử lại.'});}};
-function onSession(s) {session=s;save();app.innerHTML='';readState().catch(handleSessionError);connectStream();}
+function onSession(s) {session=s;save();app.innerHTML='';if(s.transport==='poll')connectPoll();else{readState().catch(handleSessionError);connectStream();}}
+async function connectPoll(){
+ aborter?.abort();const active=new AbortController();aborter=active;let backoff=1500;statusEl.textContent='Đang kết nối';
+ active.signal.addEventListener('abort',()=>clearTimeout(active.pollTimer),{once:true});
+ const poll=async()=>{
+  if(active.signal.aborted||!session)return;
+  try{await readState(AbortSignal.any([active.signal,AbortSignal.timeout(12000)]));if(active.signal.aborted)return;statusEl.textContent='● Trực tuyến';backoff=1500;}
+  catch(error){if(active.signal.aborted)return;if(error.code==='UNAUTHORIZED'||error.code==='ROOM_NOT_FOUND'){recoverSession(error);return;}statusEl.textContent='Đang kết nối lại';backoff=Math.min(backoff*2,15000);}
+  if(active.signal.aborted||!session)return;
+  const interval=document.hidden?Math.max(backoff,10000):backoff;
+  active.pollTimer=setTimeout(poll,interval+Math.random()*250);
+ };
+ await poll();
+}
 async function connectStream(){if(!session)return;aborter?.abort();aborter=new AbortController();const active=aborter;statusEl.textContent='Đang kết nối';try{
  const res=await fetch(`/api/stream?room=${session.roomCode}`,{signal:active.signal,headers:{Authorization:`Bearer ${session.token}`},cache:'no-store'});
  if(!res.ok){const value=await res.json().catch(()=>({}));const error=Error(value.message||value.error||'Mất kết nối tới phòng');error.code=value.error;error.status=res.status;throw error;}delay=750;statusEl.textContent='● Trực tuyến';
@@ -157,7 +174,7 @@ function wireBank(){
 async function act(type,payload){
  if(requesting)return false;
  requesting=true;
- try{await api('/api/action',{type,...(type==='kick'?{targetId:payload.targetId}:{payload}),...(type==='submit'?{context:{gameId:snapshot.game.gameId,round:snapshot.game.round,phase:snapshot.game.phase}}:{})},true);if(type!=='leave')await readState();return true;}
+ try{await api('/api/action',{type,...(type==='kick'?{targetId:payload.targetId}:{payload}),...(['submit','next'].includes(type)?{context:{gameId:snapshot.game.gameId,round:snapshot.game.round,phase:snapshot.game.phase}}:{})},true);if(type!=='leave')await readState();return true;}
  catch(e){handleSessionError(e);return false;}
  finally{requesting=false;wireBank();}
 }
