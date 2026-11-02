@@ -1,7 +1,7 @@
 'use strict';
 const crypto = require('node:crypto');
-const {MIN_PLAYERS,MAX_PLAYERS,MAX_ROOMS,MAX_STREAMS}=require('./limits.cjs');
-const {assignBaseRoles,selectProjectDeck,createGame,submitStatement,openBlindPhase,lockAction,resolveRound,nextRound,activePlayers,projectForPlayer}=require('../engine/dist/index.js');
+const {MIN_PLAYERS,MAX_PLAYERS,MAX_ROOMS,MAX_STREAMS,SOURCE_ROOMS,SOURCE_SEATS}=require('./limits.cjs');
+const {assignBaseRoles,selectProjectDeck,createGame,submitStatement,openBlindPhase,lockAction,resolveRound,nextRound,removePlayer,activePlayers,projectForPlayer}=require('../engine/dist/index.js');
 const projects=require('../engine/dist/data/projects.json');
 const CODE_CHARS='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
 const clampName=raw=>typeof raw==='string'?raw.trim().replace(/\s+/g,' ').slice(0,24):'';
@@ -13,14 +13,24 @@ const fail=(code,message)=>{const err=Error(message);err.code=code;err.public=tr
 class RoomManager {
   constructor({onUpdate=()=>{},randomInt=crypto.randomInt,currentTime=now,store=null,maxPlayers=MAX_PLAYERS}={}){if(maxPlayers!==null&&(!Number.isSafeInteger(maxPlayers)||maxPlayers<MIN_PLAYERS))throw Error('Invalid room player limit');this.maxPlayers=maxPlayers;this.store=store;this.rooms=new Map((store?.load()||[]).map(room=>[room.code,{...room,players:room.players.map(p=>({...p,online:false})),connections:new Map()}]));this.onUpdate=onUpdate;this.randomInt=randomInt;this.currentTime=currentTime;this.saved=new WeakMap();for(const room of this.rooms.values())this.remember(room);}
   remember(room){this.saved.set(room,{fields:{...room,players:room.players.slice()},online:room.players.map(p=>p.online)});}
-  checkSlots(){let count=0;for(const room of this.rooms.values())count+=room.players.length;if(count>=MAX_STREAMS)fail('SERVER_BUSY','Máy chủ đang đầy người chơi. Hãy thử lại sau.');}
+  checkSlots(){let count=0;for(const room of this.rooms.values())count+=room.players.filter(p=>!p.removed).length;if(count>=MAX_STREAMS)fail('SERVER_BUSY','Máy chủ đang đầy người chơi. Hãy thử lại sau.');}
+  checkAdmission(source,creating=false){
+    if(source===null)return; // Trusted in-process callers have no HTTP admission source.
+    if(typeof source!=='string'||!/^[a-f0-9]{64}$/.test(source))throw Error('Invalid admission source');
+    let rooms=0,seats=0;
+    for(const room of this.rooms.values()){
+      if(room.admissionSource===source)rooms++;
+      for(const player of room.players)if(!player.removed&&player.admissionSource===source)seats++;
+    }
+    if(seats>=SOURCE_SEATS||(creating&&rooms>=SOURCE_ROOMS))fail('ADMISSION_LIMIT','Mạng của bạn đang giữ quá nhiều phòng hoặc chỗ chơi. Hãy rời phòng không dùng rồi thử lại.');
+  }
   removeRoom(room){this.rooms.delete(room.code);try{this.persist();}catch(error){this.rooms.set(room.code,room);throw error;}}
   persist(changedRoom=null){this.store?.save(this.rooms.values(),changedRoom);}
-  create(name){this.checkSlots();if(this.rooms.size>=MAX_ROOMS)fail('SERVER_BUSY','Máy chủ đang đầy phòng. Hãy thử lại sau.');name=clampName(name);if(name.length<1)fail('INVALID_NAME','Nhập tên người chơi (1–24 ký tự).');let code;do{code=Array.from({length:6},()=>CODE_CHARS[this.randomInt(CODE_CHARS.length)]).join('');}while(this.rooms.has(code));const player={id:uid(),name,secret:token(),online:false};const room={code,hostId:player.id,players:[player],state:null,lastActivity:this.currentTime(),deadline:null,revision:1,connections:new Map()};this.rooms.set(code,room);this.changed(room);return{room,player};}
+  create(name,source=null){this.checkAdmission(source,true);this.checkSlots();if(this.rooms.size>=MAX_ROOMS)fail('SERVER_BUSY','Máy chủ đang đầy phòng. Hãy thử lại sau.');name=clampName(name);if(name.length<1)fail('INVALID_NAME','Nhập tên người chơi (1–24 ký tự).');let code;do{code=Array.from({length:6},()=>CODE_CHARS[this.randomInt(CODE_CHARS.length)]).join('');}while(this.rooms.has(code));const player={id:uid(),name,secret:token(),online:false,admissionSource:source};const room={code,hostId:player.id,players:[player],state:null,lastActivity:this.currentTime(),deadline:null,revision:1,connections:new Map(),admissionSource:source};this.rooms.set(code,room);this.changed(room);return{room,player};}
   getRoom(code){const room=this.rooms.get(String(code||'').toUpperCase());if(!room)fail('ROOM_NOT_FOUND','Không tìm thấy phòng.');return room;}
-  join(code,name){this.checkSlots();const room=this.getRoom(code);if(room.state)fail('GAME_STARTED','Ván đang diễn ra. Chỉ người chơi cũ được kết nối lại.');if(this.maxPlayers!==null&&room.players.length>=this.maxPlayers)fail('ROOM_FULL',`Phòng đã đủ ${this.maxPlayers} người.`);name=clampName(name);if(!name)fail('INVALID_NAME','Nhập tên người chơi.');const player={id:uid(),name,secret:token(),online:false};room.players.push(player);this.changed(room);return{room,player};}
-  authenticate(code,rawToken){const room=this.getRoom(code);if(typeof rawToken!=='string'||!/^[a-f0-9]{64}$/.test(rawToken))fail('UNAUTHORIZED','Thiếu hoặc sai phiên chơi.');const digest=Buffer.from(rawToken,'hex');const player=room.players.find(p=>crypto.timingSafeEqual(Buffer.from(p.secret,'hex'),digest));if(!player)fail('UNAUTHORIZED','Không có quyền điều khiển người chơi này.');return{room,player};}
-  view(room,player){return{room:{code:room.code,hostId:room.hostId,minPlayers:MIN_PLAYERS,maxPlayers:this.maxPlayers,players:room.players.map(p=>({id:p.id,name:p.name,online:p.online})),status:room.state?'PLAYING':'LOBBY',revision:room.revision},game:room.state?projectForPlayer(room.state,player.id):null,serverTime:this.currentTime(),deadline:room.deadline};}
+  join(code,name,source=null){this.checkAdmission(source);this.checkSlots();const room=this.getRoom(code);if(room.state)fail('GAME_STARTED','Ván đang diễn ra. Chỉ người chơi cũ được kết nối lại.');if(this.maxPlayers!==null&&room.players.length>=this.maxPlayers)fail('ROOM_FULL',`Phòng đã đủ ${this.maxPlayers} người.`);name=clampName(name);if(!name)fail('INVALID_NAME','Nhập tên người chơi.');const player={id:uid(),name,secret:token(),online:false,admissionSource:source};room.players.push(player);this.changed(room);return{room,player};}
+  authenticate(code,rawToken){const room=this.getRoom(code);if(typeof rawToken!=='string'||!/^[a-f0-9]{64}$/.test(rawToken))fail('UNAUTHORIZED','Thiếu hoặc sai phiên chơi.');const digest=Buffer.from(rawToken,'hex');const player=room.players.find(p=>!p.removed&&crypto.timingSafeEqual(Buffer.from(p.secret,'hex'),digest));if(!player)fail('UNAUTHORIZED','Không có quyền điều khiển người chơi này.');return{room,player};}
+  view(room,player){return{room:{code:room.code,hostId:room.hostId,minPlayers:MIN_PLAYERS,maxPlayers:this.maxPlayers,players:room.players.map(p=>({id:p.id,name:p.name,online:p.online,...(p.removed?{removed:true}:{})})),status:room.state?'PLAYING':'LOBBY',revision:room.revision},game:room.state?projectForPlayer(room.state,player.id):null,serverTime:this.currentTime(),deadline:room.deadline};}
   changed(room){
     const previous=this.saved.get(room);room.revision++;room.lastActivity=this.currentTime();
     try{this.persist(room);}catch(error){
@@ -42,6 +52,19 @@ class RoomManager {
     const target=room.players.find(p=>p.id===targetId);
     if(!target||target.id===player.id)fail('INVALID_TARGET','Chọn một người chơi khác trong phòng.');
     room.players=room.players.filter(p=>p.id!==target.id);
+    this.changed(room);
+    return target;
+  }
+  kick(room,player,targetId){
+    if(!room.state)return this.kickLobby(room,player,targetId);
+    if(player.id!==room.hostId)fail('HOST_ONLY','Chỉ chủ phòng được kích người chơi.');
+    if(room.state.phase==='GAME_OVER')fail('GAME_OVER','Ván đã kết thúc.');
+    const index=room.players.findIndex(p=>p.id===targetId&&!p.removed);
+    if(index<0||targetId===player.id)fail('INVALID_TARGET','Chọn một người chơi khác trong phòng.');
+    const target=room.players[index];
+    room.state=removePlayer(room.state,targetId);
+    room.players=room.players.map((p,i)=>i===index?{...p,removed:true,online:false}:p);
+    if(room.state.phase==='GAME_OVER')room.deadline=null;
     this.changed(room);
     return target;
   }

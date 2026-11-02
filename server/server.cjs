@@ -1,5 +1,6 @@
 'use strict';
 const http=require('node:http');
+const {createHash}=require('node:crypto');
 const fs=require('node:fs');
 const path=require('node:path');
 const {RoomManager}=require('./rooms.cjs');
@@ -129,12 +130,12 @@ const server=http.createServer(async(req,res)=>{
 
     if(req.method==='POST' && url.pathname==='/api/create') {
       rate(res,'create:'+address,30);
-      const body=await readBody(req);const {room,player}=manager.create(body.name);
+      const body=await readBody(req);const {room,player}=manager.create(body.name,createHash('sha256').update(address).digest('hex'));
       return json(res,200,{roomCode:room.code,playerId:player.id,token:player.secret});
     }
     if(req.method==='POST' && url.pathname==='/api/join') {
       rate(res,'join:'+address,180);
-      const body=await readBody(req);const {room,player}=manager.join(body.roomCode,body.name);
+      const body=await readBody(req);const {room,player}=manager.join(body.roomCode,body.name,createHash('sha256').update(address).digest('hex'));
       return json(res,200,{roomCode:room.code,playerId:player.id,token:player.secret});
     }
     if(req.method==='GET' && url.pathname==='/api/state') {
@@ -159,7 +160,7 @@ const server=http.createServer(async(req,res)=>{
     if(req.method==='POST' && url.pathname==='/api/action') {
       const {room,player}=auth(req,url);rate(res,'action:'+player.id,60);const body=await readBody(req);
       switch(body.type){case 'start':manager.start(room,player);break;case 'submit':validateSubmission(room,body);manager.submit(room,player,body.payload||{});break;case 'next':manager.next(room,player);break;case 'kick':{
-        const target=manager.kickLobby(room,player,body.targetId);
+        const target=manager.kick(room,player,body.targetId);
         for(const [stream,who] of streams.get(room.code)||[])if(who.id===target.id)stream.end('event: kicked\ndata: {}\n\n');
         break;
       }case 'leave':manager.leaveLobby(room,player);for(const [stream,who] of streams.get(room.code)||[])if(who.id===player.id)stream.end();break;default:return json(res,400,{error:'INVALID_ACTION',message:'Lệnh không được hỗ trợ.'});}
@@ -170,7 +171,7 @@ const server=http.createServer(async(req,res)=>{
     const known=err instanceof HttpError||err instanceof GameError||err.public===true;
     const code=known?err.code:'INTERNAL_ERROR';
 
-    const status=err instanceof HttpError?err.status:!known?500:code==='UNAUTHORIZED'?401:code==='ROOM_NOT_FOUND'?404:code==='SERVER_BUSY'?503:400;
+    const status=err instanceof HttpError?err.status:!known?500:code==='UNAUTHORIZED'?401:code==='ROOM_NOT_FOUND'?404:code==='ADMISSION_LIMIT'?429:code==='SERVER_BUSY'?503:400;
     if(!known)console.error('Request failed:',err.name);
     return json(res,status,{error:code,message:known?err.message:'Máy chủ gặp lỗi. Vui lòng thử lại.'});
   }

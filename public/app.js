@@ -68,7 +68,7 @@ function recoverSession(error){
  aborter?.abort();session=null;snapshot=null;save();clearStatementDraft();
  try{const url=new URL(location.href);url.searchParams.delete('room');history.replaceState({},'',url.pathname+url.search+url.hash);}catch{}
  statusEl.textContent=kicked?'Đã rời phòng':expiredRoom?'Phòng không còn tồn tại':'Phiên chơi hết hạn';
- app.innerHTML=`<section class="card welcome"><h1>${kicked?'Bạn đã được đưa ra khỏi phòng':expiredRoom?'Phòng đã kết thúc hoặc hết hạn':'Phiên chơi không còn hợp lệ'}.</h1><p>${kicked?'Chủ phòng đã kích bạn khỏi phòng chờ.':expiredRoom?'Phòng này không còn trên máy chủ. Phòng có thể đã bị đóng hoặc hết thời gian lưu.':'Phiên xác thực đã hết hạn hoặc không còn hợp lệ.'} Bạn có thể quay về trang đầu để tạo phòng mới hoặc nhập mã phòng khác.</p><div class="actions"><button id="return-home" class="primary">Tạo hoặc tham gia phòng khác <span aria-hidden="true">→</span></button></div></section>`;
+ app.innerHTML=`<section class="card welcome"><h1>${kicked?'Bạn đã được đưa ra khỏi phòng':expiredRoom?'Phòng đã kết thúc hoặc hết hạn':'Phiên chơi không còn hợp lệ'}.</h1><p>${kicked?'Chủ phòng đã kích bạn khỏi phòng.':expiredRoom?'Phòng này không còn trên máy chủ. Phòng có thể đã bị đóng hoặc hết thời gian lưu.':'Phiên xác thực đã hết hạn hoặc không còn hợp lệ.'} Bạn có thể quay về trang đầu để tạo phòng mới hoặc nhập mã phòng khác.</p><div class="actions"><button id="return-home" class="primary">Tạo hoặc tham gia phòng khác <span aria-hidden="true">→</span></button></div></section>`;
 }
 function handleSessionError(error){if(error?.code==='ROOM_NOT_FOUND'||error?.code==='UNAUTHORIZED'){recoverSession(error);return;}gameError(error);}
 const api=async(path,data,authenticated=false)=>{const headers={'Content-Type':'application/json'};if(authenticated){headers.Authorization=`Bearer ${session.token}`;headers['x-room-code']=session.roomCode;}
@@ -86,7 +86,8 @@ async function connectStream(){if(!session)return;aborter?.abort();aborter=new A
  if(!active.signal.aborted&&session){statusEl.textContent='Đang kết nối lại';setTimeout(()=>{if(session&&aborter===active)connectStream()},delay);delay=Math.min(delay*1.8,9000);}
 }
 function playerList(s){return s.room.players.map(p=>{const g=s.game?.players.find(x=>x.id===p.id);let info=!g?'Trong phòng':g.isAlive?(g.hasLockedAction?'Đã khóa lệnh':g.hasStatement?'Đã phát biểu':'Đang chơi'):'Đã bị loại';if(g?.role&&s.game.phase==='GAME_OVER')info+=` · ${labelRole(g.role)}`;
- const canKick=!s.game&&session?.playerId===s.room.hostId&&p.id!==s.room.hostId;
+ if(p.removed)info='Đã bị kích khỏi phòng';
+ const canKick=session?.playerId===s.room.hostId&&p.id!==s.room.hostId&&!p.removed&&s.game?.phase!=='GAME_OVER';
  return `<div class="person ${g&&!g.isAlive?'dead':''}"><div class="avatar">${escapeHTML(p.name.charAt(0).toUpperCase())}</div><div class="person-info"><b>${escapeHTML(p.name)} ${p.id===s.room.hostId?'★':''} ${p.id===s.game?.myPlayer.id?'(Bạn)':''}</b><small>${escapeHTML(info)}</small></div><span class="pill">${p.online?'● Online':'○ Offline'}</span>${canKick?`<button type="button" class="kick-player" data-kick-player="${escapeHTML(p.id)}" aria-label="Kích ${escapeHTML(p.name)} khỏi phòng">Kích khỏi phòng</button>`:''}</div>`}).join('');}
 function timer(s){if(!s.deadline)return '';const remain=remainingSeconds();return `<span class="countdown" id="clock">${remain}s</span>`;}
 function render(){if(!snapshot||!session)return;const s=snapshot;const me=s.game?.myPlayer;const host=s.room.hostId===(me?.id||session.playerId);const q=(new URLSearchParams(location.search)).get('room');
@@ -166,7 +167,7 @@ app.addEventListener('input',e=>{if(e.target.id==='statement-text'){persistState
 app.addEventListener('click',e=>{
  const button=e.target.closest('[data-kick-player]');if(!button||requesting)return;
  const target=snapshot?.room.players.find(p=>p.id===button.dataset.kickPlayer);
- if(target&&confirm(`Kích ${target.name} khỏi phòng chờ?`))act('kick',{targetId:target.id});
+ if(target&&confirm(`Kích ${target.name} khỏi phòng${snapshot?.game?' và loại khỏi ván hiện tại':' chờ'}?`))act('kick',{targetId:target.id});
 });
 app.addEventListener('change',e=>{if(e.target.id==='stance')persistStatementDraft();});
 app.addEventListener('submit',async e=>{if(e.target.id==='form-create'){e.preventDefault();try{onSession(await api('/api/create',{name:document.getElementById('create-name').value}));}catch(err){gameError(err)}}
