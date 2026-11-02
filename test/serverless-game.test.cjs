@@ -70,6 +70,7 @@ test('private roles, kicks, stale turns and retrying a host next action work acr
   assert.equal((await request('/api/action', { type: 'start' }, host)).status, 200);
   const get = async session => (await request('/api/state?room=' + host.roomCode, null, session)).value;
   let state = await get(host);
+  assert.equal(state.transport, 'poll', 'existing browser sessions can discover the serverless transport');
   assert.equal(state.game.phase, 'DEBATE');
   assert.ok(state.game.myPlayer.role);
   assert.ok(state.game.players.every(player => !Object.hasOwn(player, 'role') && !Object.hasOwn(player, 'coins')));

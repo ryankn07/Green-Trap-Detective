@@ -116,7 +116,7 @@ function createServerlessHandler({ store } = {}) {
           }
           result = { ok: true };
         } else if (path === '/api/state') {
-          result = manager.view(room, player);
+          result = { ...manager.view(room, player), transport: 'poll' };
           if (!freshPresence && room.revision === oldRevision) return reply(res, 200, result);
         } else result = { roomCode: room.code, playerId: player.id, token: player.secret, transport: 'poll' };
         const exists = manager.rooms.has(room.code);

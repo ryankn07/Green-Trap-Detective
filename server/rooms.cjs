@@ -47,8 +47,8 @@ class RoomManager {
   submit(room,player,payload){if(!room.state)fail('NOT_STARTED','Chưa bắt đầu ván.');const state=room.state;if(state.phase==='DEBATE'){const text=String(payload.text??'');room.state=submitStatement(state,player.id,text,payload.stance);}else if(state.phase==='BLIND_ACTION'){room.state=lockAction(state,player.id,payload.action);}else fail('INVALID_PHASE','Không có hành động hợp lệ ở pha này.');this.changed(room);}
   next(room,player){if(!room.state||room.state.phase!=='REVEAL')fail('INVALID_PHASE','Chưa thể sang lượt mới.');if(player.id!==room.hostId)fail('HOST_ONLY','Chỉ chủ phòng được điều khiển lượt mới.');room.state=nextRound(room.state);this.phaseDeadline(room);this.changed(room);}
   kickLobby(room,player,targetId){
-    if(player.id!==room.hostId)fail('HOST_ONLY','Chỉ chủ phòng được kích người chơi.');
-    if(room.state)fail('GAME_STARTED','Chỉ có thể kích người trong phòng chờ.');
+    if(player.id!==room.hostId)fail('HOST_ONLY','Chỉ chủ phòng được kick người chơi.');
+    if(room.state)fail('GAME_STARTED','Chỉ có thể kick người trong phòng chờ.');
     const target=room.players.find(p=>p.id===targetId);
     if(!target||target.id===player.id)fail('INVALID_TARGET','Chọn một người chơi khác trong phòng.');
     room.players=room.players.filter(p=>p.id!==target.id);
@@ -57,7 +57,7 @@ class RoomManager {
   }
   kick(room,player,targetId){
     if(!room.state)return this.kickLobby(room,player,targetId);
-    if(player.id!==room.hostId)fail('HOST_ONLY','Chỉ chủ phòng được kích người chơi.');
+    if(player.id!==room.hostId)fail('HOST_ONLY','Chỉ chủ phòng được kick người chơi.');
     if(room.state.phase==='GAME_OVER')fail('GAME_OVER','Ván đã kết thúc.');
     const index=room.players.findIndex(p=>p.id===targetId&&!p.removed);
     if(index<0||targetId===player.id)fail('INVALID_TARGET','Chọn một người chơi khác trong phòng.');
