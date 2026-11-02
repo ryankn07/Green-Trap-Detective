@@ -74,12 +74,13 @@ if (Array.isArray(projects)) {
 }
 
 if (manifest && manifest.cards && typeof manifest.cards === 'object') {
-  const manifestIds = Object.keys(manifest.cards).sort();
-  if (manifestIds.length !== 25) fail('Expected 25 project entries in the card manifest; found ' + manifestIds.length);
+  const manifestIds = Object.keys(manifest.cards);
+  if (manifestIds.length !== 32) fail('Expected 32 source pages in the Canva card manifest; found ' + manifestIds.length);
   if (Array.isArray(projects)) {
-    const projectIds = projects.map(project => project.id).sort();
-    if (JSON.stringify(manifestIds) !== JSON.stringify(projectIds)) {
-      fail('Project catalog IDs do not match the Canva card manifest');
+    for (const project of projects) {
+      if (!Object.hasOwn(manifest.cards, project.id)) {
+        fail('Project catalog ID is missing from the Canva card manifest: ' + project.id);
+      }
     }
   }
 } else if (manifest) {
