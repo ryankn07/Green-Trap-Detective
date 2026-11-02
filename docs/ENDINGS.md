@@ -46,3 +46,11 @@ Each tree now groups its crown, trunk, branches and root shadow under one local 
 - Syntax, runtime bundle parity, full tests and static build were checked. Screenshots and current command results are retained outside the checkout in the task's outputs directory.
 
 This implementation is local. No commit, push, hosting configuration change or deployment is implied.
+
+## Review screenshots
+
+Standalone viewers, captured without room credentials or private player data:
+
+![Good Ending on desktop](assets/endings/good-desktop.png)
+![Bad Ending on desktop](assets/endings/bad-desktop.png)
+![Good Ending on mobile](assets/endings/good-mobile.png)
