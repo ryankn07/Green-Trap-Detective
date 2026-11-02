@@ -8,6 +8,8 @@
   <a href="https://github.com/ryankn07/ee/issues">Báo lỗi</a>
   &nbsp; · &nbsp;
   <a href="docs/ARCHITECTURE.md">Tìm hiểu kiến trúc</a>
+  &nbsp; · &nbsp;
+  <a href="docs/README.md">Tài liệu</a>
 
   <br><br>
 
@@ -193,8 +195,10 @@ Bộ kiểm thử trình duyệt Playwright là tùy chọn và yêu cầu đã 
 ├── docs/
 │   ├── assets/           # Biểu ngữ thương hiệu và sơ đồ kiến trúc
 │   ├── decisions/        # Hồ sơ quyết định kiến trúc
+│   ├── README.md           # Documentation index
 │   ├── ARCHITECTURE.md
 │   ├── DEVELOPMENT.md
+│   ├── SCALE_AND_SECURITY.md
 │   ├── GLOSSARY.md
 │   └── AI_ASSISTED_DEVELOPMENT.md
 ├── engine/dist/          # Luật chơi, khởi tạo, kiểm tra và phân tách dữ liệu người chơi
@@ -232,7 +236,9 @@ Xem [SCALE_AND_SECURITY.md](docs/SCALE_AND_SECURITY.md) để biết ghi chú tr
 
 | Tài liệu | Nội dung |
 | --- | --- |
+| [Mục lục tài liệu](docs/README.md) | Điểm bắt đầu để tìm toàn bộ hướng dẫn và hồ sơ kỹ thuật |
 | [Kiến trúc](docs/ARCHITECTURE.md) | Thành phần, luồng dữ liệu, ranh giới tin cậy và mô hình mở rộng |
+| [Mở rộng và bảo mật](docs/SCALE_AND_SECURITY.md) | Biện pháp bảo vệ, phép đo tải cục bộ và giới hạn vận hành |
 | [Phát triển](docs/DEVELOPMENT.md) | Cài đặt, cấu hình, câu lệnh và quy trình làm việc cục bộ |
 | [Thuật ngữ](docs/GLOSSARY.md) | Bảng thuật ngữ tiếng Việt |
 | [Các quyết định kiến trúc](docs/decisions/) | Lựa chọn kỹ thuật và những đánh đổi |
@@ -466,7 +472,9 @@ See [SCALE_AND_SECURITY.md](docs/SCALE_AND_SECURITY.md) for the recorded impleme
 
 | Guide | Description |
 | --- | --- |
+| [Documentation index](docs/README.md) | Entry point for all guides and engineering records |
 | [Architecture](docs/ARCHITECTURE.md) | Components, data flow, trust boundaries, and scaling model |
+| [Scale and security](docs/SCALE_AND_SECURITY.md) | Security controls, local load measurements, and operational limits |
 | [Development](docs/DEVELOPMENT.md) | Setup, configuration, commands, and local workflow |
 | [Glossary](docs/GLOSSARY.md) | Vietnamese game terminology |
 | [Architecture decisions](docs/decisions/) | Technical choices and trade-offs |

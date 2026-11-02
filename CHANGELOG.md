@@ -6,6 +6,10 @@ This project follows a lightweight Keep a Changelog structure. Entries describe 
 
 ## [Unreleased]
 
+### Changed
+- Align maintainer instructions with the current Green Trap Detective design and runtime boundaries.
+- Add a linked documentation index and clarify the historical scope of dated implementation reports.
+
 ### Added
 - Repository architecture, development, contribution, security, and AI-assisted development guides.
 - Automated repository checks for JavaScript syntax, project records, and original card assets.
