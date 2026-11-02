@@ -35,6 +35,7 @@
     image.addEventListener("error", () => {
       const failed = image.currentSrc || image.src;
       if (failed.includes("/cards-hd-webp/")) {
+        picture.dataset.cardWebpFailed = "1";
         picture.querySelector('source[type="image/webp"]')?.remove();
         const png = picture.querySelector('source[type="image/png"]');
         const fallback = png?.getAttribute("srcset") || picture.dataset.fallback;
@@ -69,11 +70,11 @@
   }
   function addWebpSource(picture, id, before = null) {
     const src = window.GREEN_TRAP_WEBP_CARDS?.[id];
-    if (!src || picture.querySelector('source[type="image/webp"]')) return;
+    if (!src || picture.dataset.cardWebpFailed || picture.querySelector('source[type="image/webp"]')) return;
     const source = document.createElement("source");
     source.type = "image/webp";
     source.srcset = src;
-    if (before) picture.insertBefore(source, before);
+    if (before?.parentNode === picture) picture.insertBefore(source, before);
     else picture.prepend(source);
   }
   function enhanceExistingCardPictures(root) {

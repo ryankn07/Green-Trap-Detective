@@ -4,17 +4,24 @@
   "installCommand": "node --version",
   "buildCommand": "node scripts/build-web.cjs",
   "outputDirectory": ".web-dist",
+  "regions": ["sin1"],
+  "functions": {
+    "api/game.js": {
+      "maxDuration": 30,
+      "includeFiles": "{server/**,engine/dist/**}"
+    }
+  },
   "rewrites": [
-    {"source": "/api/:path*", "destination": "https://green-trap-detective.onrender.com/api/:path*"},
-    {"source": "/health", "destination": "https://green-trap-detective.onrender.com/health"}
+    { "source": "/api/:path*", "destination": "/api/game?route=:path*" },
+    { "source": "/health", "destination": "/api/game?route=health" }
   ],
   "headers": [
-    {"source": "/(.*)", "headers": [
-      {"key": "X-Content-Type-Options", "value": "nosniff"},
-      {"key": "Referrer-Policy", "value": "no-referrer"},
-      {"key": "X-Frame-Options", "value": "DENY"},
-      {"key": "Content-Security-Policy", "value": "default-src 'self'; connect-src 'self'; img-src 'self' data:; style-src 'self'; script-src 'self'; object-src 'none'; base-uri 'none'; frame-ancestors 'none'"}
+    { "source": "/(.*)", "headers": [
+      { "key": "X-Content-Type-Options", "value": "nosniff" },
+      { "key": "Referrer-Policy", "value": "no-referrer" },
+      { "key": "X-Frame-Options", "value": "DENY" },
+      { "key": "Content-Security-Policy", "value": "default-src 'self'; connect-src 'self'; img-src 'self' data:; style-src 'self'; script-src 'self'; object-src 'none'; base-uri 'none'; frame-ancestors 'none'" }
     ]},
-    {"source": "/api/:path*", "headers": [{"key": "Cache-Control", "value": "no-store"}]}
+    { "source": "/api/:path*", "headers": [{ "key": "Cache-Control", "value": "no-store" }] }
   ]
 }
