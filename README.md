@@ -136,7 +136,7 @@ Máy chủ quản lý đồng hồ của từng giai đoạn, thời hạn, vi�
 | Giao diện | JavaScript thuần, HTML và CSS |
 | Cập nhật thời gian thực | Server-Sent Events (SSE) |
 | Luật trò chơi | Các mô-đun JavaScript trong `engine/dist/` |
-| Lưu trữ | Ảnh chụp trạng thái JSON đã được kiểm tra trên hệ thống tệp cục bộ |
+| Lưu trữ | Ảnh chụp trạng thái JSON cục bộ hoặc kho Supabase riêng có kiểm soát quyền ghi |
 | Giao diện tĩnh | Sản phẩm dựng cho Vercel trong `.web-dist/` |
 | Kiểm thử tự động | Bộ kiểm thử tích hợp sẵn của Node.js |
 | Tích hợp liên tục | GitHub Actions trên Node.js 20 và 22 |
@@ -161,7 +161,7 @@ npm start
 
 Mở [http://localhost:3000](http://localhost:3000).
 
-Cấu hình chạy cục bộ mặc định không yêu cầu tệp môi trường. Quy trình khởi động sẽ kiểm tra gói tương thích và chỉ khôi phục những tệp chạy còn thiếu.
+Cấu hình lưu phòng bền vững trên hosting được hướng dẫn tại [DURABLE_ROOMS.md](docs/DURABLE_ROOMS.md). Cấu hình chạy cục bộ mặc định không yêu cầu tệp môi trường. Quy trình khởi động sẽ kiểm tra gói tương thích và chỉ khôi phục những tệp chạy còn thiếu.
 
 ### Kiểm tra chất lượng
 
@@ -370,7 +370,7 @@ Read [the architecture guide](docs/ARCHITECTURE.md) for module responsibilities,
 | Frontend | Vanilla JavaScript, HTML, and CSS |
 | Realtime | Server-sent events (SSE) |
 | Game logic | JavaScript modules in `engine/dist/` |
-| Persistence | Validated JSON snapshots on the local filesystem |
+| Persistence | Validated local JSON snapshots or a private, fenced Supabase snapshot |
 | Static frontend | Vercel build output in `.web-dist/` |
 | Automated tests | Node.js built-in test runner |
 | CI | GitHub Actions on Node.js 20 and 22 |

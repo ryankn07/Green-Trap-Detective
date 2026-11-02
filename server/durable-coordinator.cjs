@@ -1,8 +1,8 @@
 'use strict';
 
 class DurableCoordinator {
-  constructor({ capture, restore, commit, onCommitted = () => {}, batchMs = 16, maxPending = 2000, failClosed = false }) {
-    Object.assign(this, { capture, restore, commit, onCommitted, batchMs, maxPending, failClosed });
+  constructor({ capture, restore, commit, verify = async () => {}, onUnavailable = () => {}, onCommitted = () => {}, batchMs = 16, maxPending = 2000, failClosed = false }) {
+    Object.assign(this, { capture, restore, commit, verify, onUnavailable, onCommitted, batchMs, maxPending, failClosed });
     this.unavailable = false;
     this.queue = [];
     this.running = false;
@@ -11,7 +11,7 @@ class DurableCoordinator {
   }
 
   run(fn) {
-    if (this.unavailable) return Promise.reject(new Error('Remote storage unavailable'));
+    if (this.unavailable) return Promise.reject(this.unavailableError());
     if (this.queue.length >= this.maxPending) {
       const error = new Error('Server is busy. Please try again.');
       error.code = 'SERVER_BUSY';
@@ -23,6 +23,8 @@ class DurableCoordinator {
   }
 
   read(fn) { return this.run(fn); }
+
+  unavailableError() { const error = new Error('Remote storage unavailable'); error.code = 'SERVER_BUSY'; error.public = true; return error; }
 
   markChanged(room) {
     if (!this.current) throw new Error('markChanged must be called inside a queued callback');
@@ -41,7 +43,7 @@ class DurableCoordinator {
     this.running = true;
     const tasks = this.queue.splice(0);
     if (this.unavailable) {
-      for (const task of tasks) task.reject(new Error('Remote storage unavailable'));
+      for (const task of tasks) task.reject(this.unavailableError());
       this.running = false;
       this.schedule();
       return;
@@ -58,14 +60,16 @@ class DurableCoordinator {
         } catch (error) { task.error = error; }
       }
       this.current = null;
-      if (batch.dirty) {
-        try { await this.commit(); }
+      {
+        try { if (batch.dirty) await this.commit(); else await this.verify(); }
         catch (error) {
-          if (this.failClosed) this.unavailable = true;
+          if (this.failClosed) { this.unavailable = true; try { this.onUnavailable(error); } catch {} }
           try { await this.restore(checkpoint); } catch (restoreError) { error = restoreError; }
-          for (const task of tasks) task.reject(task.error || error);
+          for (const task of tasks) task.reject(this.failClosed ? this.unavailableError() : (task.error || error));
           return;
         }
+      }
+      if (batch.dirty) {
         try { await this.onCommitted(batch.rooms); }
         catch (error) {
           for (const task of tasks) task.reject(task.error || error);

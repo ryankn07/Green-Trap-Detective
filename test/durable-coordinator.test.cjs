@@ -67,3 +67,8 @@ test('ambiguous remote commit failure closes subsequent reads and writes', async
   await assert.rejects(c.read(() => state), /unavailable/i);
   await assert.rejects(c.run(() => {state = 2; c.markChanged();}), /unavailable/i);
 });
+test('read-only batches verify ownership before serving and fail closed',async()=>{
+ let checks=0,closed=0;
+ const c=new DurableCoordinator({batchMs:0,failClosed:true,capture:()=>0,restore:()=>{},commit:()=>{},verify:async()=>{checks++;throw Error('fenced');},onUnavailable:()=>{closed++;}});
+ await assert.rejects(c.read(()=>42));assert.equal(checks,1);assert.equal(closed,1);await assert.rejects(c.read(()=>42),/unavailable/i);
+});
