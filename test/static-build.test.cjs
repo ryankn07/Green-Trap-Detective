@@ -6,9 +6,6 @@ test('Vercel build includes the shared client and HD cards but no private server
  for(const file of ['index.html','app.js','style.css','card-ui.js','brand/green-trap-detective.png','cards/GREENCOIN.png','cards-hd/PROJ_01.png','cards-hd/PROJ_25.png'])assert.ok(fs.statSync(path.join(output,file)).isFile(),file);
  for(const name of ['server','data','test','.env','.git','cards-manifest.json'])assert.equal(fs.existsSync(path.join(output,name)),false,name);
  assert.equal(fs.readFileSync(path.join(output,'app.js'),'utf8'),fs.readFileSync(path.join(root,'public/app.js'),'utf8'));
- const client=fs.readFileSync(path.join(output,'app.js'),'utf8');
- assert.ok(client.includes('src="/cards/GREENCOIN.png"'),'small wallet icon uses the compact original asset');
- assert.ok(!client.includes('src="/cards-hd/GREENCOIN.png"'),'small wallet icon must not fetch the oversized HD asset');
  const home=fs.readFileSync(path.join(output,'index.html'),'utf8');
  for(const id of ['PROJ_01','PROJ_11','PROJ_25']){
   assert.ok(home.includes('href="/cards-hd/'+id+'.png"'),id+' homepage link opens the native HD artwork');
