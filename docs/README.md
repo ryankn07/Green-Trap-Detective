@@ -12,7 +12,7 @@ This page is the entry point for repository documentation.
 | docs/DEVELOPMENT.md | Local setup, configuration, tests, builds, and contribution workflow |
 | CONTRIBUTING.md | Branch, commit, review, and pull-request process |
 | SECURITY.md | How to report a security concern |
-| docs/AI_ASSISTED_DEVELOPMENT.md | Transparent and reviewable AI-assisted development practices |
+| docs/AI_ASSISTED_DEVELOPMENT.md | Transparent and reviewable AI-assisted development practices |\n| docs/decisions/ | Architecture decision records and technical trade-offs |
 
 ## Engineering references
 
