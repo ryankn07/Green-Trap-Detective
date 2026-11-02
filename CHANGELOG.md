@@ -16,6 +16,7 @@ This project follows a lightweight Keep a Changelog structure. Entries describe 
 - Document the legacy frontend files retained by the runtime recovery bundle.
 
 ### Added
+- Winner-based Good/Bad Ending videos, an animated final screen, full last-round reveal and QR links beside original project cards.
 - Repository architecture, development, contribution, security, and AI-assisted development guides.
 - Automated repository checks for JavaScript syntax, project records, and original card assets.
 - Pull request and issue templates, plus consistent editor and Git attributes.

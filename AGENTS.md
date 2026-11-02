@@ -13,6 +13,7 @@ Read the current design record that matches the surface being changed:
 - `docs/UI_REDESIGN.md` for the entry page and overall visual direction.
 - `docs/PC_GAME_REDESIGN.md` for the current PC gameplay layout.
 - `docs/BRAND_AND_CARD_FINISH.md` and `docs/CARD_HD_FIX.md` for brand treatment and original card assets.
+- `docs/ENDINGS.md` for winner-based videos, ending-only presentation and card QR links.
 
 `docs/UI_REFACTOR_BRIEF.md` and `docs/LOBBY_REDESIGN.md` are historical task records. Their older layout and capacity assumptions are superseded where they conflict with later owner-approved work. Always verify current behavior against source code and tests.
 
@@ -39,6 +40,8 @@ Read the current design record that matches the surface being changed:
 - `ui/index.html`: page shell and script/style loading.
 - `ui/style.css`: current visual system and responsive styling.
 - `ui/card-ui.js`: Canva-card integration, private role-card presentation, and current DOM/layout enhancement logic.
+- `ui/ending-ui.js`, `ui/ending.css`, `ui/ending.html`: final results, supplied films and the standalone ending viewer.
+- `server/ending-media.cjs`: exact media allowlist, streaming and byte-range handling.
 - `ui/cards/PROJ_01.png` … `PROJ_25.png`: original project-card images.
 - `ui/cards-hd/`: canonical native-resolution PNG artwork; never modify it as part of WebP conversion.
 - `ui/cards-hd-webp/`: generated pixel-exact WebP derivatives; retain the PNG fallback.

@@ -5,6 +5,10 @@ let snapshotReceivedAt=0,peopleOpen=false;
 const phaseSeconds={DEBATE:120,BLIND_ACTION:60,REVEAL:25};
 function acceptSnapshot(value){
  if(snapshot&&snapshot.room.code===value.room.code&&snapshot.room.revision>value.room.revision)return;
+ // Presence updates after game over must not recreate or restart the film.
+ if(snapshot?.game?.phase==='GAME_OVER'&&value.game?.phase==='GAME_OVER'&&snapshot.game.gameId===value.game.gameId&&snapshot.game.outcome?.winner===value.game.outcome?.winner&&app.querySelector('.gi-ending-screen')){
+  snapshot=value;snapshotReceivedAt=performance.now();const people=app.querySelector('.ending-people');if(people)people.innerHTML=playerList(value);return;
+ }
  const scrolls=Array.from(app.querySelectorAll('.people,#players-panel')).map(el=>({key:el.id||'player-list',left:el.scrollLeft,top:el.scrollTop,focused:document.activeElement===el}));
  const choiceOpen=app.querySelector('#statement-choice')?.open,choiceFocus=document.activeElement?.id,drawerFocused=peopleOpen&&app.querySelector('#players-panel')?.contains(document.activeElement);
  captureStatementDraft();snapshot=value;snapshotReceivedAt=performance.now();render();
@@ -64,7 +68,7 @@ function clearStatementDraft(){statementDraft=null;try{sessionStorage.removeItem
 function recoverSession(error){
  if(!session)return;
  const expiredRoom=error.code==='ROOM_NOT_FOUND',kicked=error.code==='KICKED';
- peopleOpen=false;document.body.classList.remove('gi-drawer-open','gi-gameplay');
+ peopleOpen=false;document.body.classList.remove('gi-drawer-open','gi-gameplay','gi-ending');
  aborter?.abort();session=null;snapshot=null;save();clearStatementDraft();
  try{const url=new URL(location.href);url.searchParams.delete('room');history.replaceState({},'',url.pathname+url.search+url.hash);}catch{}
  statusEl.textContent=kicked?'Đã rời phòng':expiredRoom?'Phòng không còn tồn tại':'Phiên chơi hết hạn';
@@ -109,8 +113,13 @@ function playerList(s){return s.room.players.map(p=>{const g=s.game?.players.fin
 function timer(s){if(!s.deadline)return '';const remain=remainingSeconds();return `<span class="countdown" id="clock">${remain}s</span>`;}
 function render(){if(!snapshot||!session)return;const s=snapshot;const me=s.game?.myPlayer;const host=s.room.hostId===(me?.id||session.playerId);const q=(new URLSearchParams(location.search)).get('room');
  document.body.classList.toggle('gi-gameplay',Boolean(s.game));
+ document.body.classList.toggle('gi-ending',s.game?.phase==='GAME_OVER');
  if(!s.game){clearStatementDraft();app.innerHTML=`<section class="grid lobby"><div class="column"><div class="card lobby-invite"><span class="eyebrow">Phòng chờ</span><h1>Phòng ${escapeHTML(s.room.code)}</h1><p>Mời bạn bè vào phòng trước khi bắt đầu ván.</p><div class="code mono">${escapeHTML(s.room.code)}</div><div class="actions"><button id="copy" class="primary">Sao chép link mời</button>${host?`<button id="start">Bắt đầu ván</button>`:'<span class="note">Đợi chủ phòng bắt đầu…</span>'}</div></div><div class="card lobby-members"><h2>Người chơi (${s.room.players.length}${s.room.maxPlayers?' / '+s.room.maxPlayers:''})</h2><div class="people" tabindex="0" role="region" aria-label="Danh sách thành viên">${playerList(s)}</div><div class="lobby-table-art" aria-hidden="true"><svg class="lobby-orbit" viewBox="0 0 800 300" fill="none"><ellipse cx="400" cy="156" rx="340" ry="104"/><ellipse cx="400" cy="156" rx="286" ry="138" stroke-dasharray="3 10"/><path d="M56 186c20-32 31-65 36-102m-15 58c-33-4-39-27-38-45 27 4 40 19 38 45Zm9-29c26-3 41-23 40-46-25 5-41 21-40 46ZM718 177c-1-34 12-63 33-88m-27 54c-24-5-31-24-29-43 23 4 32 20 29 43Zm9-24c27 1 43-15 48-35-26-1-44 12-48 35Z"/></svg><div class="lobby-card gi-card-preview"><span class="gi-card-image-viewport"><picture><source srcset="/cards-hd/PROJ_11.png"><img src="/cards/PROJ_11.png" alt="" loading="lazy" decoding="async"></picture></span></div><div class="lobby-card gi-card-preview"><span class="gi-card-image-viewport"><picture><source srcset="/cards-hd/PROJ_01.png"><img src="/cards/PROJ_01.png" alt="" loading="lazy" decoding="async"></picture></span></div><div class="lobby-card gi-card-preview"><span class="gi-card-image-viewport"><picture><source srcset="/cards-hd/PROJ_25.png"><img src="/cards/PROJ_25.png" alt="" loading="lazy" decoding="async"></picture></span></div></div></div></div><div class="column"><div class="card lobby-rules"><h2>Cách chơi</h2><p>Mỗi người được chia phe bí mật và nhận 2 xu. Thảo luận 10 dự án môi trường; đầu tư 1 xu hoặc giữ lại, dùng ngân hàng để kiểm chứng (3 xu) hoặc góp trục xuất (đủ 5 xu).</p><button id="leave" >Rời phòng</button></div></div></section>`;return;}
  const g=s.game;const latest=g.history.at(-1);let content='';
+ if(g.phase==='GAME_OVER'&&window.GreenTrapEnding){
+  peopleOpen=false;document.body.classList.remove('gi-drawer-open');clearStatementDraft();actionDraft=null;
+  app.innerHTML=window.GreenTrapEnding.render(s,playerList(s));window.GreenTrapEnding.enhance(app);document.getElementById('ending-title')?.focus({preventScroll:true});return;
+ }
  if(g.phase==='DEBATE'){
  content=`<p>Nêu một lý do về việc nên hoặc không nên triển khai dự án. Mọi ý kiến được công khai.</p>${!me.isAlive?'<p class="note">Bạn đã bị loại và đang theo dõi trận.</p>':g.players.find(p=>p.id===me.id)?.hasStatement?'<div class="note">Đã gửi ý kiến. Đợi các người chơi khác…</div>':`<form id="statement"><label class="gi-stance-select">Quan điểm<select id="stance"><option value="UNSURE">Chưa chắc chắn</option><option value="SUPPORT">Ủng hộ</option><option value="OPPOSE">Phản đối</option></select></label><label>Lý do<textarea id="statement-text" maxlength="500" required placeholder="Ví dụ: dự án cần làm rõ tác động tới hệ sinh thái..."></textarea></label><span class="gi-statement-counter" id="statement-counter">0 / 500</span><button type="submit" class="primary">Gửi ý kiến công khai</button></form><dialog id="statement-choice" class="gi-statement-choice" aria-labelledby="statement-choice-title"><h2 id="statement-choice-title">Quan điểm của bạn?</h2><div class="gi-stance-choices" role="group" aria-label="Chọn quan điểm"><button type="button" data-stance="SUPPORT" aria-pressed="false">Ủng hộ</button><button type="button" data-stance="UNSURE" aria-pressed="true">Chưa chắc</button><button type="button" data-stance="OPPOSE" aria-pressed="false">Phản đối</button></div><div class="gi-choice-actions"><button type="button" id="edit-statement">Sửa nhận định</button><button type="button" id="confirm-statement" class="primary">Gửi nhận định</button></div></dialog>`}`;
  }else if(g.phase==='BLIND_ACTION'){

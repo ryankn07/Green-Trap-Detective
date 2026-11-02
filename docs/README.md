@@ -31,6 +31,7 @@ These documents preserve the scope, decisions, and test evidence from specific i
 - [Lobby recovery and load test](LOBBY_KICK_AND_SOAK.md)
 - [Brand and card finish](BRAND_AND_CARD_FINISH.md)
 - [Native HD card images](CARD_HD_FIX.md)
+- [Video endings and card QR links](ENDINGS.md)
 - [PC gameplay redesign](PC_GAME_REDESIGN.md)
 - [Entry-page redesign](UI_REDESIGN.md)
 
