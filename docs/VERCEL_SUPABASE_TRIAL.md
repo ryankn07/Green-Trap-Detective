@@ -1,5 +1,19 @@
 # Vercel + Supabase trial
 
+## Production cutover — 2026-11-02
+
+This section supersedes the earlier Preview-only status below. The owner explicitly requested moving the whole backend off Render and approved enabling the three existing Supabase/enable environment variables for Production. Production now serves https://greentrap.vercel.app/ from Vercel Functions in Singapore; Supabase `green_trap_trial` stores rooms, receipts and rate buckets. The schema's historical name does not mean the public site is still a Preview. Server-only secrets remain hidden; deployment protection on Preview remains unchanged.
+
+Deployed commit: `c6ac01abfeb7e3dd771bdc36ef66b4c00cea2578`. Production deployment: `dpl_AVnsFCyeRc8nBYPEubeQX9JSn7WC`, project `green-trap-backend-trial`. Both Render services (`green-trap-detective`, `green-impact-legacy`) reported zero active rooms before cutover and are suspended, retaining their configuration for recovery. Existing Supabase legacy snapshot data was not deleted or rewritten. No active room transfer was necessary.
+
+The updated candidate passed 97 tests with Chrome, zero failures/skips, repository check, bundle verification and frontend build. Public production health returned HTTP 200 with backend `vercel-supabase-trial`. A disposable three-session HTTP smoke verified create/join, private room projection, polling, rejected non-host kick, successful host kick, revoked guest HTTP 401, and final lobby HTTP 404 after cleanup. Individual request timings were 159–450 ms in this small run; these are samples, not a capacity or latency percentile guarantee. Production load/egress remains unmeasured.
+
+Saved browser sessions discover the polling transport from the new state response, while standalone Node/SSE behavior remains compatible. Mobile CSS/layout, engine rules, original artwork, approved coin and ending videos are preserved. Desktop redesign remains separate and unreleased.
+
+Recovery: retain the previous deployment `dpl_3HiKPS6A8WFxXzArhmxtbk3a2Uk9` as historical reference. Do not simply resume Render after new rooms are created: its singleton storage is independent of the new per-room store. A rollback must either drain new rooms or deliberately transfer them before switching routing, to avoid splitting room state.
+
+## Historical Preview record
+
 Owner-approved isolated preview to remove the Render dependency. Baseline: `ad4fd3fdcc6ee316bd8e231444066de8e59d7835`; branch `codex/vercel-supabase-prototype`. No changes to engine, original artwork, CSS/mobile layout, or ending videos (owned by another Codex).
 
 ## Architecture and public behavior
