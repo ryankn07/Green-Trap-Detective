@@ -27,7 +27,7 @@ async function run(config={}){
  const http=[],confirm=[],clients=[];let base=o.baseURL,child,dir,stopping=false,start,paused=0;
  const fail=code=>{if(!r.failures.includes(code))r.failures.push(code);};
  async function request(route,body,session){const begin=performance.now();try{
- const res=await fetch(base+route,{method:body?'POST':'GET',headers:{...(body?{'Content-Type':'application/json'}:{}),...(session?{Authorization:'Bearer '+session.token,'x-room-code':session.roomCode}:{})},body:body?JSON.stringify(body):undefined,signal:AbortSignal.timeout(o.timeout)});
+ const res=await (o.fetch||fetch)(base+route,{method:body?'POST':'GET',headers:{...(body?{'Content-Type':'application/json'}:{}),...(session?{Authorization:'Bearer '+session.token,'x-room-code':session.roomCode}:{})},body:body?JSON.stringify(body):undefined,signal:AbortSignal.timeout(o.timeout)});
  if(!res.ok)throw Error('HTTP_'+res.status);return await res.json();
  }finally{http.push(performance.now()-begin);}}
  async function wait(check,code){const until=performance.now()+o.timeout;while(!check()){if(performance.now()>until||r.failures.length)throw Error(code);await delay(10);}}
@@ -75,7 +75,6 @@ async function run(config={}){
  r.restarts++;paused+=performance.now()-pauseStart;
  }
  if(o.testFault==='stream')for(const c of clients)c.controller.abort();
- if(o.testFault==='health')throw Error('HEALTH_FAILURE');
  const health=await request('/health');r.healthChecks++;if(health.status!=='ok')throw Error('HEALTH_FAILURE');
  for(const c of clients)if(!c.live||performance.now()-c.lastByte>20000)throw Error('STREAM_NOT_LIVE');
  await Promise.all(clients.map(act));

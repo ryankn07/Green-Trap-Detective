@@ -20,6 +20,8 @@ test('real child survives restart; steady duration excludes setup; report redact
  assert.ok(!/token|Bearer|Nhận định|myPlayer|secret/.test(JSON.stringify(r)));
 });
 for(const fault of ['stream','health'])test(fault+' failure cannot false-pass',{timeout:15000},async()=>{
- const r=await run({duration:1,sessions:3,interval:50,timeout:500,backoff:10,retries:1,testFault:fault});
+ let health=0;
+ const transport=async(url,init)=>fault==='health'&&url.endsWith('/health')&&++health>1?Response.json({status:'unhealthy'}):fetch(url,init);
+ const r=await run({duration:1,sessions:3,interval:50,timeout:500,backoff:10,retries:1,testFault:fault==='stream'?fault:undefined,fetch:transport});
  assert.equal(r.ok,false);assert.ok(r.failures.length>0);
 });
