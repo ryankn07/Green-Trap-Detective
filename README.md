@@ -1,107 +1,137 @@
-# GREEN TRAP DETECTIVE #
+# GREEN TRAP DETECTIVE
 
-GREEN TRAP DETECTIVE is a browser-based Vietnamese multiplayer social-deduction game about environmental projects. Players discuss a project, privately choose an investment and optional bank action, then review the round result.
+[![CI](https://github.com/ryankn07/ee/actions/workflows/runtime-recovery-checks.yml/badge.svg?branch=main)](https://github.com/ryankn07/ee/actions/workflows/runtime-recovery-checks.yml)
+![Node.js](https://img.shields.io/badge/Node.js-20%2B-339933?logo=node.js&logoColor=white)
+![No runtime dependencies](https://img.shields.io/badge/runtime-dependency--free-2f6f4e)
 
-## Stack
+**GREEN TRAP DETECTIVE** is a Vietnamese-language, browser-based multiplayer social-deduction game about environmental projects. Players examine one project at a time, discuss its merits, make private decisions, and discover the round outcome.
 
-- Node.js 20+
-- Built-in Node HTTP server
-- Vanilla HTML, CSS, and JavaScript
-- Server-sent events for live room updates
+The project is built with a deliberately lightweight stack: Node.js, the built-in HTTP server, vanilla JavaScript, HTML, CSS, and server-sent events.
 
-## Run locally
+## Project highlights
 
-Install Node.js 20 or later, clone the repository, then run:
+- Room-based multiplayer sessions with live server-sent event (SSE) updates.
+- A role-based social-deduction game with public statements and private actions.
+- Server-owned game phases, deadlines, validation, and round resolution.
+- Viewer-specific state projection to protect roles, wallets, locked actions, and inspection results.
+- 25 original project records and their original Canva card artwork; 10 projects are selected for a match.
+- File-based room snapshot recovery with atomic replacement.
+- Responsive browser client and a static frontend build.
+- Node.js automated tests for gameplay, room management, HTTP security, persistence, assets, and runtime-bundle integrity.
 
-```bash
+## Technology
+
+| Layer | Technology |
+| --- | --- |
+| Runtime | Node.js 20+ |
+| HTTP server | Node.js built-in HTTP module |
+| Browser client | Vanilla JavaScript, HTML, CSS |
+| Realtime transport | Server-sent events (SSE) |
+| Game logic | JavaScript modules under engine/dist/ |
+| Persistence | Validated JSON snapshots on the local filesystem |
+| Static deployment | Vercel build output in .web-dist/ |
+| Backend deployment | Node.js service; current Vercel rewrites are defined in vercel.json |
+| Automated tests | Node.js built-in test runner |
+| CI | GitHub Actions |
+
+The current runtime has no third-party npm dependencies.
+
+## Quick start
+
+### Requirements
+
+- Node.js 20 or later. The recommended local version is in .nvmrc.
+- Git.
+
+### Run locally
+
+~~~bash
+git clone https://github.com/ryankn07/ee.git
+cd ee
+npm ci
 npm start
-```
+~~~
 
-The server uses port `3000` by default and respects the `PORT` environment variable.
+Open http://localhost:3000.
 
-The `prestart` hook runs `scripts/restore-runtime-bundle.cjs` before the server starts. It restores only missing runtime files from the checked-in split bundle; it does not overwrite existing source files. To validate the bundle without writing files, run:
+No environment file is required for the default local setup. The start lifecycle checks the compatibility bundle and restores only missing runtime files; existing source files are not overwritten.
 
-```bash
-node scripts/restore-runtime-bundle.cjs --check
-```
+## Quality checks
 
-## Main areas
+Run these commands before submitting a change:
 
-- `engine/dist/` — game rules, setup, and per-player view projection.
-- `engine/dist/data/projects.json` — all 25 original project records; the engine selects 10 per game.
-- `server/` — room management, authentication, timers, HTTP routes, and live updates.
-- `public/app.js` — browser client and session recovery.
-- `ui/` — page shell, styles, Canva-card integration, card manifest, and original card images.
-- `ui/cards/` — original project and role card PNG assets.
-- `runtime.bundle.part01` … `runtime.bundle.part03` — source bundle used only to recover missing runtime files.
+| Command | Purpose |
+| --- | --- |
+| npm run check | Check JavaScript syntax, project records, manifest consistency, and required card assets |
+| npm test | Run the automated Node.js test suite |
+| npm run bundle:check | Verify that the compatibility archive matches its source files |
+| npm run build:web | Build the static frontend into .web-dist/ |
+| npm run bundle:pack | Regenerate the compatibility archive after changing bundled source files or the project catalog |
 
-After changing a bundled source or the catalog, run `npm run bundle:pack`.
-The test suite checks that the archive matches the current source, so a legacy
-Render build command cannot unpack an older client over a newer one. For new
-hosting configurations use `npm install` as the build command and `npm start`
-as the start command; extraction is only a compatibility path.
+GitHub Actions runs the quality gates on Node.js 20 and 22 for pushes and pull requests targeting main.
 
-## Room recovery
+The browser regression suite is optional and requires an existing Playwright installation. Set PLAYWRIGHT_MODULE_PATH to its module path and, if needed, BROWSER_CHANNEL to the installed browser. If Playwright is unavailable, browser tests are reported as skipped; they are not counted as executed browser coverage.
 
-`npm start` saves room snapshots to `data/rooms.json`. Set `ROOM_STORE_PATH` to
-an absolute filename to use a different location. Writes use an atomic rename;
-snapshots preserve sessions, phase, private locked choices and game history.
-Connections are marked offline on restart and reconnect using the same token.
-Snapshots contain private game data and session credentials; keep them outside
-public assets and Git. The store supports one service process only.
+## Repository map
 
-Local files survive a process restart only while that filesystem survives.
-Render's free filesystem does **not** retain them across redeploy/restart.
-For production recovery mount persistent storage and set, for example,
-`ROOM_STORE_PATH=/var/data/green-impact/rooms.json`. This repository does not
-provision a paid plan or disk automatically.
+~~~text
+.
+├── .github/
+│   ├── ISSUE_TEMPLATE/       # Structured bug and feature reports
+│   ├── workflows/            # CI and reviewed asset-import automation
+│   └── PULL_REQUEST_TEMPLATE.md
+├── docs/                     # Architecture, development, and project records
+├── engine/dist/              # Game rules, setup, validation, and player projection
+├── public/                   # Browser application runtime
+├── scripts/                  # Checks, build, asset import, and bundle utilities
+├── server/                   # HTTP API, rooms, authentication, SSE, persistence
+├── test/                     # Unit, integration, security, and regression tests
+├── ui/
+│   ├── brand/                # Brand assets
+│   ├── cards/                # Original card artwork
+│   ├── cards-hd/             # High-resolution card artwork
+│   ├── fonts/                # Local font assets and licenses
+│   ├── index.html            # Frontend page shell
+│   ├── style.css             # Frontend styles
+│   └── card-ui.js            # Card and role-art integration
+├── runtime.bundle.part*      # Split compatibility archive
+├── AGENTS.md                 # Repository-specific engineering rules
+├── CONTRIBUTING.md           # Contribution workflow
+├── SECURITY.md               # Vulnerability reporting policy
+└── README.md
+~~~
 
-The original plan's video ending assets have not been provided. The game shows
-the final result without a fabricated video or placeholder link.
+For a guided tour of each subsystem, see [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md). For local setup and operational configuration, see [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md). The full documentation index is in [docs/README.md](docs/README.md).
 
-## Gameplay phases
+## Runtime configuration
 
-`DEBATE → BLIND_ACTION → REVEAL → next round`, or `REVEAL → GAME_OVER` when the engine ends the game. Inspection and expulsion are actions inside `BLIND_ACTION`, not separate phases.
+| Variable | Default | Description |
+| --- | --- | --- |
+| PORT | 3000 | HTTP listening port |
+| ROOM_STORE_PATH | data/rooms.json | Room snapshot file |
+| ROOM_MAX_PLAYERS | Unset | Optional room-specific player limit; integer of at least 3 |
+| PUBLIC_ORIGIN | Unset | Canonical allowed origin for write requests |
+| PUBLIC_ORIGINS | Unset | Comma-separated list of exact allowed origins |
+| TRUSTED_PROXY_IPS | Unset | Exact proxy IP addresses trusted for client-address resolution |
 
-## Tests
+See [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md) before changing production configuration. In particular, only trust forwarded client-address headers from verified proxy addresses.
 
-Run the built-in Node test suite:
+## Architecture and security
 
-```bash
-npm test
-```
+The game engine owns rules and state transitions. The room manager coordinates sessions and deadlines. The HTTP layer authenticates requests and validates input. The browser receives a projection created for the authenticated player.
 
-The HTTP/runtime tests run with Node alone. Browser regression tests in
-`test/browser.test.cjs` are optional and require an existing Playwright installation;
-no browser or npm dependency is installed automatically. Set `PLAYWRIGHT_MODULE_PATH`
-to that installation's module path, and optionally `BROWSER_CHANNEL` (defaults to
-`msedge`), before running `npm test`. Without that variable, browser tests are
-reported as skipped. With it, they cover real DOM interactions, private choices,
-server-clock timing, mobile/tablet/desktop widths, expired-session recovery and
-the ten-round flow against a local server. Set `BROWSER_ARTIFACT_DIR` to an optional
-output directory to save screenshots; otherwise tests do not write screenshots.
+The UI is not a security boundary. Private information must be excluded by the server before a snapshot is sent. Room snapshots contain session credentials and private game state, so they must remain outside public directories and version control.
 
-Gameplay is rendered directly as four functional areas: players, the original
-project card, personal actions, and public statements. On mobile the player list
-is opened with the council button; the project and statement feed remain in the
-page flow. Original Canva images are displayed whole, with accessible text if an
-image cannot load.
+The current persistence and rate-limit model is **single-process**. Local snapshots can survive a process restart only when the backing filesystem survives. Multiple service replicas do not share room state, SSE subscriptions, or in-memory limits. These constraints are documented in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) and [docs/SCALE_AND_SECURITY.md](docs/SCALE_AND_SECURITY.md).
 
-## Working with Codex
+## Contributing
 
-- Read [AGENTS.md](./AGENTS.md) before making repository changes.
-- For the gameplay UI, follow [docs/UI_REFACTOR_BRIEF.md](./docs/UI_REFACTOR_BRIEF.md).
-- The engine and server define the rules and private-information boundary. The UI must reflect them; do not change gameplay to fit a mockup.
+Read [CONTRIBUTING.md](CONTRIBUTING.md) and [AGENTS.md](AGENTS.md) before making changes. Use focused branches and small commits, run the relevant checks, and open a pull request with verification evidence.
 
+## AI-assisted development
 
-## Larger rooms and baseline protection
+AI tools may assist with exploration, implementation suggestions, documentation, and test ideas. Changes still require human review and verification. The project documents its approach and suggested disclosure in [docs/AI_ASSISTED_DEVELOPMENT.md](docs/AI_ASSISTED_DEVELOPMENT.md).
 
-There is no hardcoded 8- or 12-player maximum. Groups larger than 10 are supported; the existing minimum to start is 3. Set optional `ROOM_MAX_PLAYERS` (integer >= 3) only when an operator wants a per-room policy. Without it, the UI shows the actual count without a fabricated maximum. Process-wide safety budgets still apply. PC member boxes scroll horizontally; mobile member panels scroll vertically.
+## License
 
-HTTP writes accept JSON objects up to 8000 bytes. Authenticated submissions include the current game/round/phase to reject stale commands. API and session rate limits return 429 with Retry-After. Error responses conceal unexpected internal details; room mutations roll back if persistence fails. The engine still validates wallets, targets, final locks and host permissions.
-
-Set `PUBLIC_ORIGIN` to the site's exact canonical origin when deploying behind a proxy. Forwarded client IP headers are ignored unless the socket and intermediate proxy addresses are explicitly configured in `TRUSTED_PROXY_IPS` (comma-separated exact addresses). Do not enable trust blindly or use client-supplied forwarded headers as identity. With no proxy trust, limits use socket IP and authenticated player sessions. Validate proxy behavior on the actual host before changing this setting.
-
-Per process: 100 rooms, 1200 roster slots / SSE subscriptions, 1500 sockets, 10000 rate-limit buckets. These are safety ceilings, not measured supported-host capacities. Single-process file persistence and in-memory limits do not provide distributed DDoS protection or shared state across replicas. A public room code is an invitation, not a secret access-control mechanism. See [implementation evidence](docs/SCALE_AND_SECURITY.md).
-
-Run the opt-in local load check with `node scripts/load-smoke.cjs`; `LOAD_SIZES` accepts pairs such as `[[1,25],[1,50]]`, and `LOAD_REPORT` can name a JSON output path. It uses temporary persistence, real HTTP/SSE, accelerated phase deadlines and no browser rendering. Never target a live service with this harness.
+No open-source license is currently included. Public visibility does not by itself grant permission to reuse, modify, or redistribute this project.
