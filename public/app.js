@@ -1,7 +1,7 @@
 'use strict';
 const app=document.getElementById('app'), statusEl=document.getElementById('connection'),toast=document.getElementById('toast');
 let session=null,snapshot=null,aborter=null,delay=750,clock=null,requesting=false,statementDraft=null,actionDraft=null;
-let snapshotReceivedAt=0,peopleOpen=false;
+let clockAnchor=null,peopleOpen=false;
 let kickConfirmationId=null,kickSubmittingId=null;
 const kickEffects=new Map();
 const eliminationEffects=new Map();
@@ -63,9 +63,10 @@ document.addEventListener('visibilitychange',()=>{if(document.hidden){clearPhase
 window.addEventListener('pagehide',()=>{clearPhaseTransition();clearEliminationState(false);});
 function acceptSnapshot(value){
  if(snapshot&&snapshot.room.code===value.room.code&&snapshot.room.revision>value.room.revision)return;
- if(snapshot?.room.code===value.room.code&&typeof value.room.revision==='number'&&snapshot.room.revision===value.room.revision){snapshot.serverTime=value.serverTime;snapshot.deadline=value.deadline;snapshotReceivedAt=performance.now();return;}
+ synchronizeClock(value);
+ if(snapshot?.room.code===value.room.code&&typeof value.room.revision==='number'&&snapshot.room.revision===value.room.revision){snapshot.serverTime=value.serverTime;snapshot.deadline=value.deadline;return;}
  if(eliminationHold&&snapshot?.game?.gameId===value.game?.gameId&&snapshot.room.code===value.room.code&&value.game.phase==='GAME_OVER'){
-  snapshot=value;snapshotReceivedAt=performance.now();refreshPlayerLists();finishClientSession(value);return;
+  snapshot=value;refreshPlayerLists();finishClientSession(value);return;
  }
  if(snapshot?.room.code===value.room.code)for(const player of value.room.players){
   if(player.removed&&snapshot.room.players.some(previous=>previous.id===player.id&&!previous.removed))rememberKick(player,value.room.code,false);
@@ -73,7 +74,7 @@ function acceptSnapshot(value){
  if(kickConfirmationId&&(!value.room.players.some(player=>player.id===kickConfirmationId&&!player.removed)||value.game?.phase==='GAME_OVER'))kickConfirmationId=null;
  // Presence updates after game over must not recreate or restart the film.
  if(snapshot?.game?.phase==='GAME_OVER'&&value.game?.phase==='GAME_OVER'&&snapshot.game.gameId===value.game.gameId&&snapshot.game.outcome?.winner===value.game.outcome?.winner&&app.querySelector('.gi-ending-screen')){
-  snapshot=value;snapshotReceivedAt=performance.now();refreshPlayerLists();finishClientSession(value);return;
+  snapshot=value;refreshPlayerLists();finishClientSession(value);return;
  }
  const sameRound=snapshot?.game&&snapshot.room.code===value.room.code&&snapshot.game.gameId===value.game?.gameId&&snapshot.game.round===value.game?.round;
  const scrollSelectors=['.people','#players-panel',...(sameRound?['.gi-center-column','.gi-area-discussion>.card:first-child>.hist','.gi-history .hist']:[])];
@@ -83,7 +84,7 @@ function acceptSnapshot(value){
  const motionFrame=window.GreenTrapMotion?.capture(snapshot);
  const newlyExpelled=rememberEliminations(previous,value);
  if(newlyExpelled.length&&value.game.phase==='GAME_OVER'&&app.querySelector('.gi-area-players')&&!document.hidden){
-  captureStatementDraft();snapshot=value;snapshotReceivedAt=performance.now();clearStatementDraft();actionDraft=null;
+  captureStatementDraft();snapshot=value;clearStatementDraft();actionDraft=null;
   window.GreenTrapMotion?.commit(value,motionFrame);
   clearPhaseTransition();document.querySelectorAll('dialog[open]').forEach(dialog=>dialog.close());
   eliminationHold={previous};app.inert=true;refreshPlayerLists();
@@ -91,7 +92,7 @@ function acceptSnapshot(value){
   playEliminationEffects();finishClientSession(value);return;
  }
  const kickFocus=document.activeElement?.closest('.kick-confirmation')?document.activeElement.id:null;
- captureStatementDraft();snapshot=value;snapshotReceivedAt=performance.now();render();
+ captureStatementDraft();snapshot=value;render();
  if(choiceOpen){openStatementChoice();if(choiceFocus)document.getElementById(choiceFocus)?.focus();}
  if(drawerFocused)(document.getElementById(choiceFocus)||document.getElementById('close-players'))?.focus();
  for(const saved of scrolls){const el=app.querySelector(saved.selector);if(el){el.scrollLeft=saved.left;el.scrollTop=saved.top;if(saved.focused)el.focus({preventScroll:true});}}
@@ -102,7 +103,23 @@ function acceptSnapshot(value){
  finishClientSession(value);
 }
 function finishClientSession(value){if(value.game?.phase!=='GAME_OVER'||!session)return;try{sessionStorage.setItem('green-impact-finished-game',JSON.stringify({roomCode:session.roomCode,playerId:session.playerId,view:value}));}catch{}aborter?.abort();statusEl.textContent='Ván đã kết thúc';}
-function remainingSeconds(){return snapshot?.deadline?Math.max(0,Math.ceil((snapshot.deadline-snapshot.serverTime-(performance.now()-snapshotReceivedAt))/1000)):0;}
+function remainingMilliseconds(){return clockAnchor?Math.max(0,clockAnchor.remaining-(performance.now()-clockAnchor.at)):0;}
+function remainingSeconds(){return Math.ceil(remainingMilliseconds()/1000);}
+function scheduleClock(){if(!clock&&clockAnchor&&!document.hidden)clock=requestAnimationFrame(paintClock);}
+function synchronizeClock(value){
+ if(!value.deadline||value.game?.phase==='GAME_OVER'){clockAnchor=null;cancelAnimationFrame(clock);clock=null;return;}
+ const key=[value.room.code,value.game?.gameId,value.game?.round,value.game?.phase,value.deadline].join(':');
+ const remaining=Math.max(0,value.deadline-value.serverTime);
+ clockAnchor={key,remaining:clockAnchor?.key===key?Math.min(remaining,remainingMilliseconds()):remaining,at:performance.now()};
+ scheduleClock();
+}
+function paintClock(){
+ clock=null;if(!clockAnchor||document.hidden||!snapshot?.deadline)return;
+ const remaining=remainingMilliseconds(),label=Math.ceil(remaining/1000)+'s',el=document.getElementById('clock'),progress=document.getElementById('phase-progress');
+ if(el&&el.textContent!==label)el.textContent=label;
+ if(progress)progress.value=remaining/1000;
+ if(remaining>0)scheduleClock();
+}
 const draftStorageKey='green-impact-statement-draft';
 const storeKey='green-impact-multiplayer-session';
 const escapeHTML=(v)=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -170,7 +187,7 @@ const api=async(path,data,authenticated=false)=>{const headers={'Content-Type':'
  const requestId=pendingRequests.get(key)||crypto.randomUUID();pendingRequests.set(key,requestId);
  if(pendingRequests.size>20)pendingRequests.delete(pendingRequests.keys().next().value);
  const r=await fetch(path,{method:'POST',headers,body:JSON.stringify({...data,requestId}),signal:AbortSignal.timeout(15000)});const value=await r.json().catch(()=>({}));if(r.ok||r.status<500)pendingRequests.delete(key);if(!r.ok){const error=Error(value.message||value.error||`HTTP ${r.status}`);error.code=value.error;error.status=r.status;throw error;}return value;};
-const readState=async(signal)=>{const current=session;if(!current)return;if(snapshot?.room.code===current.roomCode&&snapshot.game?.phase==='GAME_OVER')return snapshot;const r=await fetch(`/api/state?room=${current.roomCode}`,{headers:{Authorization:`Bearer ${current.token}`},cache:'no-store',signal:signal||AbortSignal.timeout(12000)});const value=await r.json().catch(()=>({}));if(!r.ok){if(snapshot?.room.code===current.roomCode&&snapshot.game?.phase==='GAME_OVER')return snapshot;const error=Error(value.message||value.error||'Không thể tải trạng thái phòng');error.code=value.error;error.status=r.status;throw error;}if(session!==current)return;if(current.transport==='poll'&&snapshot?.room.code===value.room.code&&snapshot.room.revision===value.room.revision){snapshot.serverTime=value.serverTime;snapshot.deadline=value.deadline;snapshotReceivedAt=performance.now();}else acceptSnapshot(value);return value;};
+const readState=async(signal)=>{const current=session;if(!current)return;if(snapshot?.room.code===current.roomCode&&snapshot.game?.phase==='GAME_OVER')return snapshot;const r=await fetch(`/api/state?room=${current.roomCode}`,{headers:{Authorization:`Bearer ${current.token}`},cache:'no-store',signal:signal||AbortSignal.timeout(12000)});const value=await r.json().catch(()=>({}));if(!r.ok){if(snapshot?.room.code===current.roomCode&&snapshot.game?.phase==='GAME_OVER')return snapshot;const error=Error(value.message||value.error||'Không thể tải trạng thái phòng');error.code=value.error;error.status=r.status;throw error;}if(session!==current)return;acceptSnapshot(value);return value;};
 const copyRoom=async()=>{const url=`${location.origin}/?room=${session.roomCode}`;try{await navigator.clipboard.writeText(url);showToast('Đã sao chép','success',3000);}catch{gameError({message:'Không thể sao chép. Hãy thử lại.'});}};
 function onSession(s) {
  const url=new URL(location.href);
@@ -324,7 +341,7 @@ function render(){if(!snapshot||!session)return;const s=snapshot;const me=s.game
   <header class="card gi-phase-header">
    <div class="gi-mobile-wallet"><img class="gi-coin-icon" src="/brand/green-coin.png" alt="" width="28" height="28"> ${me.coins} xu</div>
    <div class="flex"><span class="phase">${escapeHTML(phaseText[g.phase].toUpperCase())} · LƯỢT ${g.round}/${g.roundLimit}</span>${timer(s)}</div>
-   ${g.phase!=='GAME_OVER'?'<progress id="phase-progress" max="'+phaseSeconds[g.phase]+'" value="'+remainingSeconds()+'" aria-label="Thời gian còn lại"></progress>':''}
+   ${g.phase!=='GAME_OVER'?'<progress id="phase-progress" max="'+phaseSeconds[g.phase]+'" value="'+remainingMilliseconds()/1000+'" aria-label="Thời gian còn lại"></progress>':''}
    <div class="flex muted"><span>Bảo vệ: ${g.approvedProtectorCount}</span><span>Phá hoại: ${g.approvedSaboteurCount}</span></div>
   </header>
   <aside class="card gi-area-players" id="players-panel" data-open="${peopleOpen}" aria-label="Danh sách người chơi">
@@ -435,7 +452,9 @@ app.addEventListener('click',e=>{
 });
 app.addEventListener('pointerdown',e=>{if(['show-role','mobile-show-role'].includes(e.target.closest('button')?.id))showRoleText();});
 for(const ev of ['pointerup','pointercancel','pointerleave'])app.addEventListener(ev,e=>{if(['show-role','mobile-show-role'].includes(e.target.closest('button')?.id))hideRoleText();});
-clock=setInterval(()=>{if(snapshot?.deadline){const el=document.getElementById('clock');if(el)el.textContent=remainingSeconds()+'s';const progress=document.getElementById('phase-progress');if(progress)progress.value=remainingSeconds();}},300);
+document.addEventListener('visibilitychange',()=>{if(document.hidden){cancelAnimationFrame(clock);clock=null;}else scheduleClock();});
+window.addEventListener('pagehide',()=>{cancelAnimationFrame(clock);clock=null;});
+window.addEventListener('pageshow',scheduleClock);
 function setDesktopRoleCard(hidden){const card=document.querySelector('#role .gi-private-role-card');if(card&&(hidden||matchMedia('(min-width:1200px)').matches))card.hidden=hidden;}
 function showRoleText(){const node=document.getElementById('role-value'),mobile=document.getElementById('mobile-role-value');if(node)node.textContent=labelRole(snapshot.game.myPlayer.role);setDesktopRoleCard(false);if(mobile){mobile.hidden=false;const card=mobile.querySelector('.gi-private-role-card');if(card)card.hidden=false;}document.getElementById('mobile-show-role')?.setAttribute('aria-pressed','true');}
 function hideRoleText(){const node=document.getElementById('role-value'),mobile=document.getElementById('mobile-role-value');setDesktopRoleCard(true);if(node)node.textContent='••••••';if(mobile){mobile.hidden=true;const card=mobile.querySelector('.gi-private-role-card');if(card)card.hidden=true;}document.getElementById('mobile-show-role')?.setAttribute('aria-pressed','false');}
