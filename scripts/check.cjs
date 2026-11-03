@@ -94,6 +94,8 @@ for (const asset of [
   'ui/brand/green-trap-detective.png',
   'ui/ending.html',
   'ui/ending.css',
+  'ui/motion.js',
+  'ui/motion.css',
   'ui/endings/good.mp4',
   'ui/endings/bad.mp4',
   'ui/endings/good-poster.jpg',

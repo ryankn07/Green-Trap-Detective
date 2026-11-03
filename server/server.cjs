@@ -70,7 +70,7 @@ if(remote){
 const transaction=fn=>remote?coordinator.run(fn):Promise.resolve().then(fn);
 const MIME={'.html':'text/html; charset=utf-8','.js':'text/javascript; charset=utf-8','.css':'text/css; charset=utf-8','.svg':'image/svg+xml','.ico':'image/x-icon'};
 const HEADERS={'X-Content-Type-Options':'nosniff','Referrer-Policy':'no-referrer','X-Frame-Options':'DENY','Content-Security-Policy':"default-src 'self'; connect-src 'self'; img-src 'self' data:; style-src 'self'; script-src 'self'; object-src 'none'; base-uri 'none'; frame-ancestors 'none'"};
-const allowedPaths=new Set(['/','/index.html','/app.js','/style.css','/card-webp-manifest.js','/ending.html','/ending.css','/ending-ui.js','/qr-code.js']);
+const allowedPaths=new Set(['/','/index.html','/app.js','/style.css','/motion.css','/motion.js','/card-webp-manifest.js','/ending.html','/ending.css','/ending-ui.js','/qr-code.js']);
 const staticAssetCache=new Map();
 function acceptsGzip(req){
   const header=req.headers['accept-encoding'];

@@ -5,16 +5,21 @@ let snapshotReceivedAt=0,peopleOpen=false;
 const phaseSeconds={DEBATE:120,BLIND_ACTION:60,REVEAL:25};
 function acceptSnapshot(value){
  if(snapshot&&snapshot.room.code===value.room.code&&snapshot.room.revision>value.room.revision)return;
+ if(snapshot?.room.code===value.room.code&&typeof value.room.revision==='number'&&snapshot.room.revision===value.room.revision){snapshot.serverTime=value.serverTime;snapshot.deadline=value.deadline;snapshotReceivedAt=performance.now();return;}
  // Presence updates after game over must not recreate or restart the film.
  if(snapshot?.game?.phase==='GAME_OVER'&&value.game?.phase==='GAME_OVER'&&snapshot.game.gameId===value.game.gameId&&snapshot.game.outcome?.winner===value.game.outcome?.winner&&app.querySelector('.gi-ending-screen')){
   snapshot=value;snapshotReceivedAt=performance.now();const people=app.querySelector('.ending-people');if(people)people.innerHTML=playerList(value);return;
  }
- const scrolls=Array.from(app.querySelectorAll('.people,#players-panel')).map(el=>({key:el.id||'player-list',left:el.scrollLeft,top:el.scrollTop,focused:document.activeElement===el}));
+ const sameRound=snapshot?.game&&snapshot.room.code===value.room.code&&snapshot.game.gameId===value.game?.gameId&&snapshot.game.round===value.game?.round;
+ const scrollSelectors=['.people','#players-panel',...(sameRound?['.gi-center-column','.gi-area-discussion>.card:first-child>.hist','.gi-history .hist']:[])];
+ const scrolls=scrollSelectors.flatMap(selector=>{const el=app.querySelector(selector);return el?[{selector,left:el.scrollLeft,top:el.scrollTop,focused:document.activeElement===el}]:[];});
  const choiceOpen=app.querySelector('#statement-choice')?.open,choiceFocus=document.activeElement?.id,drawerFocused=peopleOpen&&app.querySelector('#players-panel')?.contains(document.activeElement);
+ const motionFrame=window.GreenTrapMotion?.capture(snapshot);
  captureStatementDraft();snapshot=value;snapshotReceivedAt=performance.now();render();
  if(choiceOpen){openStatementChoice();if(choiceFocus)document.getElementById(choiceFocus)?.focus();}
  if(drawerFocused)(document.getElementById(choiceFocus)||document.getElementById('close-players'))?.focus();
- for(const saved of scrolls){const el=saved.key==='player-list'?app.querySelector('.people'):document.getElementById(saved.key);if(el){el.scrollLeft=saved.left;el.scrollTop=saved.top;if(saved.focused)el.focus({preventScroll:true});}}
+ for(const saved of scrolls){const el=app.querySelector(saved.selector);if(el){el.scrollLeft=saved.left;el.scrollTop=saved.top;if(saved.focused)el.focus({preventScroll:true});}}
+ window.GreenTrapMotion?.commit(value,motionFrame);
 }
 function remainingSeconds(){return snapshot?.deadline?Math.max(0,Math.ceil((snapshot.deadline-snapshot.serverTime-(performance.now()-snapshotReceivedAt))/1000)):0;}
 const draftStorageKey='green-impact-statement-draft';
@@ -115,7 +120,7 @@ async function connectStream(){if(!session)return;aborter?.abort();aborter=new A
 function playerList(s){return s.room.players.map(p=>{const g=s.game?.players.find(x=>x.id===p.id);let info=!g?'Trong phòng':g.isAlive?(g.hasLockedAction?'Đã khóa lệnh':g.hasStatement?'Đã phát biểu':'Đang chơi'):'Đã bị loại';if(g?.role&&s.game.phase==='GAME_OVER')info+=` · ${labelRole(g.role)}`;
  if(p.removed)info='Đã bị kick khỏi phòng';
  const canKick=session?.playerId===s.room.hostId&&p.id!==s.room.hostId&&!p.removed&&s.game?.phase!=='GAME_OVER';
- return `<div class="person ${g&&!g.isAlive?'dead':''}"><div class="avatar">${escapeHTML(p.name.charAt(0).toUpperCase())}</div><div class="person-info"><b>${escapeHTML(p.name)} ${p.id===s.room.hostId?'★':''} ${p.id===s.game?.myPlayer.id?'(Bạn)':''}</b><small>${escapeHTML(info)}</small></div><span class="pill">${p.online?'● Online':'○ Offline'}</span>${canKick?`<button type="button" class="kick-player" data-kick-player="${escapeHTML(p.id)}" aria-label="Kick ${escapeHTML(p.name)} khỏi phòng">Kick</button>`:''}</div>`}).join('');}
+ return `<div class="person ${g&&!g.isAlive?'dead':''}" data-player-id="${escapeHTML(p.id)}"><div class="avatar">${escapeHTML(p.name.charAt(0).toUpperCase())}</div><div class="person-info"><b>${escapeHTML(p.name)} ${p.id===s.room.hostId?'★':''} ${p.id===s.game?.myPlayer.id?'(Bạn)':''}</b><small>${escapeHTML(info)}</small></div><span class="pill">${p.online?'● Online':'○ Offline'}</span>${canKick?`<button type="button" class="kick-player" data-kick-player="${escapeHTML(p.id)}" aria-label="Kick ${escapeHTML(p.name)} khỏi phòng">Kick</button>`:''}</div>`}).join('');}
 function timer(s){if(!s.deadline)return '';const remain=remainingSeconds();return `<span class="countdown" id="clock">${remain}s</span>`;}
 function render(){if(!snapshot||!session)return;const s=snapshot;const me=s.game?.myPlayer;const host=s.room.hostId===(me?.id||session.playerId);const q=(new URLSearchParams(location.search)).get('room');
  document.body.classList.toggle('gi-gameplay',Boolean(s.game));
@@ -138,7 +143,7 @@ function render(){if(!snapshot||!session)return;const s=snapshot;const me=s.game
  const project = g.phase==='GAME_OVER'?latest?{id:latest.projectId,title:latest.projectTitle,description:'Các dự án đã hoàn thành. Xem lịch sử bên dưới.'}:g.project:g.project;
  const statements=(g.phase==='REVEAL'||g.phase==='GAME_OVER')?(latest?.statements||[]):g.currentStatements;
  const stanceLabel={SUPPORT:'Ủng hộ',OPPOSE:'Phản đối',UNSURE:'Chưa chắc chắn'};
- const discussion=statements.map(st=>{const name=s.room.players.find(p=>p.id===st.playerId)?.name||'Người chơi';return '<div class="gi-statement"><span class="gi-chat-avatar" aria-hidden="true">'+escapeHTML(name.charAt(0).toUpperCase())+'</span><div class="gi-chat-bubble"><b>'+escapeHTML(name)+'</b><span class="pill">'+escapeHTML(stanceLabel[st.stance]||'Nhận định')+'</span><p>'+escapeHTML(st.text)+'</p></div></div>';}).join('');
+ const discussion=statements.map(st=>{const name=s.room.players.find(p=>p.id===st.playerId)?.name||'Người chơi';return '<div class="gi-statement" data-player-id="'+escapeHTML(st.playerId)+'"><span class="gi-chat-avatar" aria-hidden="true">'+escapeHTML(name.charAt(0).toUpperCase())+'</span><div class="gi-chat-bubble"><b>'+escapeHTML(name)+'</b><span class="pill">'+escapeHTML(stanceLabel[st.stance]||'Nhận định')+'</span><p>'+escapeHTML(st.text)+'</p></div></div>';}).join('');
  app.innerHTML=`
  <div class="gi-mobile-topbar"><div class="gi-top-wallet"><img src="/brand/green-coin.png" alt="" width="24" height="24"><b>${me.coins}</b><span>xu</span></div><button id="mobile-show-role" type="button" aria-label="Nhấn giữ để xem vai trò" aria-describedby="mobile-role-value" aria-pressed="false"><svg viewBox="0 0 64 64" aria-hidden="true"><path d="M5 32c7-11 17-17 27-17s20 6 27 17c-7 11-17 17-27 17S12 43 5 32Z"/><circle cx="32" cy="32" r="10"/></svg></button><span id="mobile-role-value" role="status" data-role="${escapeHTML(me.role)}" hidden></span><span class="gi-round-chip">Lượt ${g.round} / ${g.roundLimit}</span></div>
  <div class="gi-game-grid" data-game-layout="four-areas">
@@ -191,9 +196,11 @@ function wireBank(){
 async function act(type,payload){
  if(requesting)return false;
  requesting=true;
- try{await api('/api/action',{type,...(type==='kick'?{targetId:payload.targetId}:{payload}),...(['submit','next'].includes(type)?{context:{gameId:snapshot.game.gameId,round:snapshot.game.round,phase:snapshot.game.phase}}:{})},true);if(type!=='leave')await readState();return true;}
+ const finishMotion=type==='submit'?window.GreenTrapMotion?.pending(app.querySelector('#statement button[type=submit],#lock-action')):null;
+ let confirmed=false;
+ try{await api('/api/action',{type,...(type==='kick'?{targetId:payload.targetId}:{payload}),...(['submit','next'].includes(type)?{context:{gameId:snapshot.game.gameId,round:snapshot.game.round,phase:snapshot.game.phase}}:{})},true);if(type!=='leave')await readState();confirmed=true;return true;}
  catch(e){handleSessionError(e);return false;}
- finally{requesting=false;wireBank();}
+ finally{finishMotion?.(confirmed);requesting=false;wireBank();}
 }
 function updateStatementCounter(){const field=document.getElementById('statement-text'),counter=document.getElementById('statement-counter');if(field&&counter)counter.textContent=field.value.length+' / 500';}
 function openStatementChoice(){const dialog=document.getElementById('statement-choice'),stance=document.getElementById('stance');if(!dialog||!stance||dialog.open)return;dialog.querySelectorAll('[data-stance]').forEach(button=>button.setAttribute('aria-pressed',String(button.dataset.stance===stance.value)));dialog.showModal();dialog.querySelector('[aria-pressed="true"]')?.focus();}
@@ -225,11 +232,13 @@ app.addEventListener('submit',async e=>{
  if(e.target.id==='action-form'){e.preventDefault();const kind=document.getElementById('bank').value;const bankAction=kind==='NONE'?{type:'NONE'}:kind==='INSPECT'?{type:'INSPECT',targetId:document.getElementById('target').value}:{type:'EXPEL',targetId:document.getElementById('target').value,amount:Number(document.getElementById('amount').value)};act('submit',{action:{invest:document.getElementById('invest').checked,bankAction}});}
 });
 function setPlayersOpen(open,moveFocus=true){
+ const changed=peopleOpen!==open;
  peopleOpen=open;const panel=document.getElementById('players-panel'),toggle=document.getElementById('toggle-players'),backdrop=document.getElementById('players-backdrop');
  panel?.setAttribute('data-open',String(open));toggle?.setAttribute('aria-expanded',String(open));if(backdrop)backdrop.hidden=!open;
  document.body.classList.toggle('gi-drawer-open',open);
  if(open){panel?.setAttribute('role','dialog');panel?.setAttribute('aria-modal','true');if(moveFocus)document.getElementById('close-players')?.focus();}
  else{panel?.removeAttribute('role');panel?.removeAttribute('aria-modal');if(moveFocus)toggle?.focus();}
+ if(changed&&open)window.GreenTrapMotion?.drawer(panel);
 }
 app.addEventListener('click',e=>{
  const button=e.target.closest('button'),id=button?.id||e.target.id;
@@ -266,3 +275,4 @@ if(saved){
  }catch{session=null;save();}
 }
 if(!session&&invitedRoom)document.getElementById('join-code').value=invitedRoom;
+if(!session)window.GreenTrapMotion?.home();
