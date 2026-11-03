@@ -24,7 +24,7 @@ class SupabaseRoomStore {
   read(code, scope, requestId) { return this.call('read', { room_code: code, scope_hash: scope || null, request_id: requestId || null }); }
   async commit(value) {
     const result = await this.call('commit', { room_code: value.code, expected_version: value.expectedVersion, new_payload: value.payload, scope_hash: value.scope, request_id: value.requestId, request_hash: value.requestHash, public_response: value.response, source_hash: value.source, operation: value.operation });
-    if (result.error === 'ADMISSION_LIMIT') throw new HttpError('ADMISSION_LIMIT', 'Mạng của bạn đang giữ quá nhiều phòng hoặc chỗ chơi. Hãy rời phòng không dùng rồi thử lại.', 429);
+    if (result.error === 'ADMISSION_LIMIT') throw new HttpError('ADMISSION_LIMIT', 'Đã đạt giới hạn tạo hoặc tham gia phòng. Vui lòng thử lại sau.', 429);
     if (result.error === 'SERVER_BUSY') throw new HttpError('SERVER_BUSY', 'Máy chủ đang đầy. Hãy thử lại sau.', 503);
     return result;
   }

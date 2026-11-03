@@ -4,12 +4,13 @@
  const rootStyle=getComputedStyle(document.documentElement);
  const timing=name=>parseFloat(rootStyle.getPropertyValue('--gi-motion-'+name));
  const ease=rootStyle.getPropertyValue('--gi-motion-ease').trim()||'ease-out';
- const running=new Set();let queued=0,generation=0,homePlayed=false;
+ const running=new Set();let queued=0,generation=0,homePlayed=false,pendingScene=null,lastFacts=null;
 
- function stop(){
+ function stop(preserveScene=false){
   generation++;cancelAnimationFrame(queued);
   for(const animation of running)animation.cancel();
   running.clear();
+  if(preserveScene!==true)pendingScene=null;
  }
  function visible(element){return element?.isConnected&&element.getClientRects().length>0;}
  function play(element,key,frames,milliseconds=timing('feedback')||140){
@@ -31,17 +32,36 @@
  }
  function capture(snapshot){
   const frame={previous:facts(snapshot),panel:rect('.gi-action-panel')};
-  stop();return frame;
+  stop(true);return frame;
+ }
+ const sceneIdentity=value=>JSON.stringify([value?.room,value?.game,value?.round,value?.phase]);
+ function scene(selector,key,frames,duration){
+  pendingScene={identity:sceneIdentity(lastFacts),selector,key,frames,duration};
+ }
+ function resumeScene(){
+  const pending=pendingScene;pendingScene=null;
+  if(!pending||document.hidden||pending.identity!==sceneIdentity(lastFacts))return;
+  play(document.querySelector(pending.selector),pending.key,pending.frames,pending.duration);
  }
  function arrive(element,key,distance=8,duration=180){
   play(element,key,[{opacity:.5,transform:`translateY(${distance}px)`},{opacity:1,transform:'none'}],duration);
  }
  function commit(snapshot,frame){
   const next=facts(snapshot),previous=frame?.previous,version=generation;
+  lastFacts=next;
+  if(pendingScene&&pendingScene.identity!==sceneIdentity(next))pendingScene=null;
   if(!previous||previous.room!==next.room||next.phase==='GAME_OVER')return;
+  const sameRound=previous.game===next.game&&previous.round===next.round;
+  // Retain scene intent before RAF: another snapshot may cancel that frame.
+  if(next.phase==='DEBATE'&&(!sameRound||!previous.game)){
+   const frames=desktop.matches?[{opacity:.6,transform:'translate(12px,-10px) rotate(1.2deg)'},{opacity:1,transform:'none'}]:[{opacity:.6},{opacity:1}];
+   scene('.gi-area-project .project','card',frames,desktop.matches?(timing('scene')||340):180);
+  }
+  if(next.phase==='REVEAL'&&previous.phase!=='REVEAL'){
+   scene('.gi-action-panel .summary','reveal',[{opacity:.55,transform:'translateY(6px)',outline:'2px solid transparent',outlineOffset:'-2px'},{opacity:1,transform:'none',outline:'2px solid currentColor',outlineOffset:'-2px'},{opacity:1,outline:'2px solid transparent',outlineOffset:'-2px'}],420);
+  }
   queued=requestAnimationFrame(()=>{
    if(version!==generation||document.hidden)return;
-   const sameRound=previous.game===next.game&&previous.round===next.round;
    if(sameRound&&previous.phase===next.phase&&!previous.ready&&next.ready&&desktop.matches&&!reduced.matches){
     const panel=rect('.gi-action-panel'),actions=document.querySelector('.gi-area-actions');
     if(panel&&frame.panel&&Math.abs(frame.panel.height-panel.height)>4&&getComputedStyle(actions).display==='grid'){
@@ -49,15 +69,7 @@
      play(actions,'collapse',[{gridTemplateRows:frame.panel.height+'px'+extra},{gridTemplateRows:panel.height+'px'+extra}],timing('layout')||260);
     }
    }
-   if(next.phase==='DEBATE'&&(!sameRound||!previous.game)){
-    const card=document.querySelector('.gi-area-project .project');
-    const frames=desktop.matches?[{opacity:.6,transform:'translate(12px,-10px) rotate(1.2deg)'},{opacity:1,transform:'none'}]:[{opacity:.6},{opacity:1}];
-    play(card,'card',frames,desktop.matches?(timing('scene')||340):180);
-   }
-   if(next.phase==='REVEAL'&&previous.phase!=='REVEAL'){
-    const result=document.querySelector('.gi-action-panel .summary');
-    play(result,'reveal',[{opacity:.55,transform:'translateY(6px)',outline:'2px solid transparent',outlineOffset:'-2px'},{opacity:1,transform:'none',outline:'2px solid currentColor',outlineOffset:'-2px'},{opacity:1,outline:'2px solid transparent',outlineOffset:'-2px'}],420);
-   }
+   if(!document.querySelector('.gi-phase-transition'))resumeScene();
    if(previous.game&&previous.game===next.game&&Number.isFinite(previous.coins)&&previous.coins!==next.coins){
     for(const coin of document.querySelectorAll('.gi-desktop-wallet,.gi-top-wallet'))
      play(coin,'balance',[{opacity:.6,transform:'scale(.97)'},{opacity:1,transform:'scale(1.035)'},{opacity:1,transform:'none'}],200);
@@ -99,5 +111,5 @@
   const base=getComputedStyle(button).transform;
   play(button,'press',[{transform:(base==='none'?'':base)+' scale(.985)'},{transform:base}],120);
  });
- window.GreenTrapMotion={capture,commit,pending,drawer,home};
+ window.GreenTrapMotion={capture,commit,pending,drawer,home,resumeScene};
 })();

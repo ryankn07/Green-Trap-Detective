@@ -1,5 +1,9 @@
 # Green Trap Detective — logo and card finish
 
+## Owner refinement — 3 November 2026
+
+The owner reverted the text-only masthead. The header again uses the original logo, **Green Trap Detective** title and **Trò chơi suy luận môi trường** subtitle, with the earlier sizing and spacing. The project-card eyebrow remains **DỰ ÁN ĐANG ĐƯỢC ĐƯA RA**.
+
 Owner refinements on 2026-11-01: remove exterior white margins around gameplay cards and enlarge them within the PC frame; rename the visible website to Green Trap Detective; use the supplied logo, remove its background and apply golden-ratio proportions.
 
 ## Card treatment

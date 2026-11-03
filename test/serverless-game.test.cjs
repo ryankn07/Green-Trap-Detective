@@ -10,6 +10,7 @@ class TestDatabase {
   constructor() { this.rooms = new Map(); this.receipts = new Map(); this.time = Date.now(); }
   async limit() {}
   async read(code, scope, requestId) {
+    const result=this.rooms.get(code);if(result&&result.expires<=this.time)this.rooms.delete(code);
     return structuredClone({ record: this.rooms.get(code) || null, receipt: this.receipts.get(scope + ':' + requestId) || null, now: this.time });
   }
   async commit({ code, expectedVersion, payload, scope, requestId, requestHash, response }) {
@@ -17,7 +18,7 @@ class TestDatabase {
     if (this.receipts.has(key)) return { receipt: structuredClone(this.receipts.get(key)) };
     const old = this.rooms.get(code);
     if ((old?.version ?? 0) !== expectedVersion) return { conflict: true };
-    if (payload) this.rooms.set(code, structuredClone({ version: expectedVersion + 1, payload }));
+    if(payload){const terminal=payload.rooms[0].state?.phase==='GAME_OVER'&&payload.completionProtocol===1;const expires=terminal?Math.min(old?.expires??Infinity,this.time+120000):this.time+14400000;this.rooms.set(code,structuredClone({version:expectedVersion+1,payload,expires}));}
     else this.rooms.delete(code);
     if (!requestId) return { committed: true };
     const receipt = { requestHash, response };
@@ -32,13 +33,32 @@ async function fixture(t) {
   for (const server of servers) await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
   t.after(async () => { for (const server of servers) { server.closeAllConnections(); await new Promise(resolve => server.close(resolve)); } });
   let count = 0;
-  async function request(path, body, session) {
+  async function request(path, body, session, cachesEnding=true) {
     const origin = 'http://127.0.0.1:' + servers[count++ % 2].address().port;
-    const response = await fetch(origin + path, { method: body ? 'POST' : 'GET', headers: { ...(body ? { 'Content-Type': 'application/json', Origin: origin } : {}), ...(session ? { Authorization: 'Bearer ' + session.token, 'x-room-code': session.roomCode } : {}) }, body: body ? JSON.stringify({ requestId: randomUUID(), ...body }) : undefined });
+    const response = await fetch(origin + path, { method: body ? 'POST' : 'GET', headers: { ...(cachesEnding?{'x-game-result-cache':'1'}:{}),...(body ? { 'Content-Type': 'application/json', Origin: origin } : {}), ...(session ? { Authorization: 'Bearer ' + session.token, 'x-room-code': session.roomCode } : {}) }, body: body ? JSON.stringify({ requestId: randomUUID(), ...body }) : undefined });
     return { status: response.status, value: await response.json() };
   }
   return { store, request };
 }
+
+test('completion keeps only bounded authenticated delivery results outside admission',async t=>{
+ const {store,request}=await fixture(t);
+ const host=(await request('/api/create',{name:'Host'})).value,guests=[];
+ for(const name of ['Guest A','Guest B'])guests.push((await request('/api/join',{roomCode:host.roomCode,name})).value);
+ await request('/api/action',{type:'start'},host);
+ let view=(await request('/api/state?room='+host.roomCode,null,host)).value;
+ for(let count=0;view.game.phase!=='GAME_OVER'&&count<32;count++){
+  store.time=view.deadline+1;const response=await request('/api/state?room='+host.roomCode,null,host);assert.equal(response.status,200);view=response.value;
+ }
+ assert.equal(view.game.phase,'GAME_OVER');assert.equal(store.rooms.get(host.roomCode).payload.rooms[0].state.phase,'GAME_OVER');
+ const expiry=store.rooms.get(host.roomCode).expires;assert.equal(expiry,store.time+120000);
+ const peer=await request('/api/state?room='+host.roomCode,null,guests[0]);assert.equal(peer.status,200);assert.equal(peer.value.game.phase,'GAME_OVER');assert.ok(!JSON.stringify(peer.value).includes(host.token));
+ assert.equal(store.rooms.get(host.roomCode).expires,expiry,'result reads do not renew delivery lifetime');
+ assert.equal((await request('/api/state?room='+host.roomCode,null,{...host,token:'0'.repeat(64)})).status,401);
+ assert.equal((await request('/api/action',{type:'next'},host)).value.error,'GAME_OVER');
+ assert.equal((await request('/api/join',{roomCode:host.roomCode,name:'Too late'})).status,400);
+ store.time=expiry+1;assert.equal((await request('/api/state?room='+host.roomCode,null,host)).status,404);
+});
 
 test('guests with the host name get separate authenticated IDs in the requested room', async t => {
   const { request } = await fixture(t);
@@ -56,6 +76,22 @@ test('guests with the host name get separate authenticated IDs in the requested 
     assert.equal(state.value.room.hostId, host.playerId);
     assert.deepEqual(new Set(state.value.room.players.map(player => player.id)), new Set(sessions.map(session => session.playerId)));
   }
+});
+
+test('an older client joining a new room preserves the legacy ending delivery window',async t=>{
+ const {store,request}=await fixture(t);
+ const host=(await request('/api/create',{name:'Current host'})).value;
+ assert.equal(store.rooms.get(host.roomCode).payload.completionProtocol,1);
+ const guest=(await request('/api/join',{roomCode:host.roomCode,name:'Older guest'},null,false)).value;
+ assert.equal(store.rooms.get(host.roomCode).payload.completionProtocol,undefined);
+ await request('/api/join',{roomCode:host.roomCode,name:'Other guest'});
+ await request('/api/action',{type:'start'},host);
+ store.time+=35*60000;
+ const ending=await request('/api/state?room='+host.roomCode,null,host);
+ assert.equal(ending.value.game.phase,'GAME_OVER');
+ assert.equal(store.rooms.get(host.roomCode).payload.completionProtocol,undefined,'later new clients cannot re-enable short expiry');
+ store.time+=3*60000;
+ assert.equal((await request('/api/state?room='+host.roomCode,null,guest,false)).value.game.phase,'GAME_OVER');
 });
 
 test('finished room remains readable until all players leave the ending', async t => {

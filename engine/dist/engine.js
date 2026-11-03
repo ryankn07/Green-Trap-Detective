@@ -160,18 +160,22 @@ function resolveRound(state) {
     });
     const inspections = { ...state.inspections };
     const pooled = {};
+    const expellers = new Map();
     for (const p of eligible) {
         const bank = state.lockedActions[p.id].bankAction;
         if (bank.type === "INSPECT") {
             const target = state.players.find(pl => pl.id === bank.targetId);
             inspections[p.id] = [...(inspections[p.id] ?? []), { round: state.round, targetId: bank.targetId, revealedRole: target.role }];
         }
-        if (bank.type === "EXPEL")
+        if (bank.type === "EXPEL") {
             pooled[bank.targetId] = (pooled[bank.targetId] ?? 0) + bank.amount;
+            if (!expellers.has(bank.targetId)) expellers.set(bank.targetId, []);
+            expellers.get(bank.targetId).push(p.id);
+        }
     }
     const expelIds = new Set(Object.keys(pooled).filter(id => pooled[id] >= 5));
     // EXPULSION takes precedence if target both spent final coin and was expelled.
-    players = players.map(p => p.isAlive && expelIds.has(p.id) ? { ...p, isAlive: false, eliminatedReason: "EXPELLED" } : p);
+    players = players.map(p => p.isAlive && expelIds.has(p.id) ? { ...p, isAlive: false, eliminatedReason: "EXPELLED", eliminatedByPlayerIds: expellers.get(p.id).slice() } : p);
     players = players.map(p => p.isAlive && p.coins === 0 ? { ...p, isAlive: false, eliminatedReason: "BANKRUPT" } : p);
     const newlyEliminatedIds = players.filter(p => !p.isAlive && eligible.some(start => start.id === p.id)).map(p => p.id);
     const summary = {

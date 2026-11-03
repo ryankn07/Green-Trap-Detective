@@ -49,7 +49,7 @@ The engine owns the game state and phase transitions. The active phases are:
 1. DEBATE — players submit one public statement for the current round.
 2. BLIND_ACTION — players lock an investment decision and an optional bank action.
 3. REVEAL — the round result is made public.
-4. GAME_OVER — the final outcome is available.
+4. GAME_OVER — the final outcome is available; the active room and its admission reservations are immediately retired. See [room cleanup](ROOM_COMPLETION.md) for final-result delivery and storage.
 
 The normal transition is DEBATE → BLIND_ACTION → REVEAL → the next round's DEBATE, or GAME_OVER when the engine ends the game. Inspection and expulsion are bank actions; they are not separate phases.
 
@@ -61,6 +61,8 @@ The server owns phase deadlines and timeout handling. The browser displays the s
 - The server calls the per-player projection in engine/dist/view.js before returning game state.
 - During a game, a player receives their own role, wallet, locked action, and inspection history. Other players' private role, wallet, inspection results, and locked action are not part of that player's projection.
 - Project alignment and verdict are withheld until the reveal stage. Roles become public only when the game is over.
+- Per the owner's ending refinement, the engine retains contributor IDs for successful expulsions across rounds and storage. Only `GAME_OVER` exposes the elimination reason and those IDs in the public player roster; the browser resolves them to room names. Bankruptcy has no actor. Individual contribution amounts and inspection history remain private, including at game over. Older states without provenance use an empty actor list.
+- Public round history also identifies `expelledPlayerIds`, derived from the engine's eliminated targets, so the browser can play in-match vote-out motion. It contains no contributor IDs or amounts. Final-vote presentation never delays server retirement, final-result caching or transport shutdown; see [elimination motion](ELIMINATION_EFFECT.md).
 - Public statements are visible to the room.
 - Treat room snapshots as sensitive: they contain session credentials and private game state. They must stay outside public static directories and must not be committed.
 

@@ -8,6 +8,28 @@ function trackMotion(session){
  Element.prototype.animate=function(frames,options){window.playedMotion.push({id:options?.id,frames});return animate.call(this,frames,options);};
 }
 
+test('card and result motion wait for the chapter, survive presence, and do not replay',{skip:!playwrightPath},async()=>{
+ const {chromium}=require(playwrightPath),{server,manager}=require('../server/server.cjs');let browser,now=Date.now();manager.currentTime=()=>now;
+ await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));
+ try{
+  const {room,player}=manager.create('Scene coordination');manager.join(room.code,'Peer A');manager.join(room.code,'Peer B');room.players.forEach(peer=>manager.connected(room,peer));
+  browser=await chromium.launch({channel:process.env.BROWSER_CHANNEL||'chrome',headless:true});const page=await browser.newPage({viewport:{width:1440,height:900}});
+  await page.addInitScript(trackMotion,{roomCode:room.code,playerId:player.id,token:player.secret});await page.goto('http://127.0.0.1:'+server.address().port);
+  await page.evaluate(()=>{window.requestAnimationFrame=callback=>setTimeout(()=>callback(performance.now()),350);window.cancelAnimationFrame=id=>clearTimeout(id);});
+  await page.locator('#start').click();await page.locator('.gi-phase-transition[data-transition=project]').waitFor();
+  assert.equal(await page.evaluate(()=>window.playedMotion.filter(m=>m.id==='gt-motion-card').length),0,'card entrance is not spent beneath the full-screen chapter');
+  manager.changed(room);await page.waitForFunction(revision=>snapshot.room.revision>=revision,room.revision);
+  await page.locator('.gi-phase-transition').waitFor({state:'detached'});await page.waitForFunction(()=>window.playedMotion.some(m=>m.id==='gt-motion-card'));
+  assert.equal(await page.evaluate(()=>window.playedMotion.filter(m=>m.id==='gt-motion-card').length),1,'presence retains one pending scene for the current DOM');
+  now=room.deadline;manager.tick();await page.locator('#lock-action').waitFor();now=room.deadline;manager.tick();await page.locator('#next').waitFor();
+  await page.locator('.gi-phase-transition[data-phase=REVEAL]').waitFor();assert.equal(await page.evaluate(()=>window.playedMotion.filter(m=>m.id==='gt-motion-reveal').length),0);
+  manager.changed(room);await page.waitForFunction(revision=>snapshot.room.revision>=revision,room.revision);
+  await page.locator('.gi-phase-transition').waitFor({state:'detached'});await page.waitForFunction(()=>window.playedMotion.some(m=>m.id==='gt-motion-reveal'));
+  manager.changed(room);await page.waitForFunction(revision=>snapshot.room.revision>=revision,room.revision);
+  assert.equal(await page.evaluate(()=>window.playedMotion.filter(m=>m.id==='gt-motion-reveal').length),1);
+ }finally{if(browser)await browser.close();server.closeAllConnections();await new Promise(resolve=>server.close(resolve));}
+});
+
 test('confirmed actions animate once, while presence and replayed snapshots stay quiet',{skip:!playwrightPath},async()=>{
  const {chromium}=require(playwrightPath),{server,manager}=require('../server/server.cjs');
  let browser,now=Date.now();manager.currentTime=()=>now;
@@ -21,6 +43,7 @@ test('confirmed actions animate once, while presence and replayed snapshots stay
   await page.addInitScript(trackMotion,{roomCode:room.code,playerId:player.id,token:player.secret});
   await page.goto('http://127.0.0.1:'+server.address().port);
   await page.locator('#start').click();await page.locator('#statement-text').waitFor();
+  await page.waitForFunction(()=>window.playedMotion.filter(m=>m.id==='gt-motion-card').length===1);
   const discussionBefore=await page.locator('.gi-area-discussion').boundingBox();
   await page.locator('#statement-text').fill('Một nhận định để kiểm tra hiệu ứng.');
   await page.locator('#statement button[type=submit]').click();

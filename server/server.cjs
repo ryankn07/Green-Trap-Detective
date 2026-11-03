@@ -47,7 +47,7 @@ function writeStreamFrame(res,frame){
 const pendingBroadcasts=new Map();
 function emitRoom(room){
  if(pendingBroadcasts.has(room.code))return;
- const timer=setTimeout(()=>{pendingBroadcasts.delete(room.code);void transaction(()=>{const current=manager.rooms.get(room.code);if(!current)return [];const frames=[];for(const [res,who] of streams.get(room.code)||[]){const member=current.players.find(p=>p.id===who.id&&!p.removed);if(member)frames.push([res,manager.view(current,member)]);}return frames;}).then(frames=>{for(const [res,view] of frames)streamSend(res,'snapshot',view);}).catch(()=>{});},16);
+ const timer=setTimeout(()=>{pendingBroadcasts.delete(room.code);void transaction(()=>{const current=manager.findRoom(room.code);if(!current)return [];const frames=[];for(const [res,who] of streams.get(room.code)||[]){const member=current.players.find(p=>p.id===who.id&&!p.removed);if(member)frames.push([res,manager.view(current,member)]);}return frames;}).then(frames=>{for(const [res,view] of frames){if(view.game?.phase==='GAME_OVER'){if(!res.destroyed&&!res.writableEnded)res.end('event: snapshot\ndata: '+JSON.stringify(view)+'\n\n');}else streamSend(res,'snapshot',view);}}).catch(()=>{});},16);
  timer.unref();pendingBroadcasts.set(room.code,timer);
 }
 const snapshotPath=process.env.ROOM_STORE_PATH||(require.main===module?path.resolve(__dirname,'../data/rooms.json'):null);
@@ -59,18 +59,18 @@ let coordinator;
 const manager=new RoomManager({onUpdate:room=>{if(!remote)emitRoom(room);},store:remote?{load:()=>[],save:(_rooms,room)=>coordinator.markChanged(room)}:snapshotPath?new FileRoomStore(snapshotPath):null});
 if(remote){
   coordinator=new DurableCoordinator({failClosed:true,
-    capture:()=>structuredClone(manager.rooms),
-    restore:rooms=>{manager.rooms=rooms;manager.saved=new WeakMap();for(const room of rooms.values())manager.remember(room);},
+    capture:()=>structuredClone({rooms:manager.rooms,finished:manager.finished}),
+    restore:state=>{manager.rooms=state.rooms;manager.finished=state.finished;manager.saved=new WeakMap();for(const room of state.rooms.values())manager.remember(room);},
     commit:()=>remote.commit({version:1,rooms:Array.from(manager.rooms.values(),serializeRoom)}),
     verify:()=>remote.verify(),
     onUnavailable:error=>{const type=['Error','TypeError','TimeoutError','AbortError','SyntaxError'].includes(error?.name)?error.name:'Error';const status=Number.isInteger(error?.status)&&error.status>=100&&error.status<=599?' HTTP_'+error.status:'';console.error('Remote storage unavailable:',type+status);for(const group of streams.values())for(const res of group.keys())res.destroy();},
-    onCommitted:rooms=>{for(const room of rooms)if(room&&manager.rooms.get(room.code)===room)emitRoom(room);}
+    onCommitted:rooms=>{for(const room of rooms)if(room&&manager.findRoom(room.code)===room)emitRoom(room);}
   });
 }
 const transaction=fn=>remote?coordinator.run(fn):Promise.resolve().then(fn);
 const MIME={'.html':'text/html; charset=utf-8','.js':'text/javascript; charset=utf-8','.css':'text/css; charset=utf-8','.svg':'image/svg+xml','.ico':'image/x-icon'};
 const HEADERS={'X-Content-Type-Options':'nosniff','Referrer-Policy':'no-referrer','X-Frame-Options':'DENY','Content-Security-Policy':"default-src 'self'; connect-src 'self'; img-src 'self' data:; style-src 'self'; script-src 'self'; object-src 'none'; base-uri 'none'; frame-ancestors 'none'"};
-const allowedPaths=new Set(['/','/index.html','/app.js','/style.css','/motion.css','/motion.js','/card-webp-manifest.js','/ending.html','/ending.css','/ending-ui.js','/qr-code.js']);
+const allowedPaths=new Set(['/','/index.html','/app.js','/style.css','/motion.css','/motion.js','/card-webp-manifest.js','/ending.html','/ending.css','/ending-ui.js']);
 const staticAssetCache=new Map();
 function acceptsGzip(req){
   const header=req.headers['accept-encoding'];
@@ -221,7 +221,8 @@ const server=http.createServer(async(req,res)=>{
       for(const [old,other] of subscriptions) if(other.id===player.id && old!==res) {streamSend(old,'superseded',{});old.end();subscriptions.delete(old);}
       subscriptions.set(res,player);
       res.on('close',()=>{if(subscriptions.get(res)?.id===player.id){subscriptions.delete(res);if(!subscriptions.size)streams.delete(room.code);void transaction(()=>disconnectIfAbsent(room.code,player.id)).catch(error=>console.error('Disconnect persistence failed:',error.name));}});
-      streamSend(res,'snapshot',await transaction(()=>{const current=manager.rooms.get(room.code);const member=current?.players.find(p=>p.id===player.id&&!p.removed);if(!member)throw Error('Session no longer available');return manager.view(current,member);}));
+      const initial=await transaction(()=>{const current=manager.findRoom(room.code);const member=current?.players.find(p=>p.id===player.id&&!p.removed);if(!member)throw Error('Session no longer available');return manager.view(current,member);});
+      if(initial.game?.phase==='GAME_OVER')res.end('event: snapshot\ndata: '+JSON.stringify(initial)+'\n\n');else streamSend(res,'snapshot',initial);
       return;
     }
     if(req.method==='POST' && url.pathname==='/api/action') {
@@ -250,7 +251,7 @@ server.on('close',()=>{for(const timer of pendingBroadcasts.values())clearTimeou
 const clock=setInterval(()=>{if(remoteReady&&!coordinator?.unavailable)void transaction(()=>manager.tick()).catch(error=>console.error('Room clock failed:',error.name));},500);clock.unref();
 const heartbeat=setInterval(()=>{limiter.prune();for(const group of streams.values())for(const res of group.keys())if(!res.destroyed&&!res.writableEnded)if(!res.writableNeedDrain)res.write(': heartbeat\n\n');},15000);heartbeat.unref();
 if(require.main===module)(async()=>{
-  if(remote){const rooms=validateSnapshot(await remote.load());manager.rooms=new Map(rooms.map(room=>[room.code,{...room,players:room.players.map(p=>({...p,online:false})),connections:new Map()}]));manager.saved=new WeakMap();for(const room of manager.rooms.values())manager.remember(room);remoteReady=true;}
+  if(remote){const rooms=validateSnapshot(await remote.load());manager.rooms=new Map(rooms.map(room=>[room.code,{...room,players:room.players.map(p=>({...p,online:false})),connections:new Map()}]));manager.saved=new WeakMap();for(const room of manager.rooms.values())manager.remember(room);remoteReady=true;await transaction(()=>{for(const room of manager.rooms.values())if(room.state?.phase==='GAME_OVER')manager.changed(room);});}
   server.listen(port,host,()=>console.log('GREEN IMPACT multiplayer listening on port '+port));
 })().catch(error=>{console.error('Remote snapshot startup failed:',error.name);process.exitCode=1;clearInterval(clock);clearInterval(heartbeat);});
 module.exports={server,manager};

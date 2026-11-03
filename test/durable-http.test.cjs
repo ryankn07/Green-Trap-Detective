@@ -7,6 +7,31 @@ const path=require('node:path');
 const once=require('node:events').once;
 async function listen(server){server.listen(0,'127.0.0.1');await once(server,'listening');return server.address().port;}
 async function freePort(){const s=http.createServer();const p=await listen(s);await new Promise(r=>s.close(r));return p;}
+
+test('remote durable commit sends the final SSE frame before retiring a completed room',async t=>{
+ const {RoomManager}=require('../server/rooms.cjs'),{serializeRoom}=require('../server/room-store.cjs');
+ const {createGame}=require('../engine/dist/index.js'),projects=require('../engine/dist/data/projects.json');
+ const manager=new RoomManager(),{room,player}=manager.create('Host');manager.join(room.code,'Peer');const target=manager.join(room.code,'Saboteur').player;
+ room.state=createGame({gameId:'remote-terminal-sse',players:room.players.map((p,i)=>({id:p.id,name:p.name,role:i===2?'SABOTEUR':'PROTECTOR'})),projects,deckIds:projects.slice(0,10).map(p=>p.id)});manager.phaseDeadline(room);
+ let snapshot={version:1,rooms:[serializeRoom(room)]},revision=0,writer;
+ const rest=http.createServer(async(req,res)=>{
+  let data='';for await(const part of req)data+=part;const body=JSON.parse(data);res.setHeader('content-type','application/json');
+  if(req.url.endsWith('/game_snapshot_claim')){writer=body.writer_token;return res.end(JSON.stringify({revision,snapshot}));}
+  if(req.url.endsWith('/game_snapshot_verify'))return res.end(JSON.stringify(writer===body.writer_token?{revision}:null));
+  if(body.writer_token!==writer||body.expected_revision!==revision){res.statusCode=409;return res.end('{}');}
+  snapshot=body.new_snapshot;revision++;res.end(JSON.stringify({revision}));
+ });
+ const restPort=await listen(rest),port=await freePort();t.after(()=>{rest.closeAllConnections();rest.close();});
+ const child=spawn(process.execPath,['--require',path.join(__dirname,'fixtures/redirect-fetch.cjs'),path.join(__dirname,'../server/server.cjs')],{env:{...process.env,PORT:String(port),GAME_SUPABASE_URL:'https://example.test',GAME_SUPABASE_SERVICE_KEY:'test-key',TEST_REST_ORIGIN:`http://127.0.0.1:${restPort}`},stdio:['ignore','pipe','pipe']});
+ t.after(()=>child.kill());
+ await new Promise((resolve,reject)=>{const timer=setTimeout(()=>reject(Error('startup timeout')),5000);child.stdout.on('data',x=>{if(String(x).includes('listening')){clearTimeout(timer);resolve();}});child.once('exit',()=>{clearTimeout(timer);reject(Error('server exited'));});});
+ const origin=`http://127.0.0.1:${port}`,headers={authorization:'Bearer '+player.secret,'x-room-code':room.code,'content-type':'application/json'};
+ const stream=await fetch(origin+'/api/stream?room='+room.code,{headers,signal:AbortSignal.timeout(5000)});
+ assert.equal(stream.status,200);
+ const kick=await fetch(origin+'/api/action',{method:'POST',headers,body:JSON.stringify({type:'kick',targetId:target.id})});
+ assert.equal(kick.status,200);assert.match(await stream.text(),/"phase":"GAME_OVER"/);
+ assert.deepEqual(snapshot.rooms,[]);assert.equal((await (await fetch(origin+'/health')).json()).activeRooms,0);
+});
 test('HTTP room survives restart; a failed CAS stops stale reads and writes',async t=>{
  let revision=0,snapshot={version:1,rooms:[]},fail=false,gate=null,started=null,writer=null;
  const rest=http.createServer(async(req,res)=>{let data='';for await(const part of req)data+=part;const body=JSON.parse(data);res.setHeader('content-type','application/json');if(req.url.endsWith('/game_snapshot_claim')){writer=body.writer_token;return res.end(JSON.stringify({revision,snapshot}));}if(req.url.endsWith('/game_snapshot_verify')){if(writer!==body.writer_token||revision!==body.expected_revision)return res.end('null');return res.end(JSON.stringify({revision}));}if(gate){started();await gate;}if(fail||body.writer_token!==writer||body.expected_revision!==revision){res.statusCode=409;return res.end('{}');}snapshot=body.new_snapshot;revision++;res.end(JSON.stringify({revision}));});
