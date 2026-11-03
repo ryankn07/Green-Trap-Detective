@@ -333,3 +333,36 @@ test('mobile gameplay follows server time, validates costs and completes ten rou
     if(browser)await browser.close();server.closeAllConnections();await new Promise(resolve=>server.close(resolve));
   }
 });
+
+test('an invite takes precedence over a saved session and accepts matching display names', {skip: !playwrightPath}, async () => {
+ const {chromium}=require(playwrightPath);
+ const {server,manager}=require('../server/server.cjs');
+ await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));
+ let browser;
+ try{
+  const base='http://127.0.0.1:'+server.address().port;
+  const {room,player}=manager.create('Minh');
+  browser=await chromium.launch({channel:process.env.BROWSER_CHANNEL||'chrome',headless:true});
+  const guest=await browser.newPage();
+  await guest.goto(base);
+  await guest.locator('#create-name').fill('Minh');
+  await guest.locator('#form-create button').click();
+  await guest.locator('#leave').waitFor();
+  const oldCode=await guest.locator('.lobby-invite .code').textContent();
+  assert.notEqual(oldCode,room.code);
+  const roomCount=manager.rooms.size;
+  await guest.goto(base+'/?room='+room.code.toLowerCase());
+  assert.equal(await guest.locator('#join-code').inputValue(),room.code);
+  await guest.locator('#join-name').fill('Minh');
+  await guest.locator('#form-join button').click();
+  await guest.locator('.lobby-invite .code').filter({hasText:room.code}).waitFor();
+  assert.equal(await guest.locator('#start').count(),0);
+  assert.equal(room.hostId,player.id);
+  assert.equal(room.players.length,2);
+  assert.notEqual(room.players[0].id,room.players[1].id);
+  assert.equal(manager.rooms.size,roomCount);
+  await guest.reload();
+  await guest.locator('.lobby-invite .code').filter({hasText:room.code}).waitFor();
+  assert.equal(room.players.length,2);
+ }finally{if(browser)await browser.close();server.closeAllConnections();await new Promise(resolve=>server.close(resolve));}
+});
