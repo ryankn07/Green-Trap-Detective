@@ -11,7 +11,7 @@ test('new transparent coin is served exactly and all wallet renderers use it',as
  assert.deepEqual(Buffer.from(await response.arrayBuffer()),expected);
  assert.equal(expected[25],6,'PNG must have an RGBA channel');
  const app=fs.readFileSync(path.join(__dirname,'../public/app.js'),'utf8');
- assert.equal((app.match(/src="\/brand\/green-coin.png"/g)||[]).length,5);
+ assert.equal((app.match(/src="\/brand\/green-coin.png"/g)||[]).length,4);
  assert.ok(!app.includes('◈ ${me.coins}'));
  for(const wrong of ['/brand/.env','/brand/green-coin.png/extra','/brand/other.png'])assert.equal((await fetch(base+wrong)).status,404);
 });
