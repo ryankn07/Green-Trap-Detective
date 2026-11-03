@@ -7,18 +7,20 @@ const { createServerlessHandler } = require('../server/serverless-game.cjs');
 
 // External persistence seam: each invocation receives an independent copy.
 class TestDatabase {
-  constructor() { this.rooms = new Map(); this.receipts = new Map(); this.time = Date.now(); }
+  constructor() { this.rooms = new Map(); this.completed = new Map(); this.receipts = new Map(); this.time = Date.now(); }
   async limit() {}
   async read(code, scope, requestId) {
-    return structuredClone({ record: this.rooms.get(code) || null, receipt: this.receipts.get(scope + ':' + requestId) || null, now: this.time });
+    const result=this.completed.get(code);if(result&&result.expires<=this.time)this.completed.delete(code);
+    return structuredClone({ record: this.rooms.get(code) || this.completed.get(code) || null, receipt: this.receipts.get(scope + ':' + requestId) || null, now: this.time });
   }
   async commit({ code, expectedVersion, payload, scope, requestId, requestHash, response }) {
     const key = scope + ':' + requestId;
     if (this.receipts.has(key)) return { receipt: structuredClone(this.receipts.get(key)) };
-    const old = this.rooms.get(code);
+    const old = this.rooms.get(code)||this.completed.get(code);
     if ((old?.version ?? 0) !== expectedVersion) return { conflict: true };
-    if (payload) this.rooms.set(code, structuredClone({ version: expectedVersion + 1, payload }));
-    else this.rooms.delete(code);
+    if(payload?.completed){this.completed.set(code,structuredClone({version:expectedVersion+1,payload,expires:this.time+15*60*1000}));this.rooms.delete(code);}
+    else if (payload) this.rooms.set(code, structuredClone({ version: expectedVersion + 1, payload }));
+    else {this.rooms.delete(code);this.completed.delete(code);}
     if (!requestId) return { committed: true };
     const receipt = { requestHash, response };
     this.receipts.set(key, structuredClone(receipt));
@@ -39,6 +41,25 @@ async function fixture(t) {
   }
   return { store, request };
 }
+
+test('completion atomically retires the active room and keeps only expiring authenticated results',async t=>{
+ const {store,request}=await fixture(t);
+ const host=(await request('/api/create',{name:'Host'})).value,guests=[];
+ for(const name of ['Guest A','Guest B'])guests.push((await request('/api/join',{roomCode:host.roomCode,name})).value);
+ await request('/api/action',{type:'start'},host);
+ let view=(await request('/api/state?room='+host.roomCode,null,host)).value;
+ for(let count=0;view.game.phase!=='GAME_OVER'&&count<32;count++){
+  store.time=view.deadline+1;const response=await request('/api/state?room='+host.roomCode,null,host);assert.equal(response.status,200);view=response.value;
+ }
+ assert.equal(view.game.phase,'GAME_OVER');assert.equal(store.rooms.has(host.roomCode),false);assert.equal(store.completed.has(host.roomCode),true);
+ const expiry=store.completed.get(host.roomCode).expires;
+ const peer=await request('/api/state?room='+host.roomCode,null,guests[0]);assert.equal(peer.status,200);assert.equal(peer.value.game.phase,'GAME_OVER');assert.ok(!JSON.stringify(peer.value).includes(host.token));
+ assert.equal(store.completed.get(host.roomCode).expires,expiry,'result reads do not renew archive lifetime');
+ assert.equal((await request('/api/state?room='+host.roomCode,null,{...host,token:'0'.repeat(64)})).status,401);
+ assert.equal((await request('/api/action',{type:'next'},host)).value.error,'GAME_OVER');
+ assert.equal((await request('/api/join',{roomCode:host.roomCode,name:'Too late'})).status,400);
+ store.time=expiry+1;assert.equal((await request('/api/state?room='+host.roomCode,null,host)).status,404);
+});
 test('a room survives separate Function invocations and a concurrent join does not lose players', async t => {
   const { request } = await fixture(t);
   const created = await request('/api/create', { name: 'Chủ phòng' });

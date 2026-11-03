@@ -92,6 +92,10 @@ function createServerlessHandler({ store } = {}) {
         if (authenticated && loaded.record) ({ room, player } = manager.authenticate(code, token));
         if (loaded.receipt) return reply(res, 200, receiptValue(loaded.receipt, requestHash));
         if (authenticated && !loaded.record) throw new HttpError('ROOM_NOT_FOUND', 'Không tìm thấy phòng.', 404);
+        if (authenticated && loaded.record.payload.completed) {
+          if(path==='/api/state')return reply(res,200,{...manager.view(room,player),transport:'poll'});
+          throw new HttpError('GAME_OVER','Ván đã kết thúc.');
+        }
         let result, operation = 'write';
         const oldRevision = room?.revision;
         if (room && presenceChanged) manager.changed(room);
@@ -120,7 +124,8 @@ function createServerlessHandler({ store } = {}) {
           if (!freshPresence && room.revision === oldRevision) return reply(res, 200, result);
         } else result = { roomCode: room.code, playerId: player.id, token: player.secret, transport: 'poll' };
         const exists = manager.rooms.has(room.code);
-        const payload = exists ? { version: 1, rooms: [serializeRoom(room)], presence, online: Object.fromEntries(room.players.map(member => [member.id, member.online])) } : null;
+        const completed=room.state?.phase==='GAME_OVER';
+        const payload = exists||completed ? { version: 1, rooms: [serializeRoom(room)], presence, online: Object.fromEntries(room.players.map(member => [member.id, member.online])),...(completed?{completed:true}:{}) } : null;
         const committed = await store.commit({ code: room.code, expectedVersion: loaded.record?.version || 0, payload, scope: writing ? scope : null, requestId: body.requestId || null, requestHash: writing ? requestHash : null, response: writing ? result : null, source, operation });
         if (committed.receipt) return reply(res, 200, receiptValue(committed.receipt, requestHash));
         if (committed.committed) return reply(res, 200, result);
