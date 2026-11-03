@@ -29,4 +29,10 @@ Artifacts are outside the repository at `../outputs/motion-verification/`: three
 
 At 1440×900, the action card measured **538.66 → 258.23 → 250.09 px** high; discussion top moved **626.66 → 346.23 → 338.09 px**. The intermediate screenshot holds the actual WAAPI animation at 130 ms for inspection. A separate natural lock transition sample recorded no long task during its roughly 900 ms observation. At 390×844 the panel remained inside the viewport, with no horizontal overflow or page error.
 
-These observations are from local Chrome and mobile emulation. They do not establish a frame-rate guarantee or physical-phone performance. Release verification remains pending until integrated with current main and deployed.
+These observations are from local Chrome and mobile emulation. They do not establish a frame-rate guarantee or physical-phone performance.
+
+## Release
+
+PR #34 merged as `27ec9046cdeb53063b0cbe87e1a2eef33fe4538d`; Node 20/22 CI passed on its final head `fe794c6`. The merge also included the separately authored compact-empty-discussion CSS from PR #36. All 10 affected browser/mobile/motion/static-build cases passed again on the exact merged application commit, with no skips.
+
+Vercel production deployment `dpl_GdFXtLoyy6X2yazmeUBEaS57FUxj` reached READY and assigned `greentrap.vercel.app` to that application commit. Public verification: root HTTP 200, `/health` reports `ok`, and live `app.js`, `motion.js`, `motion.css` match the merged source after newline normalization. The home page was visually inspected in a separate Edge tab; existing player tabs were not reloaded or altered. This final documentation update does not change the released application code.

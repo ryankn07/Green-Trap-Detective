@@ -1,6 +1,6 @@
 # Website motion plan — 3 November 2026
 
-Status: implemented and locally verified; release pending. Original baseline: main `9a7eed2ce997a868a9417d19899bd10253fd1b7d`. Verification details: `docs/MOTION_VERIFICATION_20261103.md`.
+Status: implemented, verified and live at https://greentrap.vercel.app/ through PR #34, application commit `27ec9046cdeb53063b0cbe87e1a2eef33fe4538d`. Original baseline: main `9a7eed2ce997a868a9417d19899bd10253fd1b7d`. Verification details: `docs/MOTION_VERIFICATION_20261103.md`.
 
 The owner assigns this work to effects, independently of Plus 2's visual-design proposal. The motion direction below is authored for the investigation/card-game interaction; it does not adopt Plus 2's proposed palette, materials, composition or redesign. Existing product assets, game rules and functional layout remain authoritative.
 
@@ -34,7 +34,7 @@ Treat a round as a dossier arriving on a table and the reveal as its conclusion 
 5. [x] Add own-balance and new-public-statement feedback. Key events by stable identity and preserve the message-list reading position.
 6. [x] Add bounded home/lobby/panel feedback and reuse existing copy acknowledgment; prevent double animation of controls that already have an effect.
 7. [x] Verify interruption, rapid repeated actions, replayed snapshots, reconnect, page hiding, keyboard use, reduced motion and narrow screens. Retain all current draft/privacy/layout/ending regressions.
-8. [ ] Capture actual before/after motion evidence, profile a representative PC/mobile-emulation session, and commit each verified unit. Release only the tested integration with current main.
+8. [x] Capture actual before/after motion evidence, profile a representative PC/mobile-emulation session, and commit each verified unit. Release only the tested integration with current main.
 
 Implementation uses the Web Animations API in a separate motion module with no new dependencies. Drawer feedback is opacity-only so its bounds remain inside narrow viewports; closing and private-role hiding remain immediate. The reveal uses one brief accent on the existing result rather than delaying its individual text blocks.
 
