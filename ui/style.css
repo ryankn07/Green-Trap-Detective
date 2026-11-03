@@ -92,7 +92,7 @@ button:disabled{opacity:.5;cursor:not-allowed}
 :where(button,input,textarea,select,a,summary):focus-visible{outline:3px solid var(--focus);outline-offset:4px}
 label{display:grid;gap:8px;font-size:14px;font-weight:600;min-width:0}
 input,textarea,select{width:100%;min-width:0;padding:12px 12px;min-height:48px;color:var(--text);background:var(--surface);border:1px solid var(--border-strong);border-radius:var(--radius);font-size:16px;font-weight:400}
-input::placeholder,textarea::placeholder{color:var(--subtle);opacity:1}
+input::placeholder,textarea::placeholder{color:var(--muted);opacity:1}
 input:hover,textarea:hover,select:hover{border-color:var(--text)}
 textarea{min-height:132px;resize:vertical;line-height:1.55}
 input[type=checkbox]{width:20px;height:20px;min-height:0;accent-color:var(--green);flex:0 0 20px}
@@ -800,11 +800,11 @@ body.copy-confirmed::after{content:"";position:fixed;z-index:99;inset:0;pointer-
  body.gi-gameplay .gi-phase-header .phase {font-size:clamp(17px,1.35vw,22px)}
  body.gi-gameplay .gi-phase-header .countdown {padding:2px 8px;font-size:18px}
  body.gi-gameplay .gi-phase-header>.flex:not(.muted) {gap:16px}
- body.gi-gameplay .gi-phase-header>.muted {font-size:10px;gap:7px}
+ body.gi-gameplay .gi-phase-header>.muted {font-size:12px;gap:7px}
  body.gi-gameplay .gi-phase-header>.muted>span {padding:4px 8px}
  body.gi-gameplay .gi-area-project {min-height:0;height:100%;padding:12px;gap:8px;border-radius:20px}
  body.gi-gameplay .gi-area-project::before {inset:7px;border-radius:14px}
- body.gi-gameplay .gi-area-project>.eyebrow {flex:none;font-size:9px;line-height:16px}
+ body.gi-gameplay .gi-area-project>.eyebrow {flex:none;font-size:12px;line-height:18px}
  body.gi-gameplay .gi-area-project .project {display:flex;align-items:center;justify-content:center;flex:1;min-height:0;container-type:size}
  body.gi-gameplay .gi-area-project .gi-card-preview {width:min(100cqw,calc(100cqh * (var(--card-frame-ratio,794 / 1123))));flex:none}
  body.gi-gameplay .gi-area-actions {display:flex;flex-direction:column;height:100%;min-height:0;overflow:auto;gap:10px;overscroll-behavior:contain;scrollbar-width:thin}
@@ -812,14 +812,14 @@ body.copy-confirmed::after{content:"";position:fixed;z-index:99;inset:0;pointer-
  body.gi-gameplay .gi-area-actions .gi-profile-panel {padding:10px 16px;gap:6px 12px}
  body.gi-gameplay .gi-profile-panel>.flex {grid-column:2;grid-row:1;justify-content:flex-end}
  body.gi-gameplay .gi-profile-panel>.flex h2 {display:none}
- body.gi-gameplay .gi-profile-panel>p {grid-column:1;grid-row:1;align-self:center;font-size:12px}
+ body.gi-gameplay .gi-profile-panel>p {grid-column:1;grid-row:1;align-self:center;font-size:14px}
  body.gi-gameplay .gi-profile-panel>.flex .coins {padding:4px 9px;font-size:17px}
  body.gi-gameplay .gi-area-actions #role {grid-row:2;margin:0;padding:5px 9px}
  body.gi-gameplay .gi-area-actions #show-role {min-height:28px;padding:4px 10px}
  body.gi-gameplay .gi-action-panel>h2 {font-size:26px}
- body.gi-gameplay .gi-action-panel>p {margin-top:7px;font-size:12px;line-height:1.5}
+ body.gi-gameplay .gi-action-panel>p {margin-top:7px;font-size:14px;line-height:1.5}
  body.gi-gameplay .gi-action-panel form {gap:8px;margin-top:12px}
- body.gi-gameplay .gi-action-panel label {gap:5px;font-size:12px}
+ body.gi-gameplay .gi-action-panel label {gap:5px;font-size:14px}
  body.gi-gameplay .gi-action-panel textarea,body.gi-gameplay .gi-action-panel select {padding:9px 11px;font-size:14px}
  body.gi-gameplay .gi-action-panel textarea {min-height:76px}
  body.gi-gameplay .gi-action-panel form>button {min-height:40px;padding:9px 16px;font-size:13px}
@@ -827,6 +827,8 @@ body.copy-confirmed::after{content:"";position:fixed;z-index:99;inset:0;pointer-
  body.gi-gameplay .gi-area-players h2 {flex:none;font-size:17px}
  body.gi-gameplay .gi-area-players .people {display:flex;flex-direction:column;flex:1;min-height:0;overflow:auto;gap:8px;padding:0;overscroll-behavior:contain;scrollbar-width:thin}
  body.gi-gameplay .gi-area-players .person {flex:none;min-height:70px;width:100%;border-radius:10px}
+ body.gi-gameplay .gi-area-players .person-info b {font-size:14px}
+ body.gi-gameplay .gi-area-players .person-info small,body.gi-gameplay .gi-area-players .pill {font-size:12px}
  body.gi-gameplay .gi-area-discussion {display:flex;flex-direction:column;height:100%;min-height:0;overflow:auto;gap:8px;scrollbar-width:thin}
  body.gi-gameplay .gi-area-discussion>.card {padding:12px 16px;border-radius:14px}
  body.gi-gameplay .gi-area-discussion>.card:first-child {flex:1;min-height:0;display:flex;flex-direction:column}

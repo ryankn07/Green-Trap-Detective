@@ -54,7 +54,7 @@ test('mobile components work across small phones, landscape, and every game phas
      assert.equal(await card.isVisible(),false,'leaving eye conceals private card');
      assert.equal(await eye.getAttribute('aria-pressed'),'false','leaving eye resets pressed state');await entry.mouse.up();
     }
-    await entry.locator('.gi-card-button').click();assert.equal(await entry.locator('.gi-card-dialog').isVisible(),true);await entry.locator('.gi-card-dialog button').click();assert.equal(await entry.locator('.gi-card-dialog').count(),0);
+    await entry.locator('.gi-card-button').click();assert.equal(await entry.locator('.gi-card-dialog').isVisible(),true);await entry.locator('.gi-card-dialog button').click();await entry.locator('.gi-card-dialog').waitFor({state:'detached'});
     await entry.locator('#toggle-players').click();const panel=entry.locator('#players-panel');assert.equal(await panel.isVisible(),true);const panelBox=await panel.boundingBox();assert.ok(panelBox.x>=0&&panelBox.y>=0&&panelBox.x+panelBox.width<=width+1&&panelBox.y+panelBox.height<=height+1,'drawer fits '+width+'x'+height);
     await entry.locator('#close-players').click();assert.equal(await panel.isVisible(),false);assert.equal(await entry.locator('#toggle-players').getAttribute('aria-expanded'),'false');
    }
