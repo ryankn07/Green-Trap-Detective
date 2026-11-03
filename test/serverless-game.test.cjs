@@ -39,6 +39,24 @@ async function fixture(t) {
   }
   return { store, request };
 }
+
+test('guests with the host name get separate authenticated IDs in the requested room', async t => {
+  const { request } = await fixture(t);
+  const { value: host } = await request('/api/create', { name: 'Minh' });
+  const guests = await Promise.all([1, 2].map(() => request('/api/join', { roomCode: host.roomCode, name: 'Minh' })));
+  assert.ok(guests.every(result => result.status === 200));
+  const sessions = [host, ...guests.map(result => result.value)];
+  assert.equal(new Set(sessions.map(session => session.playerId)).size, 3);
+  assert.equal(new Set(sessions.map(session => session.token)).size, 3);
+  for (const session of sessions) {
+    assert.equal(session.roomCode, host.roomCode);
+    const state = await request('/api/state?room=' + host.roomCode, null, session);
+    assert.equal(state.status, 200);
+    assert.equal(state.value.room.code, host.roomCode);
+    assert.equal(state.value.room.hostId, host.playerId);
+    assert.deepEqual(new Set(state.value.room.players.map(player => player.id)), new Set(sessions.map(session => session.playerId)));
+  }
+});
 test('a room survives separate Function invocations and a concurrent join does not lose players', async t => {
   const { request } = await fixture(t);
   const created = await request('/api/create', { name: 'Chủ phòng' });

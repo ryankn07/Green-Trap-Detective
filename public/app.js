@@ -83,7 +83,13 @@ const api=async(path,data,authenticated=false)=>{const headers={'Content-Type':'
  const r=await fetch(path,{method:'POST',headers,body:JSON.stringify({...data,requestId}),signal:AbortSignal.timeout(15000)});const value=await r.json().catch(()=>({}));if(r.ok||r.status<500)pendingRequests.delete(key);if(!r.ok){const error=Error(value.message||value.error||`HTTP ${r.status}`);error.code=value.error;error.status=r.status;throw error;}return value;};
 const readState=async(signal)=>{const current=session;if(!current)return;const r=await fetch(`/api/state?room=${current.roomCode}`,{headers:{Authorization:`Bearer ${current.token}`},cache:'no-store',signal:signal||AbortSignal.timeout(12000)});const value=await r.json().catch(()=>({}));if(!r.ok){const error=Error(value.message||value.error||'Không thể tải trạng thái phòng');error.code=value.error;error.status=r.status;throw error;}if(session!==current)return;if(current.transport==='poll'&&snapshot?.room.code===value.room.code&&snapshot.room.revision===value.room.revision){snapshot.serverTime=value.serverTime;snapshot.deadline=value.deadline;snapshotReceivedAt=performance.now();}else acceptSnapshot(value);return value;};
 const copyRoom=async()=>{const url=`${location.origin}/?room=${session.roomCode}`;try{await navigator.clipboard.writeText(url);showToast('Đã sao chép','success',3000);}catch{gameError({message:'Không thể sao chép. Hãy thử lại.'});}};
-function onSession(s) {session=s;save();app.innerHTML='';if(s.transport==='poll')connectPoll();else readState().then(value=>{if(session!==s)return;if(value?.transport==='poll'){s.transport='poll';save();connectPoll();}else connectStream();}).catch(handleSessionError);}
+function onSession(s) {
+ const url=new URL(location.href);
+ if(url.searchParams.has('room')&&url.searchParams.get('room')!==s.roomCode){
+  url.searchParams.set('room',s.roomCode);
+  history.replaceState(history.state,'',url);
+ }
+ session=s;save();app.innerHTML='';if(s.transport==='poll')connectPoll();else readState().then(value=>{if(session!==s)return;if(value?.transport==='poll'){s.transport='poll';save();connectPoll();}else connectStream();}).catch(handleSessionError);}
 async function connectPoll(){
  aborter?.abort();const active=new AbortController();aborter=active;let backoff=1500;statusEl.textContent='Đang kết nối';
  active.signal.addEventListener('abort',()=>clearTimeout(active.pollTimer),{once:true});
@@ -256,8 +262,23 @@ app.addEventListener('click',e=>{
  if(target&&confirm(`Kick ${target.name} khỏi phòng${snapshot?.game?' và loại khỏi ván hiện tại':' chờ'}?`))act('kick',{targetId:target.id});
 });
 app.addEventListener('change',e=>{if(e.target.id==='stance')persistStatementDraft();});
-app.addEventListener('submit',async e=>{if(e.target.id==='form-create'){e.preventDefault();try{onSession(await api('/api/create',{name:document.getElementById('create-name').value}));}catch(err){gameError(err)}}
- if(e.target.id==='form-join'){e.preventDefault();try{onSession(await api('/api/join',{roomCode:document.getElementById('join-code').value.trim().toUpperCase(),name:document.getElementById('join-name').value}));}catch(err){gameError(err)}}
+app.addEventListener('submit',async e=>{
+ const formId=e.target.id;
+ if(formId==='form-create'||formId==='form-join'){
+  e.preventDefault();
+  if(requesting||session)return;
+  const joining=formId==='form-join';
+  const roomCode=joining?document.getElementById('join-code').value.trim().toUpperCase():null;
+  const name=document.getElementById(joining?'join-name':'create-name').value;
+  requesting=true;
+  try{
+   const next=await api(joining?'/api/join':'/api/create',joining?{roomCode,name}:{name});
+   if(joining&&next.roomCode!==roomCode)throw Error('Phản hồi không khớp mã phòng. Hãy thử lại.');
+   onSession(next);
+  }catch(err){gameError(err);}
+  finally{requesting=false;}
+  return;
+ }
  if(e.target.id==='statement'){e.preventDefault();if(matchMedia('(max-width:759px)').matches)openStatementChoice();else act('submit',{text:document.getElementById('statement-text').value,stance:document.getElementById('stance').value});}
  if(e.target.id==='action-form'){e.preventDefault();const kind=document.getElementById('bank').value;const bankAction=kind==='NONE'?{type:'NONE'}:kind==='INSPECT'?{type:'INSPECT',targetId:document.getElementById('target').value}:{type:'EXPEL',targetId:document.getElementById('target').value,amount:Number(document.getElementById('amount').value)};act('submit',{action:{invest:document.getElementById('invest').checked,bankAction}});}
 });
@@ -293,5 +314,13 @@ document.addEventListener('keydown',e=>{
 });
 matchMedia('(max-width:1199px)').addEventListener('change',()=>{if(peopleOpen)setPlayersOpen(false);});
 app.addEventListener('keyup',hideRoleText);document.addEventListener('visibilitychange',()=>{if(document.hidden)hideRoleText();});
-const saved=sessionStorage.getItem(storeKey);if(saved){try{session=JSON.parse(saved);onSession(session)}catch{session=null;save()}}
-if(!session){const q=new URLSearchParams(location.search).get('room');if(q&&/^[A-Z2-9]{6}$/i.test(q)){document.getElementById('join-code').value=q.toUpperCase();}}
+const inviteCode=new URLSearchParams(location.search).get('room')?.toUpperCase();
+const invitedRoom=inviteCode&&/^[A-Z2-9]{6}$/.test(inviteCode)?inviteCode:null;
+const saved=sessionStorage.getItem(storeKey);
+if(saved){
+ try{
+  const previous=JSON.parse(saved);
+  if(previous&&(!invitedRoom||previous.roomCode===invitedRoom))onSession(previous);
+ }catch{session=null;save();}
+}
+if(!session&&invitedRoom)document.getElementById('join-code').value=invitedRoom;
