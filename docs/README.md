@@ -32,11 +32,15 @@ These documents preserve the scope, decisions, and test evidence from specific i
 - [Lobby recovery and load test](history/records/LOBBY_KICK_AND_SOAK.md)
 - [Brand and card finish](BRAND_AND_CARD_FINISH.md)
 - [Native HD card images](CARD_HD_FIX.md)
-- [Video endings and card QR links](ENDINGS.md)
+- [Video endings and the team's no-QR decision](ENDINGS.md)
 - [Earlier PC gameplay redesign](history/briefs/PC_GAME_REDESIGN.md)
 - [Entry-page redesign](UI_REDESIGN.md)
 - [Desktop gameplay release, 3 November](DESKTOP_GAME_RELEASE_20261103.md)
 - [Mobile component verification, 3 November](MOBILE_VERIFICATION_20261103.md)
+- [Full-screen phase transitions](PHASE_TRANSITIONS.md)
+- [Inline kick confirmation and pencil removal](KICK_CONFIRMATION.md)
+- [In-match vote-out motion](ELIMINATION_EFFECT.md)
+- [Immediate room cleanup](ROOM_COMPLETION.md)
 - [Historical product completion record](history/records/PRODUCT_FINISH.md)
 
 They are dated records, not live monitoring. A statement such as "local", "uncommitted", or "not deployed" describes the state at the time that document was written. Use the current Git history and source/tests for repository state; verify Vercel and Render separately before making claims about the live deployment.

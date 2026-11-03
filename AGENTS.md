@@ -2,7 +2,13 @@
 
 Current owner override (2026-11-01): support groups larger than 10; do not assume a maximum of 12. PC player boxes scroll horizontally, mobile player panels vertically. Preserve the existing redesign and native HD images. See docs/SCALE_AND_SECURITY.md for verified implementation and limits.
 
+Current owner/team decision (2026-11-03): endings show the supplied video directly in the game page, using the full content width. **Do not add QR codes, scan instructions, camera/scanner flows or the former card/role scan sidebar.** The team approved removing QR entirely in favor of showing the video. This supersedes the scanning proposal in `GREEN IMPACT PLAN.md` rule 11 and any earlier documentation or screenshots. Preserve this decision during later Codex work unless the owner explicitly changes it. See `docs/ENDINGS.md`.
+
 ## Project purpose
+
+Ending refinement (2026-11-03): keep the “Dấu vết của ván chơi / Những lá thẻ cùng tương lai” gallery removed. `TRUTH` verdict text stays green in reveals and journals, including within Bad Ending; the ending's faction color must not override it.
+
+Vote-out motion clarification (2026-11-03): the two-second elimination effect runs on player tiles **inside the match when a turn resolves a successful expulsion**, after the reveal chapter. For a final vote, accept/cache/retire the result immediately while showing the inert board's brief effect before the ending chapter. Keep the ending roster static and contributors private during play. See `docs/ELIMINATION_EFFECT.md`.
 
 GREEN TRAP DETECTIVE is a browser-based Vietnamese multiplayer social-deduction game about environmental projects. The current stack is Node.js (20+), a built-in HTTP server, and vanilla HTML/CSS/JavaScript. Keep the existing stack unless the owner explicitly approves a change.
 
@@ -13,7 +19,7 @@ Read the current design record that matches the surface being changed:
 - `docs/UI_REDESIGN.md` for the entry page and overall visual direction.
 - `docs/DESKTOP_GAME_RELEASE_20261103.md` for the current PC gameplay layout (the earlier plan is archived).
 - `docs/BRAND_AND_CARD_FINISH.md` and `docs/CARD_HD_FIX.md` for brand treatment and original card assets.
-- `docs/ENDINGS.md` for winner-based videos, ending-only presentation and card QR links.
+- `docs/ENDINGS.md` for winner-based video playback, ending presentation and the team's no-QR decision.
 
 `docs/history/briefs/UI_REFACTOR_BRIEF.md` and `docs/history/briefs/LOBBY_REDESIGN.md` are historical task records. Their older layout and capacity assumptions are superseded where they conflict with later owner-approved work. Always verify current behavior against source code and tests.
 
@@ -64,7 +70,7 @@ The following behavior is confirmed by the engine and room manager at the handof
 - In `BLIND_ACTION`, each living player locks one final action. The action contains both an `invest` boolean and a `bankAction`; these are independent parts of the same submission and may be combined if the player can afford the total cost.
 - Investment is either 0 or 1 coin. `INSPECT` costs 3 coins. `EXPEL` contributes an integer amount from 1 to 5 coins to a target. The total action cost is investment cost plus bank-action cost. The server rejects an action whose total exceeds the player's wallet.
 - A locked action is final for that round. The UI must not imply that a player can edit it afterward.
-- Inspection results are private to the inspecting player. Expulsion contributions are pooled by target; a target is expelled when pooled contributions reach at least 5. Do not publish individual contributors or their amounts.
+- Inspection results are private to the inspecting player. Expulsion contributions are pooled by target; a target is expelled when pooled contributions reach at least 5. Contributor identities and amounts stay private during active play. Owner refinement (2026-11-03): at `GAME_OVER`, the ending names all eligible contributors to each successful expulsion; contribution amounts, inspection results and other locked actions remain private. Do not invent an actor for bankruptcy or older results without attribution.
 - Investment approval requires at least half of the living players, rounded up. Investors pay the investment cost whether or not the project is approved. An investor receives the engine-defined payout only when their role aligns with the project's alignment.
 - During play, `projectForPlayer` exposes the viewer's own role, coins, locked action, and inspection history. Other players' public entries contain identity/status and whether they have submitted or locked; they do not contain their role, wallet, inspection results, or action details. Project alignment/verdict/explanation are withheld until `REVEAL` or `GAME_OVER`. All roles become visible at `GAME_OVER`.
 - The engine accepts groups of at least 3 with no hardcoded upper player count. ROOM_MAX_PLAYERS is an optional operator policy, default unset. Separate process resource budgets protect the server; these are not hosting capacity guarantees. Derive any displayed maximum from the authenticated room projection.
