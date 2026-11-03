@@ -56,8 +56,3 @@ begin
   return jsonb_build_object('receipt', jsonb_build_object('requestHash', request_hash, 'response', public_response));
 end;
 $$;
-
--- Apply the same bounded delivery window to already completed rooms.
-update green_trap_trial.rooms
-set expires_at = least(expires_at, clock_timestamp() + interval '2 minutes')
-where payload#>>'{rooms,0,state,phase}' = 'GAME_OVER';
