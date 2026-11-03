@@ -221,6 +221,20 @@ body.copy-confirmed::after{content:"";position:fixed;z-index:99;inset:0;pointer-
 .gi-phase-header .muted{font-size:13px}
 .gi-area-players{grid-area:players;padding:16px 16px;background:var(--surface-soft);border:0;border-top:2px solid var(--text);border-radius:0}
 .gi-area-players h2{font-size:17px}
+.gi-area-players .gi-council-heading {display:flex;align-items:center;gap:8px}
+.gi-council-heading svg,.gi-reveal-status svg {
+ width:18px;height:18px;flex:none;fill:none;stroke:currentColor;
+ stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;
+}
+body.gi-gameplay .gi-area-players .gi-person-self {background:#e5efda;border-color:#a9c095}
+body.gi-gameplay .gi-action-panel .summary>.gi-reveal-status {
+ display:inline-flex;align-items:center;gap:6px;padding:5px 10px;
+ border-radius:8px;font-size:14px;letter-spacing:normal;
+ background:#f4ebd8;color:#684e27;
+}
+body.gi-gameplay .gi-action-panel .summary>.gi-reveal-status[data-approved="true"] {
+ background:#e3eed8;color:#2d5535;
+}
 .gi-area-players .people{max-height:65dvh;overflow-y:auto;overscroll-behavior:contain}
 .gi-area-players .person{grid-template-columns:28px minmax(0,1fr);gap:8px;padding:16px 0}
 .gi-area-players .avatar{width:28px;height:28px;font-size:12px}
@@ -687,6 +701,12 @@ body.copy-confirmed::after{content:"";position:fixed;z-index:99;inset:0;pointer-
  .gi-statement-counter{display:block;margin:-7px 0 0;text-align:right;font-size:11px;color:#718075;font-variant-numeric:tabular-nums}
  .gi-action-panel form>button{min-height:46px;border-radius:12px;background:#0c4c34;border-color:#0c4c34}
  .gi-gameplay .gi-area-discussion{display:flex;flex-direction:column;gap:12px}
+ .gi-gameplay .gi-mobile-topbar{background:linear-gradient(105deg,#eff4e5,#fffdf4)}
+ .gi-gameplay .gi-top-wallet{background:#f1f4de;border-color:#d5dfb6}
+ .gi-gameplay .gi-area-project{background:radial-gradient(ellipse at center,#f8f5e6,#e1ebd1)}
+ .gi-gameplay .gi-area-project>.eyebrow{color:#385841}
+ .gi-gameplay .gi-area-project .gi-card-preview{filter:drop-shadow(0 5px 8px #34583b35)}
+ .gi-gameplay .gi-phase-header{background:linear-gradient(110deg,#e6f0de,#fffdf5)}
  .gi-gameplay .gi-area-discussion>.card{padding:14px;border:1px solid #dce5d8;border-radius:18px;background:#fffef8}
  .gi-area-discussion h2{font-size:17px;color:#0c4c34}
  .gi-area-discussion>.card:first-child>.hist:empty{display:none}
@@ -824,10 +844,34 @@ body.copy-confirmed::after{content:"";position:fixed;z-index:99;inset:0;pointer-
  body.gi-gameplay .gi-phase-header>.muted {font-size:12px;gap:7px}
  body.gi-gameplay .gi-phase-header>.muted>span {padding:4px 8px}
  body.gi-gameplay .gi-area-project {min-height:0;height:100%;padding:12px;gap:8px;border-radius:20px}
- body.gi-gameplay .gi-area-project::before {inset:7px;border-radius:14px}
+ body.gi-gameplay .gi-area-project::before {
+  inset:7px;
+  border-radius:14px;
+  background:url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20720%20630%22%20preserveAspectRatio%3D%22none%22%3E%3Cg%20fill%3D%22none%22%20stroke%3D%22%2371885c%22%20stroke-opacity%3D%22.22%22%20stroke-width%3D%221.3%22%3E%3Cpath%20d%3D%22M-55%20630%20C125%20573%20-28%20446%2059%20369%20S119%20238%2030%20164%20S33%2049%2096%20-20%22%2F%3E%3Cpath%20d%3D%22M-37%20630%20C143%20573%20-10%20446%2077%20369%20S137%20238%2048%20164%20S51%2049%20114%20-20%22%2F%3E%3Cpath%20d%3D%22M-19%20630%20C161%20573%208%20446%2095%20369%20S155%20238%2066%20164%20S69%2049%20132%20-20%22%2F%3E%3Cpath%20d%3D%22M-1%20630%20C179%20573%2026%20446%20113%20369%20S173%20238%2084%20164%20S87%2049%20150%20-20%22%2F%3E%3Cpath%20d%3D%22M17%20630%20C197%20573%2044%20446%20131%20369%20S191%20238%20102%20164%20S105%2049%20168%20-20%22%2F%3E%3Cpath%20d%3D%22M35%20630%20C215%20573%2062%20446%20149%20369%20S209%20238%20120%20164%20S123%2049%20186%20-20%22%2F%3E%3Cg%20transform%3D%22translate%28720%20630%29%20rotate%28180%29%22%3E%3Cpath%20d%3D%22M-55%20630%20C125%20573%20-28%20446%2059%20369%20S119%20238%2030%20164%20S33%2049%2096%20-20%22%2F%3E%3Cpath%20d%3D%22M-37%20630%20C143%20573%20-10%20446%2077%20369%20S137%20238%2048%20164%20S51%2049%20114%20-20%22%2F%3E%3Cpath%20d%3D%22M-19%20630%20C161%20573%208%20446%2095%20369%20S155%20238%2066%20164%20S69%2049%20132%20-20%22%2F%3E%3Cpath%20d%3D%22M-1%20630%20C179%20573%2026%20446%20113%20369%20S173%20238%2084%20164%20S87%2049%20150%20-20%22%2F%3E%3Cpath%20d%3D%22M17%20630%20C197%20573%2044%20446%20131%20369%20S191%20238%20102%20164%20S105%2049%20168%20-20%22%2F%3E%3Cpath%20d%3D%22M35%20630%20C215%20573%2062%20446%20149%20369%20S209%20238%20120%20164%20S123%2049%20186%20-20%22%2F%3E%3C%2Fg%3E%3C%2Fg%3E%3C%2Fsvg%3E") center / 100% 100% no-repeat,
+             radial-gradient(ellipse at 50% 85%,#b2c39045,transparent 68%);
+ }
+ body.gi-gameplay .gi-area-project {
+  border-color:#a9ba8e;
+  background:url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20155%20155%22%3E%3Cpath%20d%3D%22M10%20152Q83%20114%20113%2028%22%20fill%3D%22none%22%20stroke%3D%22%23849d64%22%20stroke-width%3D%223%22%2F%3E%3Cg%20fill%3D%22%238da967%22%3E%3Cpath%20d%3D%22M54%20122Q11%20112%208%2078Q43%2085%2054%20122M72%20105Q83%2066%20119%2063Q111%2094%2072%20105M85%2084Q46%2073%2049%2042Q79%2048%2085%2084M101%2059Q109%2020%20143%2014Q136%2049%20101%2059M31%20137Q53%20112%2092%20127Q67%20147%2031%20137%22%2F%3E%3C%2Fg%3E%3Cg%20fill%3D%22%23a9b976%22%3E%3Ccircle%20cx%3D%2229%22%20cy%3D%2261%22%20r%3D%222%22%2F%3E%3Ccircle%20cx%3D%22120%22%20cy%3D%22106%22%20r%3D%222%22%2F%3E%3Ccircle%20cx%3D%2267%22%20cy%3D%2224%22%20r%3D%222.5%22%2F%3E%3C%2Fg%3E%3C%2Fsvg%3E") left 10px bottom 8px / clamp(74px,10vw,158px) auto no-repeat,
+             url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20155%20155%22%3E%3Cg%20transform%3D%22translate%28155%20155%29%20rotate%28180%29%22%3E%3Cpath%20d%3D%22M10%20152Q83%20114%20113%2028%22%20fill%3D%22none%22%20stroke%3D%22%23849d64%22%20stroke-width%3D%223%22%2F%3E%3Cg%20fill%3D%22%238da967%22%3E%3Cpath%20d%3D%22M54%20122Q11%20112%208%2078Q43%2085%2054%20122M72%20105Q83%2066%20119%2063Q111%2094%2072%20105M85%2084Q46%2073%2049%2042Q79%2048%2085%2084M101%2059Q109%2020%20143%2014Q136%2049%20101%2059M31%20137Q53%20112%2092%20127Q67%20147%2031%20137%22%2F%3E%3C%2Fg%3E%3Cg%20fill%3D%22%23a9b976%22%3E%3Ccircle%20cx%3D%2229%22%20cy%3D%2261%22%20r%3D%222%22%2F%3E%3Ccircle%20cx%3D%22120%22%20cy%3D%22106%22%20r%3D%222%22%2F%3E%3Ccircle%20cx%3D%2267%22%20cy%3D%2224%22%20r%3D%222.5%22%2F%3E%3C%2Fg%3E%3C%2Fg%3E%3C%2Fsvg%3E") right 10px top 8px / clamp(74px,10vw,158px) auto no-repeat,
+             radial-gradient(ellipse at center,#f5f3df,#dce7c8 82%);
+ }
+ body.gi-gameplay .gi-area-project::before {
+  border-color:#a3b78370;
+  background-color:transparent;
+ }
+ body.gi-gameplay .gi-area-project>.eyebrow {
+  padding-inline:12px;
+  border-radius:8px;
+  background:#faf4df;
+  box-shadow:0 1px 3px #435d3424;
+ }
  body.gi-gameplay .gi-area-project>.eyebrow {flex:none;font-size:12px;line-height:18px}
  body.gi-gameplay .gi-area-project .project {display:flex;align-items:center;justify-content:center;flex:1;min-height:0;container-type:size}
  body.gi-gameplay .gi-area-project .gi-card-preview {width:min(100cqw,calc(100cqh * (var(--card-frame-ratio,794 / 1123))));flex:none}
+ body.gi-gameplay .gi-area-project .gi-card-preview {
+  filter:drop-shadow(0 12px 16px #203e2b3d);
+ }
  body.gi-gameplay .gi-area-actions {
   display:grid;grid-template-columns:minmax(0,1fr);align-content:start;flex:none;
   height:auto;min-height:0;overflow:visible;gap:10px;
@@ -922,4 +966,45 @@ body.copy-confirmed::after{content:"";position:fixed;z-index:99;inset:0;pointer-
  body.gi-gameplay .gi-area-discussion .gi-statement {margin-bottom:8px}
  body.gi-gameplay .gi-history {flex:none;width:100%}
  body.gi-gameplay .gi-history summary {font-size:16px}
+}
+
+@media (min-width:1200px) {
+ body.gi-gameplay:not(.gi-ending) {
+  background:radial-gradient(ellipse at 18% 85%,#dfe9d2,transparent 48%),#f2f2e8;
+ }
+ body.gi-gameplay .gi-phase-header {
+  background:linear-gradient(110deg,#284d39,#1e3e30);
+  box-shadow:0 2px 7px #253c2a24;
+ }
+ body.gi-gameplay .gi-action-panel {
+  border-color:#cad5bd;
+  background:linear-gradient(165deg,#fffdf4,#fbfaf1);
+  box-shadow:0 3px 10px #354e2914;
+ }
+ body.gi-gameplay .gi-desktop-wallet strong {
+  padding:4px 8px;
+  border-radius:8px;
+  background:#eef1d8;
+  white-space:nowrap;
+ }
+ body.gi-gameplay .gi-area-players {
+  border-color:#c7d3ba;
+  background:linear-gradient(165deg,#edf2e3,#fbf9ef 58%);
+ }
+ body.gi-gameplay .gi-area-players .gi-person-self {
+  background:#e0edd5;
+  border-color:#a9c095;
+ }
+ body.gi-gameplay .gi-area-discussion>.card:first-child {background:#f4f7ec}
+ body.gi-gameplay .gi-area-discussion>.card:first-child>h2 {
+  padding-inline-start:25px;
+  background:url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23527447%22%20stroke-width%3D%221.6%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M4%205h16v11H9l-5%204Z%22%2F%3E%3Cpath%20d%3D%22M8%2010h8m-8%203h5%22%2F%3E%3C%2Fsvg%3E") left center / 17px auto no-repeat;
+ }
+ body.gi-gameplay .gi-area-discussion .gi-chat-bubble {background:#fffdf4}
+ body.gi-gameplay .gi-area-discussion>.gi-history {background:#faf4e4}
+ body.gi-gameplay .gi-history summary {
+  padding-inline-start:24px;
+  background:url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23527447%22%20stroke-width%3D%221.6%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Crect%20x%3D%225%22%20y%3D%223%22%20width%3D%2214%22%20height%3D%2218%22%20rx%3D%222%22%2F%3E%3Cpath%20d%3D%22M8%208h8m-8%204h8m-8%204h5%22%2F%3E%3C%2Fsvg%3E") left center / 16px auto no-repeat;
+ }
+ body.gi-gameplay .gi-history summary::marker {color:#527447}
 }
