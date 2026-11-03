@@ -1050,7 +1050,44 @@ body.gi-gameplay .gi-area-players .person.gi-elimination-fx[data-elimination-sta
   display:flex;align-items:center;min-height:clamp(90px,8vw,112px);
   padding-inline-end:calc(clamp(76px,8vw,112px) + 110px);font-size:26px;
  }
- body.gi-gameplay .gi-action-panel>.gi-discussion-title {font-size:36px}
+ body.gi-gameplay .gi-action-panel>.gi-discussion-title {
+  font-size:36px;
+  border-radius:12px;
+  background:linear-gradient(100deg,#edf2dc,#f5f5e6 72%,transparent);
+  padding-inline-start:12px;
+ }
+ @media (min-width:1440px) {
+  body.gi-gameplay .gi-action-panel>.gi-discussion-title {
+   background-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20116%2076%22%20fill%3D%22none%22%3E%3Cpath%20d%3D%22M21%2015h37a13%2013%200%200%201%2013%2013v10a13%2013%200%200%201-13%2013H40l-13%2010V51h-6A13%2013%200%200%201%208%2038V28a13%2013%200%200%201%2013-13Z%22%20fill%3D%22%23e0ebcd%22%20stroke%3D%22%23719365%22%20stroke-width%3D%222%22%2F%3E%3Ccircle%20cx%3D%2228%22%20cy%3D%2233%22%20r%3D%222.6%22%20fill%3D%22%2353774a%22%2F%3E%3Ccircle%20cx%3D%2239%22%20cy%3D%2233%22%20r%3D%222.6%22%20fill%3D%22%2353774a%22%2F%3E%3Ccircle%20cx%3D%2250%22%20cy%3D%2233%22%20r%3D%222.6%22%20fill%3D%22%2353774a%22%2F%3E%3Cpath%20d%3D%22M74%2064c10-6%2017-17%2021-29%22%20stroke%3D%22%23719365%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%2F%3E%3Cpath%20d%3D%22M87%2053c-10-1-15-7-14-15%209%202%2014%207%2014%2015Zm3-5c2-10%209-15%2018-14-3%208-9%2013-18%2014Zm-9%2012c7-7%2015-8%2022-3-6%206-14%207-22%203Z%22%20fill%3D%22%2396b078%22%2F%3E%3C%2Fsvg%3E"),linear-gradient(100deg,#edf2dc,#f5f5e6 72%,transparent);
+   background-position:right calc(clamp(76px,8vw,112px) + 118px) center,center;
+   background-size:clamp(60px,6vw,104px) auto,100% 100%;
+   background-repeat:no-repeat;
+  }
+ }
+  body.gi-gameplay .gi-action-panel>h2[data-phase="BLIND_ACTION"] {
+   border-radius:12px;
+   padding-inline-start:12px;
+   background:linear-gradient(100deg,#e1efea,transparent);
+  }
+  @media(min-width:1440px) {
+  body.gi-gameplay .gi-action-panel>h2[data-phase="BLIND_ACTION"] {
+    padding-inline-start:48px;
+    background:url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2064%2064%22%20fill%3D%22none%22%20stroke%3D%22%23468779%22%20stroke-width%3D%222.6%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Crect%20x%3D%2212%22%20y%3D%2224%22%20width%3D%2240%22%20height%3D%2230%22%20rx%3D%227%22%2F%3E%3Cpath%20d%3D%22M21%2024v-8a11%2011%200%200%201%2022%200v8M32%2036v8%22%2F%3E%3C%2Fsvg%3E") left 12px center / 28px auto no-repeat,
+               linear-gradient(100deg,#e1efea,transparent);
+   }
+  }
+  body.gi-gameplay .gi-action-panel>h2[data-phase="REVEAL"] {
+   border-radius:12px;
+   padding-inline-start:12px;
+   background:linear-gradient(100deg,#f5eccf,transparent);
+  }
+  @media(min-width:1440px) {
+  body.gi-gameplay .gi-action-panel>h2[data-phase="REVEAL"] {
+    padding-inline-start:48px;
+    background:url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2064%2064%22%20fill%3D%22none%22%20stroke%3D%22%2398763d%22%20stroke-width%3D%222.6%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M7%2048V17h19l6%207h22v24M7%2048l8-19h44l-7%2019Z%22%2F%3E%3Cpath%20d%3D%22M39%205v9m14-5-5%207%22%2F%3E%3C%2Fsvg%3E") left 12px center / 28px auto no-repeat,
+               linear-gradient(100deg,#f5eccf,transparent);
+   }
+  }
  body.gi-gameplay .gi-desktop-wallet {
   position:absolute;inset-block-start:12px;inset-inline-end:68px;
   display:flex;align-items:center;gap:6px;color:var(--entry-ink);

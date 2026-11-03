@@ -15,6 +15,7 @@ test('card and result motion wait for the chapter, survive presence, and do not 
   const {room,player}=manager.create('Scene coordination');manager.join(room.code,'Peer A');manager.join(room.code,'Peer B');room.players.forEach(peer=>manager.connected(room,peer));
   browser=await chromium.launch({channel:process.env.BROWSER_CHANNEL||'chrome',headless:true});const page=await browser.newPage({viewport:{width:1440,height:900}});
   await page.addInitScript(trackMotion,{roomCode:room.code,playerId:player.id,token:player.secret});await page.goto('http://127.0.0.1:'+server.address().port);
+  await page.evaluate(()=>{window.requestAnimationFrame=callback=>setTimeout(()=>callback(performance.now()),350);window.cancelAnimationFrame=id=>clearTimeout(id);});
   await page.locator('#start').click();await page.locator('.gi-phase-transition[data-transition=project]').waitFor();
   assert.equal(await page.evaluate(()=>window.playedMotion.filter(m=>m.id==='gt-motion-card').length),0,'card entrance is not spent beneath the full-screen chapter');
   manager.changed(room);await page.waitForFunction(revision=>snapshot.room.revision>=revision,room.revision);
