@@ -33,3 +33,19 @@ test('countdown drains continuously and never refills on a same-phase snapshot',
   await page.locator('.gi-ending-screen').waitFor();assert.equal(await page.locator('#phase-progress').count(),0);
  }finally{if(browser)await browser.close();server.closeAllConnections();await new Promise(resolve=>server.close(resolve));}
 });
+
+test('unchanged polling snapshots keep the countdown connected',{skip:!process.env.PLAYWRIGHT_MODULE_PATH},async()=>{
+ const {chromium}=require(process.env.PLAYWRIGHT_MODULE_PATH),{server,manager}=require('../server/server.cjs');let browser;
+ await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));
+ try{
+  const {room,player}=manager.create('Polling clock QA');manager.join(room.code,'A');manager.join(room.code,'B');
+  for(const peer of room.players)manager.connected(room,peer);manager.start(room,player);
+  browser=await chromium.launch({channel:process.env.BROWSER_CHANNEL||'chrome',headless:true});const page=await browser.newPage();
+  await page.addInitScript(s=>sessionStorage.setItem('green-impact-multiplayer-session',JSON.stringify(s)),{roomCode:room.code,playerId:player.id,token:player.secret,transport:'poll'});
+  let reads=0;const repeatedPoll=new Promise(resolve=>page.on('response',response=>{if(response.url().includes('/api/state?')&&++reads===2)resolve();}));
+  await page.goto('http://127.0.0.1:'+server.address().port);await repeatedPoll;
+  await page.waitForTimeout(100);
+  assert.equal(await page.locator('#connection').textContent(),'● Trực tuyến','an unchanged response must not break the polling loop');
+  assert.ok(await page.locator('#phase-progress').evaluate(el=>el.value%1!==0));
+ }finally{if(browser)await browser.close();server.closeAllConnections();await new Promise(resolve=>server.close(resolve));}
+});
