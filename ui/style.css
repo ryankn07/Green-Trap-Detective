@@ -247,7 +247,8 @@ body.copy-confirmed::after{content:"";position:fixed;z-index:99;inset:0;pointer-
 #show-role{width:100%;font-size:13px;background:var(--surface);margin-top:4px;min-height:44px}
 .gi-action-panel form{margin-top:16px}
 .gi-action-panel>h2{font-size:18px;text-transform:lowercase}
-.gi-action-panel>h2::first-letter{text-transform:uppercase}
+.gi-action-panel>h2>span{display:block}
+.gi-action-panel>h2>span::first-letter{text-transform:uppercase}
 .gi-action-panel p{font-size:14px}
 .gi-action-panel form>button{width:100%}
 .gi-action-panel input,.gi-action-panel textarea,.gi-action-panel select{padding:12px;font-size:15px}
@@ -809,12 +810,12 @@ body.copy-confirmed::after{content:"";position:fixed;z-index:99;inset:0;pointer-
  body.gi-gameplay .gi-history .hist {font-size:12px;line-height:1.8;margin-top:15px}
  body.gi-gameplay .gi-history .hist>div {padding:12px 0;border-bottom:1px solid var(--border)}
  /* Fit the desktop play surface to the window; only dense panels scroll. */
- body.gi-gameplay {height:100dvh;overflow:hidden}
+ body.gi-gameplay:not(.gi-ending) {height:100dvh;overflow:hidden}
  body.gi-gameplay .top {height:64px;min-height:64px;padding-block:7px}
  body.gi-gameplay .brand-logo {height:44px}
  body.gi-gameplay .brand b {font-size:23px}
  body.gi-gameplay .brand small {font-size:12px}
- body.gi-gameplay #app {height:calc(100dvh - 64px);padding:12px clamp(20px,2vw,60px)}
+ body.gi-gameplay:not(.gi-ending) #app {height:calc(100dvh - 64px);padding:12px clamp(20px,2vw,60px)}
  body.gi-gameplay .gi-game-grid {height:100%;min-height:0;grid-template-columns:minmax(0,1.12fr) minmax(330px,1fr) clamp(172px,15vw,240px);grid-template-rows:minmax(0,1fr);grid-template-areas:"project middle players";gap:12px 16px}
  body.gi-gameplay .gi-center-column {grid-area:middle;display:flex;flex-direction:column;align-self:stretch;height:100%;min-height:0;gap:12px;overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin}
  body.gi-gameplay .gi-phase-header {position:fixed;z-index:20;top:7px;left:clamp(386px,33vw,744px);right:clamp(20px,2vw,60px);height:50px;padding:5px 16px 6px;border-radius:12px;gap:3px 16px;grid-area:auto}

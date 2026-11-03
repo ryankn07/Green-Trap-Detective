@@ -139,7 +139,7 @@ test('desktop game adapts its card to the viewport and preserves protected layou
     const expanded=await page.locator('.gi-action-panel').boundingBox();
     await page.locator('#amount').scrollIntoViewIfNeeded();
     assert.ok(await page.evaluate(()=>document.documentElement.scrollHeight<=innerHeight),'expanded bank fields stay inside the desktop board');
-    await page.locator('.gi-area-discussion .gi-statement').last().scrollIntoViewIfNeeded();
+    await page.locator('.gi-area-discussion .gi-statement').last().evaluate(el=>el.scrollIntoView({block:'center',behavior:'instant'}));
     await page.waitForFunction(()=>{const rect=document.querySelector('.gi-area-discussion .gi-statement:last-child').getBoundingClientRect();return rect.top>=0&&rect.bottom<=innerHeight;});
     await page.locator('#lock-action').click();
     await page.locator('#action-form').waitFor({state:'detached'});
@@ -157,6 +157,14 @@ test('desktop game adapts its card to the viewport and preserves protected layou
   }
   while(room.state.phase!=='GAME_OVER'){now=room.deadline;manager.tick();}
   await page.waitForFunction(()=>document.querySelector('.phase')?.textContent.includes('KẾT THÚC'));
+  const ending=page.locator('.gi-ending-screen');
+  await ending.locator('details summary').first().click();
+  await page.evaluate(()=>window.scrollTo(0,0));
+  await page.mouse.move(600,350);
+  await page.mouse.wheel(0,900);
+  await page.waitForFunction(()=>window.scrollY>0);
+  await ending.locator('.ending-home').scrollIntoViewIfNeeded();
+  assert.ok((await ending.locator('.ending-home').boundingBox()).y>=0);
   await screenshot(page,'DESKTOP_NEW_GAME_OVER.png');
  }finally{if(browser)await browser.close();server.closeAllConnections();await new Promise(resolve=>server.close(resolve));}
 });

@@ -19,6 +19,8 @@ Baseline: `9a7eed2`; plan commit: `4bf3a3a`. Motion is independent of Plus 2's p
 - Impeccable layout detector: no findings (`detect --json --scope layout ui`). This is the detector's scoped result, not proof of all accessibility or visual properties.
 - Independent standards/spec review: no remaining concrete blocker after fixing public discussion scroll and mobile panel bounds.
 
+Integrated main `b737c29` (the separately authored heading/copy and ending-scroll fixes) without changing those fixes. The runtime archive was regenerated from the combined source. Full integration verification with `node --test --test-concurrency=1`: **109 passed, 0 failed, 0 skipped**. An earlier parallel run exposed a timing-sensitive existing soak test: its 2.03-second window sometimes ended before the second 2-second poll under browser-worker load. The unchanged test passed alone and in the full sequential run; no polling/backend change was made for this motion work.
+
 ## Local visual and timing evidence
 
 Artifacts are outside the repository at `../outputs/motion-verification/`: three screenshots capture expanded, contracting and confirmed states; another shows the mobile panel. `MOTION_MEASUREMENTS.json` records exact geometry and one natural transition sample.
