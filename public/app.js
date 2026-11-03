@@ -21,7 +21,7 @@ const draftStorageKey='green-impact-statement-draft';
 const storeKey='green-impact-multiplayer-session';
 const escapeHTML=(v)=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const labelRole=r=>r==='PROTECTOR'?'Người Bảo Vệ':r==='SABOTEUR'?'Người Phá Hoại':'Hòa';
-const phaseText={DEBATE:'THẢO LUẬN',BLIND_ACTION:'HÀNH ĐỘNG BÍ MẬT',REVEAL:'CÔNG BỐ',GAME_OVER:'KẾT THÚC'};
+const phaseText={DEBATE:'Thảo luận',BLIND_ACTION:'Hành động bí mật',REVEAL:'Công bố',GAME_OVER:'Kết thúc'};
 const outcomeText={TEN_ROUNDS:'Đã hoàn thành 10 lượt',FACTION_ELIMINATED:'Một phe đã bị loại toàn bộ',MUTUAL_ELIMINATION:'Hai phe cùng bị loại'};
 let toastTimer;
 function showToast(message,kind='error',duration=4700){
@@ -144,7 +144,7 @@ function render(){if(!snapshot||!session)return;const s=snapshot;const me=s.game
  <div class="gi-game-grid" data-game-layout="four-areas">
   <header class="card gi-phase-header">
    <div class="gi-mobile-wallet"><img class="gi-coin-icon" src="/brand/green-coin.png" alt="" width="28" height="28"> ${me.coins} xu</div>
-   <div class="flex"><span class="phase">${escapeHTML(phaseText[g.phase])} · LƯỢT ${g.round}/${g.roundLimit}</span>${timer(s)}</div>
+   <div class="flex"><span class="phase">${escapeHTML(phaseText[g.phase].toUpperCase())} · LƯỢT ${g.round}/${g.roundLimit}</span>${timer(s)}</div>
    ${g.phase!=='GAME_OVER'?'<progress id="phase-progress" max="'+phaseSeconds[g.phase]+'" value="'+remainingSeconds()+'" aria-label="Thời gian còn lại"></progress>':''}
    <div class="flex muted"><span>Bảo vệ: ${g.approvedProtectorCount}</span><span>Phá hoại: ${g.approvedSaboteurCount}</span></div>
   </header>
@@ -162,7 +162,7 @@ function render(){if(!snapshot||!session)return;const s=snapshot;const me=s.game
     <div id="role" class="note" data-role="${escapeHTML(me.role)}">Vai trò của bạn: <b id="role-value">••••••</b><button id="show-role" type="button" aria-label="Nhấn giữ để xem thẻ vai trò"><svg viewBox="0 0 64 64" aria-hidden="true"><path d="M5 32c7-11 17-17 27-17s20 6 27 17c-7 11-17 17-27 17S12 43 5 32Z"/><circle cx="32" cy="32" r="10"/></svg><span>Nhấn giữ để xem</span></button></div>
     ${me.inspections?.length?'<div class="rule"><h3>Kiểm chứng riêng</h3>'+me.inspections.map(x=>'<p class="tiny">Lượt '+x.round+': '+escapeHTML(s.room.players.find(p=>p.id===x.targetId)?.name)+' — '+escapeHTML(labelRole(x.revealedRole))+'</p>').join('')+'</div>':''}
    </div>
-   <div class="card gi-action-panel"><div class="gi-desktop-wallet"><img src="/brand/green-coin.png" alt="" width="112" height="112"><strong>${me.coins} xu</strong></div><h2><span>${escapeHTML(phaseText[g.phase])}</span></h2>${content}</div>
+   <div class="card gi-action-panel"><div class="gi-desktop-wallet"><img src="/brand/green-coin.png" alt="" width="112" height="112"><strong>${me.coins} xu</strong></div><h2>${escapeHTML(phaseText[g.phase])}</h2>${content}</div>
   </section>
   <section class="gi-area-discussion" aria-label="Nhận định công khai">
    <div class="card"><h2>Nhận định trong phòng</h2><div class="hist">${discussion}</div></div>

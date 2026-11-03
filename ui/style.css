@@ -246,9 +246,7 @@ body.copy-confirmed::after{content:"";position:fixed;z-index:99;inset:0;pointer-
 .gi-area-actions #role{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-top:16px;font-size:13px;border:0;padding:12px;background:var(--surface-soft)}
 #show-role{width:100%;font-size:13px;background:var(--surface);margin-top:4px;min-height:44px}
 .gi-action-panel form{margin-top:16px}
-.gi-action-panel>h2{font-size:18px;text-transform:lowercase}
-.gi-action-panel>h2>span{display:block}
-.gi-action-panel>h2>span::first-letter{text-transform:uppercase}
+.gi-action-panel>h2{font-size:18px}
 .gi-action-panel p{font-size:14px}
 .gi-action-panel form>button{width:100%}
 .gi-action-panel input,.gi-action-panel textarea,.gi-action-panel select{padding:12px;font-size:15px}
