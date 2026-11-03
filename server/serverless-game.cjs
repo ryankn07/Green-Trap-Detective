@@ -3,7 +3,7 @@ const { createHash } = require('node:crypto');
 const { isIP } = require('node:net');
 const { RoomManager } = require('./rooms.cjs');
 const { serializeRoom, validateSnapshot } = require('./room-store.cjs');
-const { HttpError, readBody, checkOrigin, validateSubmission } = require('./http-guards.cjs');
+const { HttpError, readBody, checkOrigin, validateContext, validateSubmission } = require('./http-guards.cjs');
 const { GameError } = require('../engine/dist/errors.js');
 const { BODY_BYTES } = require('./limits.cjs');
 const hash = value => createHash('sha256').update(value).digest('hex');
@@ -114,6 +114,7 @@ function createServerlessHandler({ store } = {}) {
           switch (body.type) {
             case 'start': manager.start(room, player); break;
             case 'submit': validateSubmission(room, body); manager.submit(room, player, body.payload || {}); break;
+            case 'skip_discussion': validateContext(room, body); manager.skipDiscussion(room, player); break;
             case 'next': validateSubmission(room, { ...body, payload: {} }); manager.next(room, player); break;
             case 'kick': manager.kick(room, player, body.targetId); break;
             case 'finish_leave':

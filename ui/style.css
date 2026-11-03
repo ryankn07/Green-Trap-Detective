@@ -936,6 +936,39 @@ body.gi-gameplay .gi-area-players .person.gi-elimination-fx[data-elimination-sta
 
 .gi-verdict[data-verdict="TRUTH"]{color:var(--truth-ink,var(--green))}
 
+/* Unanimous discussion skip: compact progress, then a short emerald sweep. */
+.gi-discussion-heading{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.gi-discussion-heading>span{min-width:0}
+.gi-discussion-heading .gi-discussion-skip{position:relative;isolation:isolate;display:inline-flex;align-items:center;justify-content:center;gap:4px;flex:none;width:auto;min-width:66px;min-height:30px;margin:0;padding:5px 9px;border:1px solid #c1d0b4;border-radius:9px;background:#f1f5e8;color:#36553e;font:650 12px/1.25 var(--font-body);letter-spacing:0;text-transform:none;cursor:pointer;transition:background .18s ease,border-color .18s ease,box-shadow .18s ease}
+.gi-discussion-skip svg{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:1.5;stroke-linejoin:round;stroke-linecap:round}
+.gi-discussion-heading .gi-discussion-skip:hover:not(:disabled){background:#e0efd6;border-color:#79a183;color:#20452d}
+.gi-discussion-heading .gi-discussion-skip[aria-pressed="true"]{opacity:1;background:#deecd6;border-color:#8aaf8a;color:#295b35}
+.gi-discussion-skip .gi-skip-count{position:absolute;top:-10px;right:-5px;display:grid;place-items:center;min-width:27px;min-height:18px;padding:2px 5px;border:2px solid #fffdf4;border-radius:6px;background:#244b34;color:#f6fff6;font:700 10px/1 var(--font-body);font-variant-numeric:tabular-nums;white-space:nowrap}
+.gi-discussion-heading .gi-discussion-skip[data-complete="true"]{opacity:1;border-color:#469c69;color:#103d25;background:linear-gradient(105deg,#c2f5bb,#6bdfac,#e0efad,#c2f5bb);background-size:260% 100%;animation:gi-skip-consensus .85s ease-in-out both;box-shadow:0 0 0 3px #52bf7d16,0 0 20px #5cd89238}
+.gi-discussion-skip[data-complete="true"] .gi-skip-count{background:#286344;border-color:#c3f1c6}
+@keyframes gi-skip-consensus{0%{background-position:0 50%;box-shadow:0 0 0 0 #52bf7d00}50%{box-shadow:0 0 0 4px #52bf7d25,0 0 22px #5cd89250}100%{background-position:100% 50%;box-shadow:0 0 0 3px #52bf7d16,0 0 16px #5cd89238}}
+@media(max-width:759px){.gi-discussion-heading .gi-discussion-skip{min-height:36px}}
+@media(prefers-reduced-motion:reduce){.gi-discussion-heading .gi-discussion-skip[data-complete="true"]{animation:none;transition:none}}
+
+/* Accelerated action clock: the fire follows the live fill edge. */
+.gi-phase-header{position:relative}
+.gi-clock-burn-layer{position:absolute;inset:0;z-index:2;width:100%;height:100%;pointer-events:none}
+.gi-clock-fire{position:absolute;z-index:3;width:32px;height:40px;transform:translate(-50%,-91%);pointer-events:none;filter:drop-shadow(0 0 7px #ffc04bed) drop-shadow(0 0 18px #ff773eb3)}
+.gi-clock-fire::before{content:"";position:absolute;z-index:-1;left:50%;top:87%;width:44px;height:6px;border-radius:99px;background:linear-gradient(90deg,#fff3b9,#ffac4699,transparent);filter:blur(2px);transform:translateY(-50%)}
+.gi-clock-fire svg{display:block;width:100%;height:100%;transform-origin:50% 90%;animation:gi-clock-flicker .12s ease-in-out 16 alternate}
+.gi-clock-fire.is-spent{opacity:0;transition:opacity .12s ease}
+.gi-fire-outer{fill:#ff853b}.gi-fire-inner{fill:#fff3a0}
+.gi-clock-fire i{position:absolute;left:65%;top:40%;width:3px;height:3px;border-radius:50%;background:#ffe696;animation:gi-clock-ember .28s ease-out 7 both}
+.gi-clock-fire i+i{top:70%;left:80%;animation-delay:.09s}
+body.gi-gameplay .gi-phase-header.gi-clock-burning progress::-webkit-progress-value{background:linear-gradient(90deg,#c4e68b,#ffd35f 80%,#ff853b)}
+body.gi-gameplay .gi-phase-header.gi-clock-burning progress::-moz-progress-bar{background:linear-gradient(90deg,#c4e68b,#ffd35f 80%,#ff853b)}
+.gi-phase-header.gi-clock-burning .countdown{color:#ffe696;text-shadow:0 0 14px #ffad4b70}
+.gi-phase-header.gi-clock-burning progress{filter:drop-shadow(0 0 4px #ff9d45b3)}
+@keyframes gi-clock-flicker{from{transform:scale(.9,1.04) rotate(-8deg)}to{transform:scale(1.08,.94) rotate(10deg)}}
+@keyframes gi-clock-ember{from{opacity:.9;transform:translate(0,0)}to{opacity:0;transform:translate(18px,-15px)}}
+@media(max-width:759px){.gi-clock-fire{width:28px;height:34px}}
+@media(prefers-reduced-motion:reduce){.gi-clock-fire svg,.gi-clock-fire i{animation:none}.gi-clock-fire i{display:none}}
+
 /* Desktop game — Garden table. Deliberately inactive below 1200px.
  * Every selector is scoped to gameplay; entry and lobby keep their design. */
 @media (min-width:1200px) {

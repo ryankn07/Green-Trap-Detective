@@ -59,12 +59,89 @@ function showPhaseTransition(previous,current){
  screen.addEventListener('animationend',event=>{if(event.target===screen&&event.animationName==='gi-phase-screen')dismiss();});
  phaseScreenTimer=setTimeout(dismiss,duration);
 }
-document.addEventListener('visibilitychange',()=>{if(document.hidden){clearPhaseTransition();clearEliminationState(true);}});
-window.addEventListener('pagehide',()=>{clearPhaseTransition();clearEliminationState(false);});
-function acceptSnapshot(value){
+let actionBurnHold=null;
+function cancelActionBurn(){
+ if(!actionBurnHold)return;
+ clearTimeout(actionBurnHold.timer);actionBurnHold.fire.remove();actionBurnHold.burnCanvas.remove();actionBurnHold.header.classList.remove('gi-clock-burning');
+ actionBurnHold=null;app.inert=false;
+}
+function finishActionBurn(){
+ const hold=actionBurnHold;if(!hold)return;
+ const value=snapshot;cancelActionBurn();snapshot=hold.previous;acceptSnapshot(value,false,false);
+}
+function startActionBurn(previous,value){
+ const progress=document.getElementById('phase-progress'),header=progress?.closest('.gi-phase-header');if(!header)return false;
+ // Keep the functional countdown visible; reduced motion only removes flicker/particles.
+ const reduced=matchMedia('(prefers-reduced-motion: reduce)').matches,duration=2000;
+ const burnCanvas=document.createElement('canvas');burnCanvas.className='gi-clock-burn-layer';burnCanvas.setAttribute('aria-hidden','true');
+ const fire=document.createElement('span');fire.className='gi-clock-fire';fire.setAttribute('aria-hidden','true');
+ fire.innerHTML='<svg viewBox="0 0 28 34"><path class="gi-fire-outer" d="M15 1c2 9-7 11-4 18-4-1-5-5-4-8C-4 22 3 33 14 33s18-12 9-23c1 6-2 8-3 8C23 10 16 7 15 1Z"/><path class="gi-fire-inner" d="M14 16c2 5-3 7-2 10-2 0-3-2-3-3-3 6 1 10 5 10 6 0 9-7 5-11 0 3-2 4-2 4 1-4-2-7-3-10Z"/></svg><i></i><i></i>';
+ actionBurnHold={previous,header,fire,burnCanvas,context:burnCanvas.getContext('2d'),particles:[],lastPaint:performance.now(),from:Math.max(0,progress.value),started:performance.now(),duration,reduced};
+ snapshot=value;clearPhaseTransition();document.querySelectorAll('dialog[open]').forEach(dialog=>dialog.close());
+ header.classList.add('gi-clock-burning');header.append(burnCanvas,fire);app.inert=true;
+ actionBurnHold.timer=setTimeout(finishActionBurn,duration+80);finishClientSession(value);paintActionBurn();return true;
+}
+function paintActionBurn(){
+ const hold=actionBurnHold,progress=document.getElementById('phase-progress');if(!hold||!progress){finishActionBurn();return;}
+ const elapsed=performance.now()-hold.started,t=Math.min(1,elapsed/hold.duration),burnT=Math.min(1,elapsed/(hold.duration-180)),remaining=hold.from*(1-burnT);
+ progress.value=Math.max(0,remaining);const label=document.getElementById('clock');if(label)label.textContent=Math.ceil(remaining)+'s';
+ const bar=progress.getBoundingClientRect(),header=hold.header.getBoundingClientRect();
+ hold.fire.style.left=(bar.left-header.left+bar.width*progress.value/progress.max)+'px';hold.fire.style.top=(bar.top-header.top+bar.height/2)+'px';
+ hold.fire.classList.toggle('is-spent',burnT>=1);drawActionBurn(hold,bar,header,progress,burnT);
+ if(t>=1)finishActionBurn();else scheduleClock();
+}
+function drawActionBurn(hold,bar,header,progress,burnT){
+ const ctx=hold.context;if(!ctx)return;
+ const dpr=Math.min(devicePixelRatio||1,2),canvas=hold.burnCanvas,width=Math.ceil(header.width*dpr),height=Math.ceil(header.height*dpr);
+ if(canvas.width!==width||canvas.height!==height){canvas.width=width;canvas.height=height;}
+ ctx.setTransform(dpr,0,0,dpr,0,0);ctx.clearRect(0,0,header.width,header.height);
+ const left=bar.left-header.left,y=bar.top-header.top+bar.height/2,tip=left+bar.width*progress.value/progress.max,end=left+bar.width*hold.from/progress.max,burned=Math.max(0,end-tip);
+ // Only the remaining fuel is painted; the consumed section clears to the normal track.
+ const fuel=ctx.createLinearGradient(left,0,Math.max(left+1,tip),0);fuel.addColorStop(0,'#e4bb4d');fuel.addColorStop(.82,'#ffad37');fuel.addColorStop(1,'#fff6bb');
+ ctx.fillStyle=fuel;ctx.fillRect(left,y-3.5,Math.max(0,tip-left),7);
+ const time=performance.now()/1000,dt=Math.min(.05,Math.max(0,time-hold.lastPaint/1000));hold.lastPaint=time*1000;
+ if(!hold.reduced&&burnT<1){
+  const glow=ctx.createRadialGradient(tip+12,y-7,1,tip+12,y-7,48);glow.addColorStop(0,'#ffca6bb3');glow.addColorStop(.4,'#ff6b2570');glow.addColorStop(1,'#ff5a0000');ctx.fillStyle=glow;ctx.fillRect(tip-36,y-55,96,64);
+  for(let i=0;i<10;i++){
+   const x=tip+Math.min(burned,7+i*6),fade=1-i/12,h=(12+15*(.5+.5*Math.sin(time*28+i*2.1)))*fade,w=4+fade*3,sway=Math.sin(time*20+i)*5;
+   const flame=ctx.createLinearGradient(x,y-h,x,y+2);flame.addColorStop(0,'#ff4b1b00');flame.addColorStop(.2,'#ff5e1bcc');flame.addColorStop(.6,'#ffc342');flame.addColorStop(1,'#fff6bc');ctx.fillStyle=flame;
+   ctx.beginPath();ctx.moveTo(x-w,y+3);ctx.bezierCurveTo(x-w*1.3,y-h*.4,x+w*.2,y-h*.6,x+sway,y-h);ctx.bezierCurveTo(x+w*.4,y-h*.3,x+w*1.3,y-h*.3,x+w,y+3);ctx.closePath();ctx.fill();
+  }
+  for(let i=0;i<3;i++)hold.particles.push({x:tip+Math.random()*Math.min(26,burned),y:y-3,vx:25+Math.random()*65,vy:-30-Math.random()*90,life:.22+Math.random()*.32,size:1+Math.random()*2,smoke:false});
+  hold.particles.push({x:tip+Math.min(15,burned),y:y-14,vx:12,vy:-18,life:.45,size:4,smoke:true});
+ }
+ hold.particles=hold.particles.filter(p=>(p.life-=dt)>0).slice(-120);
+ for(const p of hold.particles){
+  p.x+=p.vx*dt;p.y+=p.vy*dt;
+  if(p.smoke){p.size+=dt*12;ctx.fillStyle='rgba(99,86,75,'+Math.min(.24,p.life*.5)+')';ctx.beginPath();ctx.arc(p.x,p.y,p.size,0,Math.PI*2);ctx.fill();}
+  else{p.vy+=dt*60;ctx.fillStyle='rgba(255,'+(160+Math.round(p.life*160))+',83,'+Math.min(1,p.life*4)+')';ctx.fillRect(p.x,p.y,p.size,p.size);}
+ }
+}
+function discussionSkipButton(game,complete=false){
+ const vote=game.discussionSkip;if(!vote)return '';
+ const label=complete?'Đủ lượt Skip, chuyển sang bình chọn':vote.voted?'Bạn đã chọn Skip':'Skip thảo luận';
+ return `<button id="skip-discussion" type="button" class="gi-discussion-skip" aria-pressed="${vote.voted}" aria-label="${label} · ${vote.count}/${vote.required}" title="${label}" ${!game.myPlayer.isAlive||vote.voted||complete?'disabled':''} ${complete?'data-complete="true"':''}><svg viewBox="0 0 20 20" aria-hidden="true"><path d="m3 5 6 5-6 5Zm6 0 6 5-6 5M17 5v10"/></svg><span>Skip</span>${vote.count?`<span class="gi-skip-count" role="status" aria-label="${vote.count} trên ${vote.required} người đã chọn Skip">${vote.count}/${vote.required}</span>`:''}</button>`;
+}
+document.addEventListener('visibilitychange',()=>{if(document.hidden){finishActionBurn();clearPhaseTransition();clearEliminationState(true);}});
+window.addEventListener('pagehide',()=>{finishActionBurn();clearPhaseTransition();clearEliminationState(true);});
+function acceptSnapshot(value,skipFeedback=true,burnFeedback=true){
  if(snapshot&&snapshot.room.code===value.room.code&&snapshot.room.revision>value.room.revision)return;
  synchronizeClock(value);
  if(snapshot?.room.code===value.room.code&&typeof value.room.revision==='number'&&snapshot.room.revision===value.room.revision){snapshot.serverTime=value.serverTime;snapshot.deadline=value.deadline;return;}
+ if(actionBurnHold){
+  if(snapshot.room.code===value.room.code&&snapshot.game.gameId===value.game?.gameId&&snapshot.game.round===value.game.round&&snapshot.game.phase===value.game.phase){snapshot=value;finishClientSession(value);return;}
+  cancelActionBurn();
+  // A newer phase supersedes the held board; never burn its stale timer again.
+  skipFeedback=false;burnFeedback=false;
+ }
+ if(burnFeedback&&!document.hidden&&snapshot?.game&&value.game&&snapshot.room.code===value.room.code&&snapshot.game.gameId===value.game.gameId&&snapshot.game.round===value.game.round&&snapshot.game.phase==='BLIND_ACTION'&&['REVEAL','GAME_OVER'].includes(value.game.phase)&&value.game.history.at(-1)?.round===value.game.round&&value.game.history.at(-1)?.fastForward){
+  if(startActionBurn(snapshot,value))return;
+ }
+ if(skipFeedback&&!document.hidden&&snapshot?.game&&value.game&&snapshot.room.code===value.room.code&&snapshot.game.gameId===value.game.gameId&&snapshot.game.round===value.game.round&&snapshot.game.phase==='DEBATE'&&value.game.phase==='BLIND_ACTION'&&value.game.discussionSkip?.complete&&app.querySelector('#skip-discussion')&&value.deadline-value.serverTime>2000){
+  captureStatementDraft();
+  app.querySelector('#skip-discussion').outerHTML=discussionSkipButton(value.game,true);
+  if(startActionBurn(snapshot,value))return;
+ }
  if(eliminationHold&&snapshot?.game?.gameId===value.game?.gameId&&snapshot.room.code===value.room.code&&value.game.phase==='GAME_OVER'){
   snapshot=value;refreshPlayerLists();finishClientSession(value);return;
  }
@@ -105,7 +182,7 @@ function acceptSnapshot(value){
 function finishClientSession(value){if(value.game?.phase!=='GAME_OVER'||!session)return;try{sessionStorage.setItem('green-impact-finished-game',JSON.stringify({roomCode:session.roomCode,playerId:session.playerId,view:value}));}catch{}aborter?.abort();statusEl.textContent='Ván đã kết thúc';}
 function remainingMilliseconds(){return clockAnchor?Math.max(0,clockAnchor.remaining-(performance.now()-clockAnchor.at)):0;}
 function remainingSeconds(){return Math.ceil(remainingMilliseconds()/1000);}
-function scheduleClock(){if(!clock&&clockAnchor&&!document.hidden)clock=requestAnimationFrame(paintClock);}
+function scheduleClock(){if(!clock&&(clockAnchor||actionBurnHold)&&!document.hidden)clock=requestAnimationFrame(paintClock);}
 function synchronizeClock(value){
  if(!value.deadline||value.game?.phase==='GAME_OVER'){clockAnchor=null;cancelAnimationFrame(clock);clock=null;return;}
  const key=[value.room.code,value.game?.gameId,value.game?.round,value.game?.phase,value.deadline].join(':');
@@ -114,7 +191,7 @@ function synchronizeClock(value){
  scheduleClock();
 }
 function paintClock(){
- clock=null;if(!clockAnchor||document.hidden||!snapshot?.deadline)return;
+ clock=null;if(document.hidden)return;if(actionBurnHold){paintActionBurn();return;}if(!clockAnchor||!snapshot?.deadline)return;
  const remaining=remainingMilliseconds(),label=Math.ceil(remaining/1000)+'s',el=document.getElementById('clock'),progress=document.getElementById('phase-progress');
  if(el&&el.textContent!==label)el.textContent=label;
  if(progress)progress.value=remaining/1000;
@@ -170,6 +247,7 @@ function restoreStatementDraft(game,player){
 function clearStatementDraft(){statementDraft=null;try{sessionStorage.removeItem(draftStorageKey);}catch{}}
 function recoverSession(error){
  if(!session)return;
+ cancelActionBurn();
  clearPhaseTransition();
  clearKickState();
  clearEliminationState(false);
@@ -367,7 +445,7 @@ function render(){if(!snapshot||!session)return;const s=snapshot;const me=s.game
    <div class="card gi-action-panel"><div class="gi-desktop-wallet"><img src="/brand/green-coin.png" alt="" width="112" height="112"><strong>${me.coins} xu</strong></div><h2 data-phase="${g.phase}"${g.phase==='DEBATE'?' class="gi-discussion-title"':''}>${escapeHTML(phaseText[g.phase])}</h2>${content}</div>
   </section>
   <section class="gi-area-discussion" aria-label="Ý kiến công khai">
-   <div class="card"><h2>Ý kiến trong phòng</h2><div class="hist">${discussion}</div></div>
+   <div class="card"><h2 class="gi-discussion-heading"><span>Ý kiến trong phòng</span>${g.phase==='DEBATE'?discussionSkipButton(g):''}</h2><div class="hist">${discussion}</div></div>
    <details class="card gi-history"><summary>Nhật ký · ${g.history.length} lượt</summary><div class="hist">${g.history.map(h=>'<div>Lượt '+h.round+': '+escapeHTML(h.projectTitle)+' · '+(h.approved?'Thông qua':'Bác bỏ')+' · <span class="gi-verdict" data-verdict="'+escapeHTML(h.verdictLabel)+'">'+escapeHTML(h.verdictLabel)+'</span></div>').join('')||'<p class="tiny">Chưa có kết quả.</p>'}</div></details>
   </section>
   </div>
@@ -391,11 +469,11 @@ function wireBank(){
 }
 
 async function act(type,payload){
- if(requesting||eliminationHold)return false;
+ if(requesting||eliminationHold||actionBurnHold)return false;
  requesting=true;
  const finishMotion=type==='submit'?window.GreenTrapMotion?.pending(app.querySelector('#statement button[type=submit],#lock-action')):null;
  let confirmed=false;
- try{await api('/api/action',{type,...(type==='kick'?{targetId:payload.targetId}:{payload}),...(['submit','next'].includes(type)?{context:{gameId:snapshot.game.gameId,round:snapshot.game.round,phase:snapshot.game.phase}}:{})},true);if(type!=='leave')await readState();confirmed=true;return true;}
+ try{await api('/api/action',{type,...(type==='kick'?{targetId:payload.targetId}:{payload}),...(['submit','next','skip_discussion'].includes(type)?{context:{gameId:snapshot.game.gameId,round:snapshot.game.round,phase:snapshot.game.phase}}:{})},true);if(type!=='leave')await readState();confirmed=true;return true;}
  catch(e){handleSessionError(e);return false;}
  finally{finishMotion?.(confirmed);requesting=false;wireBank();}
 }
@@ -452,6 +530,7 @@ app.addEventListener('click',e=>{
  if(button?.dataset.stance){document.getElementById('stance').value=button.dataset.stance;app.querySelectorAll('[data-stance]').forEach(choice=>choice.setAttribute('aria-pressed',String(choice===button)));persistStatementDraft();}
  if(id==='edit-statement'){document.getElementById('statement-choice').close();document.getElementById('statement-text')?.focus();}
  if(id==='confirm-statement'&&!requesting&&document.getElementById('statement')?.reportValidity()){const payload={text:document.getElementById('statement-text').value,stance:document.getElementById('stance').value};document.getElementById('statement-choice').close();act('submit',payload);}
+ if(id==='skip-discussion')act('skip_discussion');
  if(id==='copy')copyRoom();if(id==='start')act('start');if(id==='next')act('next');
  if(id==='leave')act('leave').then(ok=>{if(!ok)return;session=null;save();aborter?.abort();location.assign('/')});
  if(id==='home'||id==='return-home'){leaveFinishedRoom();session=null;save();clearStatementDraft();aborter?.abort();location.assign('/')}

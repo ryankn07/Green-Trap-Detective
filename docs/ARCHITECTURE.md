@@ -55,6 +55,10 @@ The normal transition is DEBATE → BLIND_ACTION → REVEAL → the next round's
 
 The server owns phase deadlines and timeout handling. The browser displays the server-provided phase and timing data; it must not independently advance the game.
 
+The owner's unanimous discussion-skip action is an explicit early-transition path: the engine records one consent per living player, fills missing statements with the existing default and enters `BLIND_ACTION` once every eligible player agrees. Server authentication determines the voter; only public totals and the viewer's own consent are projected. See [discussion skip](DISCUSSION_SKIP.md).
+
+The owner also approved early resolution once every living player has locked their action. Both transports share the room manager's atomic resolution path. The public round summary marks this completion with `fastForward: true`, allowing the browser to burn down the prior clock before presenting the already-accepted result. Terminal persistence, retirement and client caching remain immediate. See [action clock](ACTION_CLOCK_BURN.md).
+
 ## Trust and privacy boundaries
 
 - A player is authenticated with the room/session credentials supplied by the server. The server derives the player identity from that authenticated session.

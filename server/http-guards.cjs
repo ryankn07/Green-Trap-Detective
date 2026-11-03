@@ -36,11 +36,14 @@ function checkOrigin(req){
   if(value.origin!==origin)throw Error();
  }catch{throw new HttpError('BAD_ORIGIN','Nguồn yêu cầu không hợp lệ.',403);}
 }
-function validateSubmission(room,body){
+function validateContext(room,body){
  if(!object(body.context)||!room.state||body.context.gameId!==room.state.gameId||
     body.context.round!==room.state.round||body.context.phase!==room.state.phase)
   throw new HttpError('STALE_ACTION','Lượt chơi đã thay đổi. Hãy tải lại trạng thái.',409);
+}
+function validateSubmission(room,body){
+ validateContext(room,body);
  if(!object(body.payload))throw new HttpError('INVALID_ACTION','Lệnh gửi không hợp lệ.');
  if(room.state.phase==='DEBATE'&&typeof body.payload.text!=='string')throw new HttpError('INVALID_STATEMENT','Nhận định phải là văn bản.');
 }
-module.exports={HttpError,readBody,checkOrigin,validateSubmission};
+module.exports={HttpError,readBody,checkOrigin,validateContext,validateSubmission};

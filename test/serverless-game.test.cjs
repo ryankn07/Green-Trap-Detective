@@ -41,6 +41,43 @@ async function fixture(t) {
   return { store, request };
 }
 
+test('discussion skip persists across cold Functions, retries once per voter and advances on unanimous consent',async t=>{
+ const {store,request}=await fixture(t),host=(await request('/api/create',{name:'Skip host'})).value;
+ const guests=[];for(const name of ['Skip A','Skip B'])guests.push((await request('/api/join',{roomCode:host.roomCode,name})).value);
+ await request('/api/action',{type:'start'},host);
+ const first=(await request('/api/state?room='+host.roomCode,null,host)).value;
+ const context={gameId:first.game.gameId,round:first.game.round,phase:'DEBATE'};
+ const vote=(session,extra={})=>request('/api/action',{type:'skip_discussion',context,...extra},session);
+ assert.equal((await vote(host,{context:{...context,round:2}})).status,409);
+ assert.equal((await vote(host)).status,200);assert.equal((await vote(host)).status,200);
+ assert.equal((await vote(guests[0])).status,200);
+ const partial=(await request('/api/state?room='+host.roomCode,null,guests[1])).value;
+ assert.deepEqual(partial.game.discussionSkip,{count:2,required:3,voted:false,complete:false});assert.equal(partial.deadline,first.deadline);
+ const id=randomUUID();const result=await vote(guests[1],{requestId:id});assert.equal(result.status,200);
+ assert.deepEqual(await vote(guests[1],{requestId:id}),result,'same committed command replays after the phase changes');
+ const next=(await request('/api/state?room='+host.roomCode,null,host)).value;
+ assert.equal(next.game.phase,'BLIND_ACTION');assert.equal(next.deadline,store.time+60000);
+ assert.deepEqual(next.game.discussionSkip,{count:3,required:3,voted:true,complete:true});
+ assert.equal((await vote(host)).status,409);assert.equal(next.game.currentStatements.length,3);
+ assert.equal(Object.hasOwn(next.game,'discussionSkipVotes'),false);
+});
+
+test('all locked actions resolve early across cold invocations and the last request replays after resolution',async t=>{
+ const {store,request}=await fixture(t),host=(await request('/api/create',{name:'Ready host'})).value,guests=[];
+ for(const name of ['Ready A','Ready B'])guests.push((await request('/api/join',{roomCode:host.roomCode,name})).value);
+ await request('/api/action',{type:'start'},host);
+ let view=(await request('/api/state?room='+host.roomCode,null,host)).value;store.time=view.deadline;
+ view=(await request('/api/state?room='+host.roomCode,null,host)).value;
+ const deadline=view.deadline,context={gameId:view.game.gameId,round:view.game.round,phase:'BLIND_ACTION'};
+ const lock=(session,extra={})=>request('/api/action',{type:'submit',context,payload:{action:{invest:false,bankAction:{type:'NONE'}}},...extra},session);
+ assert.equal((await lock(host)).status,200);assert.equal((await lock(guests[0])).status,200);
+ view=(await request('/api/state?room='+host.roomCode,null,host)).value;assert.equal(view.game.phase,'BLIND_ACTION');assert.equal(view.deadline,deadline);
+ const last={requestId:randomUUID()},response=await lock(guests[1],last);assert.equal(response.status,200);assert.deepEqual(await lock(guests[1],last),response);
+ view=(await request('/api/state?room='+host.roomCode,null,host)).value;
+ assert.equal(view.game.phase,'REVEAL');assert.equal(view.deadline,store.time+25000);assert.equal(view.game.history.length,1);assert.equal(view.game.history[0].fastForward,true);
+ assert.ok(view.game.players.every(p=>!Object.hasOwn(p,'role')&&!Object.hasOwn(p,'coins')));assert.equal((await lock(host)).status,409);
+});
+
 test('completion keeps only bounded authenticated delivery results outside admission',async t=>{
  const {store,request}=await fixture(t);
  const host=(await request('/api/create',{name:'Host'})).value,guests=[];

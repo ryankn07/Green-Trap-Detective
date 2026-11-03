@@ -4,6 +4,8 @@ exports.activePlayers = void 0;
 exports.currentProject = currentProject;
 exports.createGame = createGame;
 exports.submitStatement = submitStatement;
+exports.discussionSkipStatus = discussionSkipStatus;
+exports.skipDiscussion = skipDiscussion;
 exports.openBlindPhase = openBlindPhase;
 exports.actionCost = actionCost;
 exports.lockAction = lockAction;
@@ -51,7 +53,8 @@ function createGame({ gameId, players, projects, deckIds, roundLimit = 10 }) {
         version: 1, gameId, round: 1, roundLimit, phase: "DEBATE",
         projects: projects.map(p => ({ ...p, glossary: [...p.glossary] })), deckIds: [...deckIds],
         players: players.map(p => ({ ...p, coins: 2, isAlive: true, eliminatedReason: null })),
-        statements: {}, lockedActions: {}, inspections: {}, history: [], outcome: null
+        statements: {}, lockedActions: {}, inspections: {}, history: [], outcome: null,
+        discussionSkipVotes: [], discussionSkipped: false
     };
 }
 function submitStatement(state, actorId, text, stance) {
@@ -67,6 +70,30 @@ function openBlindPhase(state) {
     ensurePhase(state, "DEBATE");
     (0, errors_1.rule)((0, exports.activePlayers)(state).every(p => hasOwn(state.statements, p.id)), "STATEMENTS_PENDING", "Each living player must give a reason");
     return { ...state, phase: "BLIND_ACTION" };
+}
+/** Skip consent is public progress, independent from submitting a statement. */
+function discussionSkipStatus(state, viewerId) {
+    const eligible = (0, exports.activePlayers)(state);
+    const votes = new Set(state.discussionSkipVotes ?? []);
+    const count = eligible.filter(p => votes.has(p.id)).length;
+    return { count, required: eligible.length, voted: eligible.some(p => p.id === viewerId && votes.has(p.id)),
+        complete: Boolean(state.discussionSkipped) };
+}
+function completeDiscussionSkip(state) {
+    if (state.phase !== 'DEBATE') return state;
+    const progress = discussionSkipStatus(state);
+    if (!progress.required || progress.count !== progress.required) return state;
+    let next = state;
+    for (const player of (0, exports.activePlayers)(next)) {
+        if (!hasOwn(next.statements, player.id)) next = submitStatement(next, player.id, 'Không gửi ý kiến.', 'UNSURE');
+    }
+    return { ...openBlindPhase(next), discussionSkipped: true };
+}
+function skipDiscussion(state, actorId) {
+    ensurePhase(state, 'DEBATE');
+    activeActor(state, actorId);
+    if ((state.discussionSkipVotes ?? []).includes(actorId)) return state;
+    return completeDiscussionSkip({ ...state, discussionSkipVotes: [...(state.discussionSkipVotes ?? []), actorId] });
 }
 function actionCost(action) {
     let cost = action.invest ? 1 : 0;
@@ -140,10 +167,10 @@ function removePlayer(state, playerId) {
     const next = { ...state, players: state.players.map(p => p.id === playerId && p.isAlive ?
         { ...p, isAlive: false, eliminatedReason: 'REMOVED_BY_HOST' } : p) };
     const outcome = finalOutcome(next, false);
-    return outcome ? { ...next, phase: 'GAME_OVER', outcome } : next;
+    return outcome ? { ...next, phase: 'GAME_OVER', outcome } : completeDiscussionSkip(next);
 }
 /** Resolve all locked commands atomically. No individual bank targets or investments are published. */
-function resolveRound(state) {
+function resolveRound(state, { fastForward = false } = {}) {
     ensurePhase(state, "BLIND_ACTION");
     const eligible = (0, exports.activePlayers)(state);
     (0, errors_1.rule)(eligible.every(p => hasOwn(state.lockedActions, p.id)), "ACTIONS_PENDING", "All living players must lock an action");
@@ -184,6 +211,7 @@ function resolveRound(state) {
         approved: investorCount >= requiredVotes,
         investorCount, eligibleCount: eligible.length, requiredVotes,
         alignment: project.alignment, verdictLabel: project.verdictLabel,
+        ...(fastForward ? { fastForward: true } : {}),
         explanation: project.explanation, newlyEliminatedIds,
         statements: eligible.map(p => ({ ...state.statements[p.id] }))
     };
@@ -195,5 +223,5 @@ function resolveRound(state) {
 function nextRound(state) {
     ensurePhase(state, "REVEAL");
     (0, errors_1.rule)(state.round < state.roundLimit, "GAME_OVER", "No more rounds");
-    return { ...state, round: state.round + 1, phase: "DEBATE", statements: {}, lockedActions: {} };
+    return { ...state, round: state.round + 1, phase: "DEBATE", statements: {}, lockedActions: {}, discussionSkipVotes: [], discussionSkipped: false };
 }

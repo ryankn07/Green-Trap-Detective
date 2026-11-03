@@ -314,7 +314,7 @@ test('mobile gameplay follows server time, validates costs and completes ten rou
     await page.locator('#lock-action').click();
     await page.waitForFunction(()=>!document.querySelector('#action-form'));
     for(const p of room.players.slice(1))manager.submit(room,p,{action:{invest:false,bankAction:{type:'NONE'}}});
-    now=room.deadline;manager.tick();
+    assert.equal(room.state.phase,'REVEAL','all locked actions resolve before the deadline');
     await page.waitForFunction(()=>document.querySelector('.phase')?.textContent.includes('CÔNG BỐ'));
     assert.equal(await page.locator('#phase-progress').getAttribute('max'),'25');
     await page.evaluate(()=>scrollTo(0,0));await screenshot(page,'EE_MOBILE_REVEAL.png');

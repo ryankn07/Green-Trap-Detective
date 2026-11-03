@@ -8,7 +8,7 @@ const {RoomManager}=require('./rooms.cjs');
 const {FileRoomStore,serializeRoom,validateSnapshot}=require('./room-store.cjs');
 const {SupabaseSnapshotStore}=require('./supabase-snapshot.cjs');
 const {DurableCoordinator}=require('./durable-coordinator.cjs');
-const {HttpError,readBody,checkOrigin,validateSubmission}=require('./http-guards.cjs');
+const {HttpError,readBody,checkOrigin,validateContext,validateSubmission}=require('./http-guards.cjs');
 const {GameError}=require('../engine/dist/errors.js');
 const {RateLimiter,clientAddress}=require('./rate-limit.cjs');
 const {MAX_STREAMS}=require('./limits.cjs');
@@ -228,7 +228,7 @@ const server=http.createServer(async(req,res)=>{
     if(req.method==='POST' && url.pathname==='/api/action') {
       const body=await readBody(req);
       const effect=await transaction(()=>{const {room,player}=auth(req,url);rate(res,'action:'+player.id,60);
-      switch(body.type){case 'start':manager.start(room,player);break;case 'submit':validateSubmission(room,body);manager.submit(room,player,body.payload||{});break;case 'next':manager.next(room,player);break;case 'kick':{const target=manager.kick(room,player,body.targetId);return {code:room.code,id:target.id,kicked:true};}case 'leave':manager.leaveLobby(room,player);return {code:room.code,id:player.id};default:throw new HttpError('INVALID_ACTION','Lệnh không được hỗ trợ.',400);}
+      switch(body.type){case 'start':manager.start(room,player);break;case 'submit':validateSubmission(room,body);manager.submit(room,player,body.payload||{});break;case 'skip_discussion':validateContext(room,body);manager.skipDiscussion(room,player);break;case 'next':manager.next(room,player);break;case 'kick':{const target=manager.kick(room,player,body.targetId);return {code:room.code,id:target.id,kicked:true};}case 'leave':manager.leaveLobby(room,player);return {code:room.code,id:player.id};default:throw new HttpError('INVALID_ACTION','Lệnh không được hỗ trợ.',400);}
       return null;});
       if(effect)for(const [stream,who] of streams.get(effect.code)||[])if(who.id===effect.id)effect.kicked?stream.end('event: kicked\ndata: {}\n\n'):stream.end();
       return json(res,200,{ok:true});

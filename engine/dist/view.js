@@ -14,6 +14,7 @@ function projectForPlayer(state, viewerId) {
     const result = {
         gameId: state.gameId,
         phase: state.phase, round: state.round, roundLimit: state.roundLimit,
+        discussionSkip: (0, engine_1.discussionSkipStatus)(state, viewerId),
         myPlayer: {
             id: me.id, name: me.name, role: me.role, coins: me.coins,
             isAlive: me.isAlive, eliminatedReason: me.eliminatedReason,

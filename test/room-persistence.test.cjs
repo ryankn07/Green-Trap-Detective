@@ -23,7 +23,10 @@ test('a restarted room manager restores sessions, phase and locked choices witho
   assert.ok(view.game.players.every(p=>!Object.hasOwn(p,'role')&&!Object.hasOwn(p,'coins')));
   assert.throws(()=>restarted.submit(restored.room,restored.player,{action:{invest:false,bankAction:{type:'NONE'}}}),{code:'ACTION_ALREADY_LOCKED'});
   for(const old of [b,c]){const auth=restarted.authenticate(room.code,old.secret);restarted.submit(auth.room,auth.player,{action:{invest:false,bankAction:{type:'NONE'}}});}
-  now=restored.room.deadline;restarted.tick();assert.equal(restored.room.state.phase,'REVEAL');
+  assert.equal(restored.room.state.phase,'REVEAL','the final restored lock resolves immediately');
+  const afterResolution=new RoomManager({store:new FileRoomStore(filename),currentTime:()=>now}).getRoom(room.code);
+  assert.equal(afterResolution.state.phase,'REVEAL');assert.equal(afterResolution.state.history.length,1);
+  assert.equal(afterResolution.state.history[0].fastForward,true);
  }finally{fs.rmSync(filename,{force:true});fs.rmdirSync(dir);}
 });
 

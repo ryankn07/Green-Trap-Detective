@@ -1,7 +1,7 @@
 'use strict';
 const crypto = require('node:crypto');
 const {MIN_PLAYERS,MAX_PLAYERS,MAX_ROOMS,MAX_STREAMS,SOURCE_ROOMS,SOURCE_SEATS}=require('./limits.cjs');
-const {assignBaseRoles,selectProjectDeck,createGame,submitStatement,openBlindPhase,lockAction,resolveRound,nextRound,removePlayer,activePlayers,projectForPlayer}=require('../engine/dist/index.js');
+const {assignBaseRoles,selectProjectDeck,createGame,submitStatement,skipDiscussion,openBlindPhase,lockAction,resolveRound,nextRound,removePlayer,activePlayers,projectForPlayer}=require('../engine/dist/index.js');
 const projects=require('../engine/dist/data/projects.json');
 const CODE_CHARS='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
 const clampName=raw=>typeof raw==='string'?raw.trim().replace(/\s+/g,' ').slice(0,24):'';
@@ -50,8 +50,18 @@ class RoomManager {
   disconnected(room,player){if(room.state?.phase==='GAME_OVER')return;player.online=false;this.changed(room);}
   phaseDeadline(room){room.deadline=room.state&&room.state.phase!=='GAME_OVER'?this.currentTime()+PHASE_TIMES[room.state.phase]:null;}
   start(room,player){if(room.state)fail('GAME_STARTED','Phòng đang chơi.');if(player.id!==room.hostId)fail('HOST_ONLY','Chỉ chủ phòng được bắt đầu.');if(room.players.length<MIN_PLAYERS)fail('NOT_ENOUGH_PLAYERS','Cần ít nhất 3 người chơi.');if(!room.players.every(p=>p.online))fail('PLAYERS_OFFLINE','Tất cả người chơi cần kết nối trước khi bắt đầu.');const assigned=assignBaseRoles(room.players.map(p=>({id:p.id,name:p.name})),this.randomInt);const deck=selectProjectDeck(projects,10,this.randomInt);room.state=createGame({gameId:uid(),players:assigned,projects,deckIds:deck,roundLimit:10});this.phaseDeadline(room);this.changed(room);}
-  submit(room,player,payload){if(!room.state)fail('NOT_STARTED','Chưa bắt đầu ván.');const state=room.state;if(state.phase==='DEBATE'){const text=String(payload.text??'');room.state=submitStatement(state,player.id,text,payload.stance);}else if(state.phase==='BLIND_ACTION'){room.state=lockAction(state,player.id,payload.action);}else fail('INVALID_PHASE','Không có hành động hợp lệ ở pha này.');this.changed(room);}
+  submit(room,player,payload){if(!room.state)fail('NOT_STARTED','Chưa bắt đầu ván.');const state=room.state;if(state.phase==='DEBATE'){const text=String(payload.text??'');room.state=submitStatement(state,player.id,text,payload.stance);}else if(state.phase==='BLIND_ACTION'){room.state=lockAction(state,player.id,payload.action);this.finishLockedActions(room);}else fail('INVALID_PHASE','Không có hành động hợp lệ ở pha này.');this.changed(room);}
+  finishLockedActions(room){
+    if(room.state?.phase!=='BLIND_ACTION'||!activePlayers(room.state).every(p=>Object.hasOwn(room.state.lockedActions,p.id)))return;
+    room.state=resolveRound(room.state,{fastForward:true});this.phaseDeadline(room);
+  }
   next(room,player){if(!room.state||room.state.phase!=='REVEAL')fail('INVALID_PHASE','Chưa thể sang lượt mới.');if(player.id!==room.hostId)fail('HOST_ONLY','Chỉ chủ phòng được điều khiển lượt mới.');room.state=nextRound(room.state);this.phaseDeadline(room);this.changed(room);}
+  skipDiscussion(room,player){
+    if(!room.state)fail('NOT_STARTED','Chưa bắt đầu ván.');
+    const previous=room.state,next=skipDiscussion(previous,player.id);
+    if(next===previous)return;
+    room.state=next;if(next.phase!==previous.phase)this.phaseDeadline(room);this.changed(room);
+  }
   kickLobby(room,player,targetId){
     if(player.id!==room.hostId)fail('HOST_ONLY','Chỉ chủ phòng được kick người chơi.');
     if(room.state)fail('GAME_STARTED','Chỉ có thể kick người trong phòng chờ.');
@@ -68,9 +78,12 @@ class RoomManager {
     const index=room.players.findIndex(p=>p.id===targetId&&!p.removed);
     if(index<0||targetId===player.id)fail('INVALID_TARGET','Chọn một người chơi khác trong phòng.');
     const target=room.players[index];
+    const previousPhase=room.state.phase;
     room.state=removePlayer(room.state,targetId);
     room.players=room.players.map((p,i)=>i===index?{...p,removed:true,online:false}:p);
     if(room.state.phase==='GAME_OVER')room.deadline=null;
+    else if(room.state.phase!==previousPhase)this.phaseDeadline(room);
+    this.finishLockedActions(room);
     this.changed(room);
     return target;
   }

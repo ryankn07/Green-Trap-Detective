@@ -38,6 +38,8 @@ These documents preserve the scope, decisions, and test evidence from specific i
 - [Desktop gameplay release, 3 November](DESKTOP_GAME_RELEASE_20261103.md)
 - [Mobile component verification, 3 November](MOBILE_VERIFICATION_20261103.md)
 - [Full-screen phase transitions](PHASE_TRANSITIONS.md)
+- [Unanimous discussion skip](DISCUSSION_SKIP.md)
+- [Flame countdown after all actions are locked](ACTION_CLOCK_BURN.md)
 - [Inline kick confirmation and pencil removal](KICK_CONFIRMATION.md)
 - [In-match vote-out motion](ELIMINATION_EFFECT.md)
 - [Immediate room cleanup](ROOM_COMPLETION.md)
