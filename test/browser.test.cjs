@@ -62,7 +62,7 @@ test('desktop game adapts its card to the viewport and preserves protected layou
    await page.setViewportSize({width,height});
    const geometry=await page.evaluate(()=>{
     const rect=selector=>document.querySelector(selector).getBoundingClientRect().toJSON();
-    return {frame:rect('.gi-area-project .gi-card-image-viewport'),project:rect('.gi-area-project'),actions:rect('.gi-area-actions'),panel:rect('.gi-action-panel'),discussion:rect('.gi-area-discussion'),players:rect('.gi-area-players'),phase:rect('.gi-phase-header'),overflow:document.documentElement.scrollWidth>innerWidth,verticalOverflow:document.documentElement.scrollHeight>innerHeight,font:getComputedStyle(document.querySelector('.phase')).fontFamily};
+    return {frame:rect('.gi-area-project .gi-card-image-viewport'),project:rect('.gi-area-project'),center:rect('.gi-center-column'),actions:rect('.gi-area-actions'),panel:rect('.gi-action-panel'),discussion:rect('.gi-area-discussion'),players:rect('.gi-area-players'),phase:rect('.gi-phase-header'),overflow:document.documentElement.scrollWidth>innerWidth,verticalOverflow:document.documentElement.scrollHeight>innerHeight,font:getComputedStyle(document.querySelector('.phase')).fontFamily};
    });
    assert.equal(geometry.overflow,false,'no horizontal overflow at '+width+'x'+height);
    assert.equal(geometry.verticalOverflow,false,'desktop does not require page scrolling');
@@ -72,6 +72,11 @@ test('desktop game adapts its card to the viewport and preserves protected layou
    assert.ok(Math.abs((geometry.frame.left+geometry.frame.right-geometry.project.left-geometry.project.right)/2)<2,'card centered on table');
    assert.ok(geometry.actions.left>=geometry.project.right,'controls beside card');
    assert.ok(geometry.players.left>=geometry.actions.right,'compact participants are at the right');
+   assert.ok(geometry.panel.height>=geometry.center.height*.55,'the editable discussion form uses the available center-column height');
+   assert.ok(geometry.discussion.bottom>=geometry.project.bottom-2,'the center column uses the board height instead of leaving empty space below');
+   const submitButton=await page.locator('#statement button[type=submit]').boundingBox();
+   const submitInset=geometry.panel.bottom-submitButton.y-submitButton.height;
+   assert.ok(submitInset>=0&&submitInset<=32,'the expanded form uses its frame instead of leaving blank space or overflowing after the button');
    const discussionGap=geometry.discussion.top-geometry.panel.bottom;
    assert.ok(discussionGap>=0&&discussionGap<=16,'public discussion follows the action card without overlap or an empty grid track');
    assert.ok(geometry.font.includes('Hanken'),'phase uses requested sans-serif font');
@@ -84,6 +89,7 @@ test('desktop game adapts its card to the viewport and preserves protected layou
   await page.locator('#statement').waitFor({state:'detached'});
   const discussionAfter=await page.locator('.gi-area-discussion').boundingBox();
   assert.ok(discussionAfter.y<discussionBefore.y-100,'sending a statement moves public discussion up');
+  assert.ok(discussionAfter.height>discussionBefore.height+100,'submitted discussion gives the released space to public statements');
   manager.submit(room,room.players[1],{text:'Tôi muốn đối chiếu bằng chứng của dự án.',stance:'UNSURE'});
   await page.getByText('Tôi muốn đối chiếu bằng chứng của dự án.',{exact:true}).waitFor({state:'visible'});
   await screenshot(page,'DESKTOP_AFTER_STATEMENT.png');
@@ -137,6 +143,9 @@ test('desktop game adapts its card to the viewport and preserves protected layou
    assert.ok(await page.evaluate(()=>document.documentElement.scrollHeight<=innerHeight),'dense '+phase+' content stays inside the desktop board');
    await screenshot(page,'DESKTOP_NEW_'+phase+'.png');
    if(phase==='BLIND_ACTION'){
+    const panel=await page.locator('.gi-action-panel').boundingBox(),lock=await page.locator('#lock-action').boundingBox();
+    const lockInset=panel.y+panel.height-lock.y-lock.height;
+    assert.ok(lockInset>=0&&lockInset<=32,'the secret-action controls fill their expanded frame without overflowing');
     await page.setViewportSize({width:1280,height:720});
     await page.locator('#bank').selectOption('EXPEL');
     const expanded=await page.locator('.gi-action-panel').boundingBox();

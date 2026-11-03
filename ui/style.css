@@ -816,7 +816,7 @@ body.copy-confirmed::after{content:"";position:fixed;z-index:99;inset:0;pointer-
  body.gi-gameplay .brand small {font-size:12px}
  body.gi-gameplay #app {height:calc(100dvh - 64px);padding:12px clamp(20px,2vw,60px)}
  body.gi-gameplay .gi-game-grid {height:100%;min-height:0;grid-template-columns:minmax(0,1.12fr) minmax(330px,1fr) clamp(172px,15vw,240px);grid-template-rows:minmax(0,1fr);grid-template-areas:"project middle players";gap:12px 16px}
- body.gi-gameplay .gi-center-column {grid-area:middle;display:flex;flex-direction:column;min-height:0;gap:12px;overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin}
+ body.gi-gameplay .gi-center-column {grid-area:middle;display:flex;flex-direction:column;align-self:stretch;height:100%;min-height:0;gap:12px;overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin}
  body.gi-gameplay .gi-phase-header {position:fixed;z-index:20;top:7px;left:clamp(370px,30vw,680px);right:clamp(20px,2vw,60px);height:50px;padding:5px 16px 6px;border-radius:12px;gap:3px 16px;grid-area:auto}
  body.gi-gameplay .gi-phase-header .phase {font-size:clamp(17px,1.35vw,22px)}
  body.gi-gameplay .gi-phase-header .countdown {padding:2px 8px;font-size:18px}
@@ -852,6 +852,18 @@ body.copy-confirmed::after{content:"";position:fixed;z-index:99;inset:0;pointer-
  body.gi-gameplay .gi-action-panel textarea,body.gi-gameplay .gi-action-panel select {padding:9px 11px;font-size:14px}
  body.gi-gameplay .gi-action-panel textarea {min-height:76px}
  body.gi-gameplay .gi-action-panel form>button {min-height:40px;padding:9px 16px;font-size:13px}
+ /* An editable form owns the extra space; confirmation releases it to discussion. */
+ body.gi-gameplay .gi-area-actions:has(#statement,#action-form) {flex:2 0 auto;min-height:min-content;align-content:stretch;grid-template-rows:minmax(min-content,1fr)}
+ body.gi-gameplay .gi-action-panel:has(#statement,#action-form) {display:flex;flex-direction:column;align-self:stretch;padding:clamp(18px,2dvh,28px) clamp(18px,1.8vw,32px)}
+ body.gi-gameplay .gi-action-panel :is(#statement,#action-form) {display:flex;flex-direction:column;flex:1;gap:clamp(12px,1.4dvh,20px);margin-top:16px}
+ body.gi-gameplay .gi-action-panel :is(#statement,#action-form)>label {flex:none;font-size:16px}
+ body.gi-gameplay .gi-action-panel :is(#statement,#action-form) :is(select,textarea) {font-size:16px;min-height:52px;padding:12px}
+ body.gi-gameplay .gi-action-panel :is(#statement,#action-form)>button {flex:none;min-height:48px;font-size:16px}
+ body.gi-gameplay .gi-action-panel #statement>label:has(textarea) {display:flex;flex-direction:column;flex:1;min-height:150px}
+ body.gi-gameplay .gi-action-panel #statement textarea {flex:1;min-height:120px}
+ body.gi-gameplay .gi-action-panel #action-form>.choice {flex:1;min-height:72px;align-items:center;padding:16px 20px}
+ body.gi-gameplay .gi-action-panel #action-form>label:not(.choice) {display:flex;flex-direction:column;justify-content:center;flex:1;min-height:92px}
+ body.gi-gameplay .gi-action-panel #action-form #action-cost {display:flex;align-items:center;flex:1;min-height:64px;font-size:16px}
  body.gi-gameplay .gi-area-players {display:flex;flex-direction:column;align-items:stretch;align-self:stretch;height:100%;min-height:0;overflow:hidden;gap:10px;padding:12px;background:var(--entry-surface);border:1px solid var(--entry-rule);border-radius:16px}
  body.gi-gameplay .gi-area-players h2 {flex:none;font-size:17px}
  body.gi-gameplay .gi-area-players .people {display:flex;flex-direction:column;flex:1;min-height:0;overflow:auto;gap:8px;padding:0;overscroll-behavior:contain;scrollbar-width:thin}
@@ -859,6 +871,7 @@ body.copy-confirmed::after{content:"";position:fixed;z-index:99;inset:0;pointer-
  body.gi-gameplay .gi-area-players .person-info b {font-size:14px}
  body.gi-gameplay .gi-area-players .person-info small,body.gi-gameplay .gi-area-players .pill {font-size:12px}
  body.gi-gameplay .gi-area-discussion {display:flex;flex-direction:column;flex:1;height:auto;min-height:160px;overflow:visible;gap:8px}
+ body.gi-gameplay .gi-center-column:has(#statement,#action-form) .gi-area-discussion {flex-basis:clamp(200px,28dvh,360px)}
  body.gi-gameplay .gi-area-discussion>.card {padding:12px 16px;border-radius:14px}
  body.gi-gameplay .gi-area-discussion>.card:first-child {flex:1;min-height:0;display:flex;flex-direction:column}
  body.gi-gameplay .gi-area-discussion h2 {font-size:18px;flex:none}
