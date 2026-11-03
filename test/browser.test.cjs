@@ -78,10 +78,12 @@ test('desktop game adapts its card to the viewport and preserves protected layou
    if(width===1440)await screenshot(page,'DESKTOP_NEW_DEBATE.png');
   }
   await page.setViewportSize({width:1440,height:900});
+  await page.locator('.gi-area-discussion').waitFor({state:'visible'});
   const discussionBefore=await page.locator('.gi-area-discussion').boundingBox();
   await page.locator('#statement-text').fill('Cần kiểm tra tác động dài hạn của dự án.');
   await page.locator('#statement button[type=submit]').click();
   await page.locator('#statement').waitFor({state:'detached'});
+  await page.waitForFunction(()=>!requesting);await page.locator('.gi-area-discussion').waitFor({state:'visible'});
   const discussionAfter=await page.locator('.gi-area-discussion').boundingBox();
   assert.ok(discussionAfter.y<discussionBefore.y-100,'sending a statement moves public discussion up');
   manager.submit(room,room.players[1],{text:'Tôi muốn đối chiếu bằng chứng của dự án.',stance:'UNSURE'});
@@ -146,6 +148,7 @@ test('desktop game adapts its card to the viewport and preserves protected layou
     await page.waitForFunction(()=>{const rect=document.querySelector('.gi-area-discussion .gi-statement:last-child').getBoundingClientRect();return rect.top>=0&&rect.bottom<=innerHeight;});
     await page.locator('#lock-action').click();
     await page.locator('#action-form').waitFor({state:'detached'});
+    await page.waitForFunction(()=>!requesting);await page.locator('.gi-action-panel').waitFor({state:'visible'});
     const locked=await page.locator('.gi-action-panel').boundingBox();
     assert.ok(locked.height<expanded.height-100,'locking a secret action releases its form space');
     assert.ok(await page.evaluate(()=>document.documentElement.scrollHeight<=innerHeight),'expanded bank fields remain reachable without scrolling the desktop page');
@@ -188,7 +191,7 @@ test('unlocked investment and bank choices survive another player locking an act
     await page.locator('#bank').selectOption('EXPEL');
     await page.locator('#target').selectOption(third.id);
     manager.submit(room, second, {action:{invest:false,bankAction:{type:'NONE'}}});
-    await page.waitForFunction(() => document.querySelector('.people')?.textContent.includes('Đã khóa lệnh'));
+    await page.waitForFunction(() => document.querySelector('.people')?.textContent.includes('Đã chốt hành động'));
     assert.equal(await page.locator('#invest').isChecked(), true);
     assert.equal(await page.locator('#bank').inputValue(), 'EXPEL');
     assert.equal(await page.locator('#target').inputValue(), third.id);

@@ -175,6 +175,7 @@ body:has(#form-create) .brand b{font-family:var(--font-editorial);font-size:30px
 .lobby-members .kick-player{grid-column:2/-1;justify-self:start;min-height:44px;padding:8px 10px;border:1px solid currentColor;border-radius:4px;background:transparent;color:var(--danger,#a23925);font:inherit;font-size:12px;line-height:1.4}
 .lobby-members .kick-player:hover{background:var(--surface)}
 .person-info b{font-size:14px;font-weight:650;display:block;line-height:1.4}
+.player-name.is-eliminated{text-decoration-line:line-through;text-decoration-thickness:1.5px}
 .person-info small{display:block;font-size:12px;color:var(--muted);margin-top:4px}
 .dead{opacity:.6}
 .coins{font-family:var(--font-figure);font-size:24px;font-weight:600;color:var(--text);white-space:nowrap;font-variant-numeric:tabular-nums}
@@ -708,6 +709,212 @@ body.copy-confirmed::after{content:"";position:fixed;z-index:99;inset:0;pointer-
  body.gi-drawer-open{overflow:hidden}
  .gi-statement-choice{position:fixed;inset:auto 12px calc(12px + env(safe-area-inset-bottom));width:calc(100% - 24px);margin:auto;max-width:480px}
 }
+
+/* Full-window chapter cards; independent of the gameplay grid and its clock.
+ * Owner requests full demo motion here, even under reduced motion. These scoped
+ * animation declarations override the global reduction only for chapter cards. */
+.gi-phase-transition{--phase-ground:#103c2c;--phase-accent:#bce788;--phase-duration:2000ms;position:fixed;inset:0;z-index:11000;display:grid;place-items:center;isolation:isolate;overflow:hidden;pointer-events:none;background:var(--phase-ground);color:#fffbed;animation:gi-phase-screen var(--phase-duration) cubic-bezier(.22,.7,.25,1) both!important;contain:layout paint}
+.gi-phase-transition[data-phase="BLIND_ACTION"]{--phase-ground:#392f1c;--phase-accent:#f3cf79}
+.gi-phase-transition[data-phase="REVEAL"]{--phase-ground:#103b44;--phase-accent:#a0e3df}
+.gi-phase-transition[data-winner="SABOTEUR"]{--phase-ground:#3d1221;--phase-accent:#ffa2b4}
+.gi-phase-transition[data-winner="DRAW"]{--phase-ground:#303b34;--phase-accent:#e5ddbb}
+.gi-phase-transition::before{content:"";position:absolute;z-index:-1;inset:-50%;background:repeating-linear-gradient(120deg,transparent 0 120px,#ffffff03 121px 122px,transparent 123px 240px);transform:rotate(-10deg)}
+.gi-phase-transition::after{content:"";position:absolute;inset:12px;z-index:-1;border:1px solid #ffffff22;border-radius:20px}
+.gi-phase-intro{display:flex;align-items:center;flex-direction:column;gap:18px;width:min(90%,950px);padding:28px 0 50px;text-align:center;animation:gi-phase-arrive var(--phase-duration) cubic-bezier(.18,.8,.2,1) both!important}
+.gi-phase-round{color:var(--phase-accent);font:650 12px/1.4 var(--font-body);letter-spacing:.22em}
+.gi-phase-emblem{display:grid;place-items:center;width:100px;height:100px;margin:10px 0 2px;border:1px solid #ffffff30;border-radius:28px;background:#ffffff08;box-shadow:0 16px 45px #0002;transform:rotate(-8deg)}
+.gi-phase-emblem svg{width:70px;height:70px;stroke:var(--phase-accent);stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round;transform:rotate(8deg)}
+.gi-phase-intro h2{max-width:14ch;margin:0;color:inherit;font:500 clamp(48px,7.8vw,112px)/1.04 var(--font-editorial);letter-spacing:-.045em;text-wrap:balance}
+.gi-phase-intro p{margin:0;max-width:40ch;color:#fffbedbf;font:400 clamp(15px,1.4vw,20px)/1.6 var(--font-body);text-wrap:balance}
+.gi-phase-steps{display:flex;align-items:center;justify-content:center;gap:12px;max-width:100%;margin-top:22px;color:#fffbed70;font:500 12px/1.4 var(--font-body)}
+.gi-phase-steps span{padding:7px 10px;border:1px solid transparent;border-radius:99px;white-space:nowrap}
+.gi-phase-steps span[data-state="active"]{color:var(--phase-accent);border-color:currentColor;background:#ffffff08}
+.gi-phase-steps span[data-state="done"]{color:#fffbedbe}
+.gi-phase-steps i{width:24px;height:1px;background:#ffffff38}
+.gi-phase-signature{position:absolute;bottom:max(28px,env(safe-area-inset-bottom));color:#fffbed65;font:500 11px/1.4 var(--font-body);letter-spacing:.16em;text-transform:uppercase}
+.gi-phase-orbit{position:absolute;z-index:-1;left:50%;top:50%;width:min(76vw,1050px);aspect-ratio:1;border:1px solid #ffffff16;border-radius:50%;transform:translate(-50%,-50%);animation:gi-phase-orbit var(--phase-duration) ease-out both!important}
+.gi-phase-orbit--outer{width:min(110vw,1450px);border-style:dashed;border-color:#ffffff12;animation-direction:reverse!important}
+.gi-phase-sparks{position:absolute;inset:0;z-index:-1}
+.gi-phase-sparks i{position:absolute;left:16%;top:28%;width:14px;height:26px;border:1px solid var(--phase-accent);border-radius:100% 0 100% 0;opacity:.55;transform:rotate(30deg);animation:gi-phase-leaf var(--phase-duration) ease-out both!important}
+.gi-phase-sparks i:nth-child(2){left:80%;top:22%;width:9px;height:9px;border-radius:50%;animation-delay:30ms!important}
+.gi-phase-sparks i:nth-child(3){left:86%;top:68%;transform:rotate(-45deg);animation-delay:60ms!important}
+.gi-phase-sparks i:nth-child(4){left:10%;top:72%;width:7px;height:7px;border-radius:50%}
+.gi-phase-sparks i:nth-child(5){left:68%;top:84%;width:10px;height:20px;transform:rotate(75deg)}
+.gi-phase-sparks i:nth-child(6){left:31%;top:15%;width:5px;height:5px;border-radius:50%}
+@keyframes gi-phase-screen{0%{clip-path:inset(100% 0 0);opacity:1}16%,80%{clip-path:inset(0);opacity:1}100%{clip-path:inset(0 0 100%);opacity:1}}
+@keyframes gi-phase-arrive{0%,8%{opacity:0;transform:translateY(48px) scale(.92)}28%,76%{opacity:1;transform:translateY(0) scale(1)}100%{opacity:0;transform:translateY(-36px) scale(1.025)}}
+@keyframes gi-phase-orbit{from{opacity:0;transform:translate(-50%,-50%) scale(.8) rotate(-12deg)}45%,to{opacity:1;transform:translate(-50%,-50%) scale(1.08) rotate(12deg)}}
+@keyframes gi-phase-leaf{from{opacity:0;translate:0 30px}40%,to{opacity:.55;translate:0 -12px}}
+@media(max-width:600px){
+ .gi-phase-intro{gap:15px;width:calc(100% - 40px);padding-bottom:35px}
+ .gi-phase-round{font-size:10px;letter-spacing:.2em}
+ .gi-phase-emblem{width:78px;height:78px;border-radius:23px;margin:5px 0}
+ .gi-phase-emblem svg{width:58px;height:58px}
+ .gi-phase-intro h2{font-size:clamp(42px,11.5vw,68px);max-width:12ch}
+ .gi-phase-intro p{font-size:15px;max-width:28ch}
+ .gi-phase-steps{gap:3px;margin-top:12px;font-size:10px}
+ .gi-phase-steps span{padding:6px 8px}
+ .gi-phase-steps i{width:12px}
+ .gi-phase-orbit{width:115vw}.gi-phase-orbit--outer{width:175vw}
+ .gi-phase-transition::after{inset:8px;border-radius:16px}
+ .gi-phase-sparks i:nth-child(1){left:8%;top:22%}.gi-phase-sparks i:nth-child(3){left:90%}
+}
+@media(max-height:500px){
+ .gi-phase-intro{gap:8px;padding:20px 0 32px}
+ .gi-phase-emblem{width:58px;height:58px;margin:0;border-radius:18px}.gi-phase-emblem svg{width:46px;height:46px}
+ .gi-phase-intro h2{font-size:clamp(32px,9dvh,48px);max-width:none}
+ .gi-phase-intro p{font-size:13px}.gi-phase-steps{margin-top:4px;font-size:10px}
+ .gi-phase-round{font-size:9px}.gi-phase-signature{bottom:16px;font-size:9px}
+}
+/* A fresh project has one branded green card-deal chapter, replacing the
+ * discussion chapter for that snapshot rather than stacking two overlays. */
+.gi-phase-transition[data-transition="project"]{--phase-ground:#0b3425;--phase-accent:#c5ed9d;background:radial-gradient(ellipse at 50% 45%,#246b46 0,transparent 67%),var(--phase-ground)}
+.gi-project-intro{gap:20px;max-width:1000px}
+.gi-project-brand{display:flex;align-items:center;justify-content:center;gap:clamp(34px,4vw,64px);margin:18px 0 12px;max-width:100%}
+.gi-project-brand h2{display:flex;flex-direction:column;gap:0;max-width:none;font-size:clamp(48px,6.4vw,92px);line-height:.98;text-align:left;letter-spacing:-.045em}
+.gi-project-brand h2 span{white-space:nowrap}
+.gi-project-seal{position:relative;flex:none;width:156px;height:196px;perspective:800px}
+.gi-project-card{--deal-x:0px;--deal-angle:0deg;position:absolute;inset:0;display:grid;place-items:center;border:1px solid #c6e5b461;border-radius:18px;background:#205a3e;box-shadow:0 20px 45px #001b2460;animation:gi-project-deal var(--phase-duration) cubic-bezier(.18,.8,.2,1) both!important}
+.gi-project-card::before{content:"";position:absolute;inset:8px;border:1px solid #c6e5b440;border-radius:11px}
+.gi-project-card--left{--deal-x:-25px;--deal-angle:-14deg;background:#153f2e}
+.gi-project-card--right{--deal-x:25px;--deal-angle:14deg;background:#2d7049}
+.gi-project-card--front{padding:18px;background:#f6f3e9;border-color:#e0e8c7;box-shadow:0 18px 38px #001c2580}
+.gi-project-card--front::before{border-color:#c1cda3}
+.gi-project-card img{width:100%;height:100%;max-height:155px;object-fit:contain;position:relative}
+.gi-project-intro .gi-project-label{margin:0;color:var(--phase-accent);font:650 12px/1.4 var(--font-body);letter-spacing:.2em;text-transform:uppercase}
+.gi-project-intro .gi-project-name{max-width:min(46ch,100%);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;font-size:clamp(16px,1.5vw,22px);color:#fffbedda}
+.gi-phase-transition[data-transition="project"] .gi-phase-signature{color:#c5ed9d80}
+@keyframes gi-project-deal{0%,8%{opacity:0;transform:translate(0,70px) rotateY(-55deg) scale(.72)}38%,80%,100%{opacity:1;transform:translate(var(--deal-x),0) rotate(var(--deal-angle)) scale(1)}}
+@media(max-width:600px){
+ .gi-project-intro{gap:15px}
+ .gi-project-brand{flex-direction:column;gap:22px;margin:5px 0}
+ .gi-project-brand h2{text-align:center;font-size:clamp(40px,11.5vw,64px)}
+ .gi-project-seal{width:100px;height:126px}
+ .gi-project-card{border-radius:13px}.gi-project-card::before{inset:6px;border-radius:8px}
+ .gi-project-card--front{padding:12px}.gi-project-card img{max-height:100px}
+ .gi-project-card--left{--deal-x:-17px;--deal-angle:-12deg}.gi-project-card--right{--deal-x:17px;--deal-angle:12deg}
+ .gi-project-intro .gi-project-label{font-size:10px}.gi-project-intro .gi-project-name{font-size:15px;max-width:30ch}
+}
+@media(max-height:500px){
+ .gi-project-intro{gap:9px;padding:18px 0 34px}
+ .gi-project-brand{flex-direction:row;gap:25px;margin:5px 0}
+ .gi-project-brand h2{text-align:left;font-size:clamp(30px,9dvh,44px)}
+ .gi-project-seal{width:68px;height:86px}
+ .gi-project-card{border-radius:10px}.gi-project-card::before{inset:5px;border-radius:6px}
+ .gi-project-card--front{padding:9px}.gi-project-card img{max-height:66px}
+ .gi-project-card--left{--deal-x:-12px}.gi-project-card--right{--deal-x:12px}
+ .gi-project-intro .gi-project-name{font-size:13px;max-width:44ch}
+ .gi-project-intro .gi-project-label{font-size:9px}
+}
+
+/* Faction endings have their own two-second arrival, not a generic trophy card. */
+.gi-phase-transition[data-ending="good"]{--phase-ground:#073525;--phase-accent:#a8ffbd;background:radial-gradient(ellipse at 50% 40%,#26764b 0,transparent 64%),var(--phase-ground);box-shadow:inset 0 0 110px #59ff9b25}
+.gi-phase-transition[data-ending="bad"]{--phase-ground:#300813;--phase-accent:#ff8196;background:radial-gradient(ellipse at 50% 40%,#861b30 0,transparent 67%),var(--phase-ground);box-shadow:inset 0 0 110px #ff244330}
+.gi-ending-intro{gap:17px;position:relative}
+.gi-ending-sigil{display:grid;place-items:center;width:112px;height:112px;margin:4px 0 10px;border:1px solid currentColor;border-radius:50%;color:var(--phase-accent);background:#ffffff08;box-shadow:0 0 60px #a8ffbd18;animation:gi-ending-bloom var(--phase-duration) cubic-bezier(.18,.8,.2,1) both!important}
+.gi-ending-sigil svg{width:78px;height:78px;stroke:currentColor;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round}
+.gi-ending-intro h2{display:flex;flex-direction:column;gap:0;font-size:clamp(56px,8.2vw,110px);line-height:.91;letter-spacing:-.035em;color:var(--phase-accent);text-shadow:0 0 40px #a8ffbd22}
+.gi-ending-intro h2 span+span{color:#fffbed}
+.gi-ending-intro .gi-ending-faction{color:var(--phase-accent);font-weight:650;font-size:clamp(14px,1.6vw,21px);margin-top:10px}
+.gi-ending-intro .gi-ending-motto{font-size:clamp(13px,1.25vw,17px);color:#fffbedb0}
+.gi-ending-aura{position:absolute;z-index:-1;left:50%;top:45%;width:min(68vw,820px);aspect-ratio:1;translate:-50% -50%;border:1px solid #a8ffbd40;border-radius:50%;background:radial-gradient(circle,transparent 45%,#a8ffbd0d 46%,transparent 68%);box-shadow:0 0 100px #a8ffbd12;animation:gi-ending-radiance var(--phase-duration) ease-out both!important}
+.gi-ending-scenery{position:absolute;z-index:-1;left:0;bottom:0;width:100%;height:30%;fill:#092d2399;animation:gi-ending-scenery var(--phase-duration) ease-out both!important}
+.gi-ending-scenery path+path{fill:#06251f99}
+.gi-phase-transition[data-ending="bad"] .gi-ending-sigil{border-radius:24px;box-shadow:0 0 60px #ff244326;animation-name:gi-ending-fracture!important}
+.gi-phase-transition[data-ending="bad"] .gi-ending-intro h2{text-shadow:0 0 45px #ff244344}
+.gi-phase-transition[data-ending="bad"] .gi-ending-aura{border-color:#ff718644;background:radial-gradient(ellipse,#ff8d5c12,transparent 65%);box-shadow:0 0 130px #ff244322;animation-name:gi-ending-rupture!important}
+.gi-phase-transition[data-ending="bad"] .gi-ending-aura::before,.gi-phase-transition[data-ending="bad"] .gi-ending-aura::after{content:"";position:absolute;inset:-20%;border-radius:40% 60% 55% 45%;background:radial-gradient(ellipse at 30% 65%,#ed687c20,transparent 55%);animation:gi-ending-smoke var(--phase-duration) ease-out both!important}
+.gi-phase-transition[data-ending="bad"] .gi-ending-aura::after{rotate:180deg}
+.gi-phase-transition[data-ending="bad"] .gi-ending-scenery{fill:#180510a0;height:37%}
+.gi-phase-transition[data-ending="bad"] .gi-ending-crack{fill:none;stroke:#ff718629;stroke-width:2}
+.gi-phase-transition[data-ending="bad"] .gi-phase-orbit{border-color:#ff718622;border-radius:44% 56% 50% 42%}
+.gi-phase-transition[data-ending="bad"] .gi-phase-sparks i{width:4px;height:11px;border:0;border-radius:1px;background:#ff9c73;box-shadow:0 0 12px #ff604f88;animation-name:gi-ending-ember!important}
+@keyframes gi-ending-bloom{0%,10%{opacity:0;transform:translateY(25px) scale(.45) rotate(-22deg)}42%,100%{opacity:1;transform:translateY(0) scale(1) rotate(0)}}
+@keyframes gi-ending-fracture{0%,10%{opacity:0;transform:scale(1.45) rotate(14deg)}32%{opacity:1;transform:scale(.94) rotate(-5deg)}46%,100%{opacity:1;transform:scale(1) rotate(0)}}
+@keyframes gi-ending-radiance{from{opacity:0;transform:scale(.35)}55%,100%{opacity:1;transform:scale(1.3)}}
+@keyframes gi-ending-rupture{from{opacity:0;transform:scale(1.6) rotate(-25deg)}50%,100%{opacity:1;transform:scale(1) rotate(8deg)}}
+@keyframes gi-ending-scenery{from{opacity:0;transform:translateY(70px)}50%,100%{opacity:1;transform:translateY(0)}}
+@keyframes gi-ending-ember{0%{opacity:0;translate:0 50px}30%{opacity:.8}100%{opacity:0;translate:20px -120px}}
+@keyframes gi-ending-smoke{from{opacity:0;transform:translateY(80px) scale(.7)}45%,100%{opacity:1;transform:translateY(-40px) scale(1.15)}}
+@media(max-width:600px){
+ .gi-ending-intro{gap:14px}.gi-ending-sigil{width:86px;height:86px;margin-bottom:8px}.gi-ending-sigil svg{width:62px;height:62px}
+ .gi-ending-intro h2{font-size:clamp(54px,17vw,82px)}
+ .gi-ending-intro .gi-ending-faction{font-size:15px;margin-top:8px}.gi-ending-intro .gi-ending-motto{font-size:13px}
+ .gi-ending-aura{width:130vw}
+}
+@media(max-height:500px){
+ .gi-ending-intro{gap:8px;padding:16px 0 32px}.gi-ending-sigil{width:55px;height:55px;margin:0}.gi-ending-sigil svg{width:42px;height:42px}
+ .gi-ending-intro h2{font-size:clamp(36px,12dvh,52px);flex-direction:row;gap:.25em}
+ .gi-ending-intro .gi-ending-faction{font-size:13px;margin-top:4px}.gi-ending-intro .gi-ending-motto{font-size:12px}
+}
+
+/* Host confirmation stays inside its player tile. Acknowledged kicks get a
+ * graphite strike-through; private roles and normal eliminations are untouched. */
+.person[data-player-id]{position:relative}
+.person[data-kick-confirming="true"]{overflow:clip;isolation:isolate}
+.person[data-kick-confirming="true"]>:is(.avatar,.person-info,.pill){opacity:.18;filter:blur(1.3px)}
+.person[data-kick-confirming="true"]>.kick-player{visibility:hidden;pointer-events:none}
+.kick-confirmation{position:absolute;inset:0;z-index:4;display:flex;flex-direction:column;align-items:center;justify-content:center;min-width:0;padding:5px 8px 31px;margin:0;border:0;border-radius:inherit;box-sizing:border-box;background:linear-gradient(125deg,#dceee7eb,#fffef8ed 55%,#f0dcdfed);text-align:center}
+.kick-confirmation p{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;max-width:100%;margin:0;font:650 clamp(14px,1vw,16px)/1.2 var(--font-body);color:var(--text);overflow-wrap:anywhere}
+.kick-confirmation strong{font-weight:750}
+.kick-confirm-actions{position:absolute;inset:auto 3px 2px;display:flex;justify-content:space-between;margin:0;pointer-events:none}
+.person .kick-confirm-actions button{display:grid;place-items:center;flex:none;width:28px;height:28px;min-width:28px;min-height:28px;padding:0;border:0;border-radius:0;background:transparent;box-shadow:none;pointer-events:auto;font:650 11px/1.3 var(--font-body)}
+.kick-confirm-actions svg{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round}
+.person .kick-confirm-actions .kick-cancel{color:#185c33}
+.person .kick-confirm-actions .kick-cancel:hover{color:#0a8a43;background:transparent}
+.person .kick-confirm-actions .kick-confirm-yes{color:#b62f3c}
+.person .kick-confirm-actions .kick-confirm-yes:hover{color:#d41e32;background:transparent}
+.person .kick-confirm-actions button:focus-visible{outline:2px solid currentColor;outline-offset:-2px}
+.person .kick-confirm-actions button:disabled{opacity:.55;cursor:wait}
+body .people .person.is-kicked,body.gi-gameplay .gi-area-players .person.is-kicked,.ending-people .person.is-kicked{opacity:1;isolation:isolate}
+.person.is-kicked>:is(.avatar,.person-info,.pill){opacity:.32;filter:grayscale(1)}
+.person.is-kicked{background-color:#e9e8e0}
+.kick-scribble{position:absolute;inset:5px;width:calc(100% - 10px);height:calc(100% - 10px);z-index:2;pointer-events:none;overflow:hidden}
+.kick-scribble path{fill:none;stroke:#4f4b43;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round;vector-effect:non-scaling-stroke;opacity:.6}
+.kick-animating .kick-scribble path{stroke-dasharray:1;animation:kick-pencil-stroke 1150ms linear both!important;animation-delay:var(--kick-elapsed,0ms)!important}
+.kick-pencil{position:absolute;z-index:3;left:4%;top:10%;color:#595044;font:32px/1 sans-serif;pointer-events:none;rotate:-30deg;text-shadow:1px 2px #fff8;animation:kick-pencil-move 1250ms linear both!important;animation-delay:var(--kick-elapsed,0ms)!important}
+.kick-tombstone{animation:kick-tile-exit 300ms ease both!important;animation-delay:calc(2100ms + var(--kick-elapsed,0ms))!important}
+@keyframes kick-pencil-stroke{from{stroke-dashoffset:1}to{stroke-dashoffset:0}}
+@keyframes kick-pencil-move{0%{left:4%;top:10%;opacity:0}5%{opacity:1}15%{left:85%;top:5%}27%{left:4%;top:25%}39%{left:90%;top:22%}51%{left:5%;top:48%}63%{left:90%;top:44%}75%{left:8%;top:70%}87%{left:90%;top:65%;opacity:1}100%{left:90%;top:80%;opacity:0}}
+@keyframes kick-tile-exit{to{opacity:0;transform:translateY(8px)}}
+@media(pointer:coarse){.person .kick-confirm-actions button{width:40px;height:40px;min-width:40px;min-height:40px}}
+
+/* A server-confirmed vote-out plays in the existing player tile after reveal. */
+body.gi-gameplay .gi-area-players .person.gi-elimination-fx{--elim-accent:#ba494b;position:relative;isolation:isolate;overflow:clip;opacity:1}
+.person.dead:not(.is-kicked) .avatar{filter:grayscale(1)}
+.gi-elimination-fx .avatar{position:relative}
+.gi-elimination-fx .player-name{position:relative;display:inline-block;max-width:100%;text-decoration:none}
+.gi-elimination-fx .person-info small{display:grid}
+.gi-elim-before,.gi-elim-after{grid-area:1/1}
+.gi-elim-after{opacity:0}
+.gi-elim-strike{position:absolute;left:-2px;top:39%;width:calc(100% + 4px);height:10px;overflow:visible;pointer-events:none}
+.gi-elim-strike path{fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-dasharray:1;stroke-dashoffset:1;vector-effect:non-scaling-stroke}
+.gi-elim-hit{position:absolute;inset:0;z-index:3;border:1.5px solid var(--elim-accent);border-radius:inherit;opacity:0;pointer-events:none;box-shadow:inset 0 0 24px #ba494b20}
+.gi-elim-ring{position:absolute;inset:-3px;border:1px solid var(--elim-accent);border-radius:10px;opacity:0;pointer-events:none}
+.gi-elim-particle{position:absolute;left:50%;top:50%;width:5px;height:2px;border-radius:2px;background:var(--elim-accent);opacity:0;pointer-events:none}
+.gi-elim-particle:nth-of-type(1){--elim-x:-22px;--elim-y:-23px;--elim-angle:-32deg;--elim-stagger:80ms}
+.gi-elim-particle:nth-of-type(2){--elim-x:-11px;--elim-y:-32px;--elim-angle:32deg;--elim-stagger:110ms}
+.gi-elim-particle:nth-of-type(3){--elim-x:16px;--elim-y:-29px;--elim-angle:-26deg;--elim-stagger:140ms}
+.gi-elim-particle:nth-of-type(4){--elim-x:27px;--elim-y:-15px;--elim-angle:38deg;--elim-stagger:170ms}
+.gi-elim-particle:nth-of-type(5){--elim-x:20px;--elim-y:12px;--elim-angle:19deg;--elim-stagger:200ms}
+.gi-elim-particle:nth-of-type(6){--elim-x:-18px;--elim-y:13px;--elim-angle:-30deg;--elim-stagger:230ms}
+body.gi-gameplay .gi-area-players .person.gi-elimination-fx[data-elimination-state="running"]{animation:gi-elim-card 2000ms ease-out both!important;animation-delay:var(--elim-elapsed,0ms)!important}
+.gi-elimination-fx[data-elimination-state="running"] .gi-elim-hit{animation:gi-elim-flash 1250ms ease-out both!important;animation-delay:var(--elim-elapsed,0ms)!important}
+.gi-elimination-fx[data-elimination-state="running"] .gi-elim-ring{animation:gi-elim-ring 850ms cubic-bezier(.15,.7,.2,1) both!important;animation-delay:var(--elim-elapsed,0ms)!important}
+.gi-elimination-fx[data-elimination-state="running"] .gi-elim-strike path{animation:gi-elim-line 720ms cubic-bezier(.4,0,.14,1) both!important;animation-delay:calc(430ms + var(--elim-elapsed,0ms))!important}
+.gi-elimination-fx[data-elimination-state="running"] .gi-elim-before{animation:gi-elim-old-status 230ms ease-in both!important;animation-delay:var(--elim-elapsed,0ms)!important}
+.gi-elimination-fx[data-elimination-state="running"] .gi-elim-after{animation:gi-elim-new-status 620ms cubic-bezier(.2,.8,.2,1) both!important;animation-delay:calc(970ms + var(--elim-elapsed,0ms))!important}
+.gi-elimination-fx[data-elimination-state="running"] .gi-elim-particle{animation:gi-elim-fragment 700ms cubic-bezier(.12,.6,.2,1) both!important;animation-delay:calc(var(--elim-stagger) + var(--elim-elapsed,0ms))!important}
+.gi-elimination-announcement{position:fixed;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
+@keyframes gi-elim-card{0%{opacity:1;transform:translateX(0) rotate(0)}5%{transform:translateX(-3px) rotate(-.6deg)}10%{transform:translateX(3px) rotate(.35deg)}16%{transform:translateX(-1px) rotate(-.15deg)}22%{transform:translateX(0) rotate(0)}60%,100%{opacity:.6;transform:translateX(0) rotate(0)}}
+@keyframes gi-elim-flash{0%,100%{opacity:0}17%{opacity:.85}46%{opacity:.32}}
+@keyframes gi-elim-ring{0%{opacity:0;transform:scale(.9)}18%{opacity:.8}100%{opacity:0;transform:scale(1.7)}}
+@keyframes gi-elim-line{from{stroke-dashoffset:1}to{stroke-dashoffset:0}}
+@keyframes gi-elim-old-status{to{opacity:0;transform:translateY(4px)}}
+@keyframes gi-elim-new-status{from{opacity:0;transform:translateY(8px);filter:blur(2px)}to{opacity:1;transform:translateY(0);filter:blur(0)}}
+@keyframes gi-elim-fragment{0%{opacity:0;transform:translate(0,0) rotate(0) scale(.2)}17%{opacity:.6}100%{opacity:0;transform:translate(var(--elim-x),var(--elim-y)) rotate(var(--elim-angle)) scale(.7)}}
+
+.gi-verdict[data-verdict="TRUTH"]{color:var(--truth-ink,var(--green))}
 
 /* Desktop game — Garden table. Deliberately inactive below 1200px.
  * Every selector is scoped to gameplay; entry and lobby keep their design. */

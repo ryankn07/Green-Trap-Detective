@@ -146,7 +146,7 @@
     hdSource.srcset = hdPath;
     picture.appendChild(hdSource);
     full.src = original;
-    full.alt = "Hình thẻ Canva — " + title;
+    full.alt = "Thẻ dự án — " + title;
     picture.appendChild(full);
     bindCardPicture(picture);
     viewport.appendChild(picture);
@@ -217,7 +217,7 @@
     const button = document.createElement("button");
     button.className = "gi-card-button";
     button.type = "button";
-    button.title = "Nhấn để xem thẻ Canva phóng to";
+    button.title = "Nhấn để phóng to thẻ";
     button.setAttribute("aria-label", "Phóng to thẻ " + title);
     const viewport = document.createElement("span");
     viewport.className = "gi-card-image-viewport";
@@ -231,7 +231,7 @@
     addWebpSource(picture, id, hdSource);
     const img = document.createElement("img");
     img.src = url;
-    img.alt = "Thẻ dự án thiết kế trên Canva: " + title;
+    img.alt = "Thẻ dự án: " + title;
     img.loading = "eager";
     img.decoding = "async";
     img.setAttribute("fetchpriority", "high");

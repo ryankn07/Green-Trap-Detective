@@ -23,11 +23,11 @@ test('ending media streams exact partial bytes, seeks and bounds malformed range
   }
  }
 });
-test('ending page, QR code and posters are public; arbitrary media and private files stay inaccessible',async()=>{
- for(const file of ['/ending.html','/ending-ui.js','/ending.css','/qr-code.js','/endings/good-poster.jpg','/endings/bad-poster.jpg']){
+test('ending page and posters are public; removed QR assets and private files stay inaccessible',async()=>{
+ for(const file of ['/ending.html','/ending-ui.js','/ending.css','/endings/good-poster.jpg','/endings/bad-poster.jpg']){
   const response=await fetch(base+file);assert.equal(response.status,200,file);await response.arrayBuffer();
  }
- for(const file of ['/endings/secret.mp4','/endings/good.mp4.bak','/endings/../server/server.cjs','/endings/%2e%2e%2fserver%2fserver.cjs','/endings/rooms.json']){
+ for(const file of ['/qr-code.js','/endings/secret.mp4','/endings/good.mp4.bak','/endings/../server/server.cjs','/endings/%2e%2e%2fserver%2fserver.cjs','/endings/rooms.json']){
   const response=await fetch(base+file);assert.equal(response.status,404,file);await response.arrayBuffer();
  }
 });
@@ -45,8 +45,9 @@ function terminal(winner){
 test('film follows authoritative faction winner, including a good ending with tied approval totals',()=>{
  for(const [winner,film] of [['PROTECTOR','good'],['SABOTEUR','bad']]){
   const snapshot=terminal(winner);assert.equal(snapshot.game.outcome.winner,winner);if(winner==='PROTECTOR'){assert.equal(snapshot.game.approvedProtectorCount,0);assert.equal(snapshot.game.approvedSaboteurCount,0);}
-  const html=ending.render(snapshot,'');assert.ok(html.includes(`src="/endings/${film}.mp4"`));assert.ok(!html.includes(`src="/endings/${film==='good'?'bad':'good'}.mp4"`));assert.ok(html.includes('data-ending-qr'));
-  for(const turn of snapshot.game.history){assert.equal(turn.alignment,winner);assert.ok(html.includes('project='+turn.projectId));}
+  const html=ending.render(snapshot,'');assert.ok(html.includes(`src="/endings/${film}.mp4"`));assert.ok(!html.includes(`src="/endings/${film==='good'?'bad':'good'}.mp4"`));assert.doesNotMatch(html,/data-ending-qr|ending-scan|ending-qr|Quét mã|camera/i);
+  for(const turn of snapshot.game.history)assert.equal(turn.alignment,winner);
+  assert.doesNotMatch(html,/ending-projects|DẤU VẾT CỦA VÁN CHƠI|Những lá thẻ cùng tương lai/);
   const explanation=snapshot.game.history.at(-1).explanation.replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));assert.ok(html.includes(explanation));
  }
  const draw=ending.render(terminal('DRAW'),'');assert.ok(draw.includes('HÒA'));assert.ok(!draw.includes('<video'));assert.ok(!draw.includes('data-ending-qr'));
