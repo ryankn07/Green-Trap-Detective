@@ -41,6 +41,7 @@ These documents preserve the scope, decisions, and test evidence from specific i
 - [Inline kick confirmation and pencil removal](KICK_CONFIRMATION.md)
 - [In-match vote-out motion](ELIMINATION_EFFECT.md)
 - [Immediate room cleanup](ROOM_COMPLETION.md)
+- [Integrated gameplay feedback and ending review, 3 November](INTEGRATION_REVIEW_20261103.md)
 - [Historical product completion record](history/records/PRODUCT_FINISH.md)
 
 They are dated records, not live monitoring. A statement such as "local", "uncommitted", or "not deployed" describes the state at the time that document was written. Use the current Git history and source/tests for repository state; verify Vercel and Render separately before making claims about the live deployment.
