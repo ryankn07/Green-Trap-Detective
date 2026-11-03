@@ -103,6 +103,8 @@ test('home and lobby effects cancel on interruption and mobile privacy stays imm
   await page.waitForFunction(()=>window.playedMotion.some(m=>m.id==='gt-motion-member'));
   manager.join(room.code,'Third player');for(const peer of room.players)manager.connected(room,peer);
   await page.locator('#start').click();await page.locator('#mobile-show-role').waitFor();
+  await page.waitForFunction(()=>window.playedMotion.some(m=>m.id==='gt-motion-card'));
+  assert.ok(await page.evaluate(()=>window.playedMotion.filter(m=>m.id==='gt-motion-card').every(m=>m.frames.every(f=>!('transform'in f)))),'mobile card entrance preserves artwork bounds');
   await page.locator('#toggle-players').click();
   await page.waitForFunction(()=>window.playedMotion.some(m=>m.id==='gt-motion-panel'));
   await page.evaluate(()=>{document.getAnimations().filter(a=>a.id.startsWith('gt-motion-')).forEach(a=>a.pause());window.dispatchEvent(new PageTransitionEvent('pagehide'));});

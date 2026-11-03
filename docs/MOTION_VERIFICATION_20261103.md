@@ -5,7 +5,7 @@ Baseline: `9a7eed2`; plan commit: `4bf3a3a`. Motion is independent of Plus 2's p
 ## Behavior
 
 - Confirmed own statement/lock: desktop action card contracts over 260 ms; public discussion follows it. Pending submissions disable only their existing submit control and set `aria-busy`; errors release it and retain the draft.
-- A confirmed new round brings in the original project card once (340 ms). A reveal accents the existing authoritative result once (420 ms), with no delayed controls or data.
+- A confirmed new round brings in the original project card once (340 ms on desktop; a 180 ms opacity-only appearance on narrow screens to preserve artwork bounds). A reveal accents the existing authoritative result once (420 ms), with no delayed controls or data.
 - Own balance changes receive a 200 ms emphasis. New public statements and lobby members receive a 160 ms entrance. Existing list positions and same-round discussion scroll are preserved.
 - Home card fan appears once; the existing player drawer fades in. Polls, presence updates and reconnects do not replay scene effects. An equal-revision snapshot refreshes clock synchronization without rebuilding the DOM.
 - Reduced motion uses opacity only, without spatial/layout animation. Preference changes, page hiding and exit cancel running effects. Private role controls are excluded from press animation and conceal immediately.
@@ -19,7 +19,7 @@ Baseline: `9a7eed2`; plan commit: `4bf3a3a`. Motion is independent of Plus 2's p
 - Impeccable layout detector: no findings (`detect --json --scope layout ui`). This is the detector's scoped result, not proof of all accessibility or visual properties.
 - Independent standards/spec review: no remaining concrete blocker after fixing public discussion scroll and mobile panel bounds.
 
-Integrated main `b737c29` (the separately authored heading/copy and ending-scroll fixes) without changing those fixes. The runtime archive was regenerated from the combined source. Full integration verification with `node --test --test-concurrency=1`: **109 passed, 0 failed, 0 skipped**. An earlier parallel run exposed a timing-sensitive existing soak test: its 2.03-second window sometimes ended before the second 2-second poll under browser-worker load. The unchanged test passed alone and in the full sequential run; no polling/backend change was made for this motion work.
+Integrated main through `3cf5626` (the separately authored heading/copy, sentence-case and ending-scroll fixes) without changing those fixes. The runtime archive was regenerated from the combined source. Final integration verification with `node --test --test-concurrency=1`: **109 passed, 0 failed, 0 skipped**. An earlier parallel run exposed a timing-sensitive existing soak test: its 2.03-second window sometimes ended before the second 2-second poll under browser-worker load. The unchanged test passed alone and in the full sequential run; no polling/backend change was made for this motion work.
 
 ## Local visual and timing evidence
 

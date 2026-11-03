@@ -51,7 +51,8 @@
    }
    if(next.phase==='DEBATE'&&(!sameRound||!previous.game)){
     const card=document.querySelector('.gi-area-project .project');
-    play(card,'card',[{opacity:.6,transform:'translate(12px,-10px) rotate(1.2deg)'},{opacity:1,transform:'none'}],timing('scene')||340);
+    const frames=desktop.matches?[{opacity:.6,transform:'translate(12px,-10px) rotate(1.2deg)'},{opacity:1,transform:'none'}]:[{opacity:.6},{opacity:1}];
+    play(card,'card',frames,desktop.matches?(timing('scene')||340):180);
    }
    if(next.phase==='REVEAL'&&previous.phase!=='REVEAL'){
     const result=document.querySelector('.gi-action-panel .summary');

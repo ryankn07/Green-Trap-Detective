@@ -42,6 +42,8 @@ test('mobile components work across small phones, landscape, and every game phas
      assert.equal(await entry.locator('.gi-ending-screen').isVisible(),true,'existing ending screen remains available, including a draw without video');
      continue;
     }
+    const title=await entry.locator('.gi-action-panel>h2').evaluate(el=>el.innerText);
+    assert.equal(title,{DEBATE:'Thảo luận',BLIND_ACTION:'Hành động bí mật',REVEAL:'Công bố'}[phase]);
     await entry.waitForFunction(()=>{const image=document.querySelector('.gi-area-project img');return image?.complete&&image.naturalWidth>0;});
     if(width<760){
      const eye=entry.locator('#mobile-show-role'),card=entry.locator('#mobile-role-value img');await eye.scrollIntoViewIfNeeded();
