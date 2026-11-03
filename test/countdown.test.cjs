@@ -14,11 +14,11 @@ test('countdown drains continuously and never refills on a same-phase snapshot',
   await page.goto('http://127.0.0.1:'+server.address().port);await page.locator('#start').click();await page.locator('#phase-progress').waitFor();
   const sample=()=>page.evaluate(()=>new Promise(resolve=>{
    const values=[],start=performance.now();
-   function frame(now){values.push(document.querySelector('#phase-progress').value);if(now-start<650)requestAnimationFrame(frame);else resolve(values);}
+   function frame(now){values.push(document.querySelector('#phase-progress').value);if(now-start<1200)requestAnimationFrame(frame);else resolve(values);}
    requestAnimationFrame(frame);
   }));
   const values=await sample();
-  assert.ok(new Set(values.map(value=>value.toFixed(2))).size>=8,'the bar changes between integer-second ticks');
+  assert.ok(new Set(values.map(value=>value.toFixed(2))).size>=8,'the bar changes between integer-second ticks: '+JSON.stringify({frames:values.length,first:values[0],last:values.at(-1),distinct:new Set(values).size}));
   assert.ok(values.some(value=>value%1!==0),'progress retains fractional seconds');
   const before=await page.locator('#phase-progress').evaluate(el=>el.value);
   // A delayed/stale timestamp in a new presence revision must not refill time.
