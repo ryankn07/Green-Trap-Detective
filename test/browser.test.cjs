@@ -58,11 +58,11 @@ test('desktop game adapts its card to the viewport and preserves protected layou
   await page.goto('http://127.0.0.1:'+server.address().port);await page.locator('#start').click();
   await page.locator('.gi-area-project img').waitFor();
   await page.waitForFunction(()=>document.querySelector('.gi-area-project img')?.naturalWidth>0);
-  for(const [width,height] of [[1200,800],[1366,768],[1440,900],[1920,1080],[2560,1440],[2560,1080]]){
+  for(const [width,height] of [[1200,800],[1280,720],[1366,768],[1440,900],[1920,1080],[2560,1440],[2560,1080]]){
    await page.setViewportSize({width,height});
    const geometry=await page.evaluate(()=>{
     const rect=selector=>document.querySelector(selector).getBoundingClientRect().toJSON();
-    return {frame:rect('.gi-area-project .gi-card-image-viewport'),project:rect('.gi-area-project'),actions:rect('.gi-area-actions'),players:rect('.gi-area-players'),phase:rect('.gi-phase-header'),overflow:document.documentElement.scrollWidth>innerWidth,verticalOverflow:document.documentElement.scrollHeight>innerHeight,font:getComputedStyle(document.querySelector('.phase')).fontFamily};
+    return {frame:rect('.gi-area-project .gi-card-image-viewport'),project:rect('.gi-area-project'),actions:rect('.gi-area-actions'),panel:rect('.gi-action-panel'),discussion:rect('.gi-area-discussion'),players:rect('.gi-area-players'),phase:rect('.gi-phase-header'),overflow:document.documentElement.scrollWidth>innerWidth,verticalOverflow:document.documentElement.scrollHeight>innerHeight,font:getComputedStyle(document.querySelector('.phase')).fontFamily};
    });
    assert.equal(geometry.overflow,false,'no horizontal overflow at '+width+'x'+height);
    assert.equal(geometry.verticalOverflow,false,'desktop does not require page scrolling');
@@ -72,9 +72,53 @@ test('desktop game adapts its card to the viewport and preserves protected layou
    assert.ok(Math.abs((geometry.frame.left+geometry.frame.right-geometry.project.left-geometry.project.right)/2)<2,'card centered on table');
    assert.ok(geometry.actions.left>=geometry.project.right,'controls beside card');
    assert.ok(geometry.players.left>=geometry.actions.right,'compact participants are at the right');
+   const discussionGap=geometry.discussion.top-geometry.panel.bottom;
+   assert.ok(discussionGap>=0&&discussionGap<=16,'public discussion follows the action card without overlap or an empty grid track');
    assert.ok(geometry.font.includes('Hanken'),'phase uses requested sans-serif font');
    if(width===1440)await screenshot(page,'DESKTOP_NEW_DEBATE.png');
   }
+  await page.setViewportSize({width:1440,height:900});
+  const discussionBefore=await page.locator('.gi-area-discussion').boundingBox();
+  await page.locator('#statement-text').fill('Cần kiểm tra tác động dài hạn của dự án.');
+  await page.locator('#statement button[type=submit]').click();
+  await page.locator('#statement').waitFor({state:'detached'});
+  const discussionAfter=await page.locator('.gi-area-discussion').boundingBox();
+  assert.ok(discussionAfter.y<discussionBefore.y-100,'sending a statement moves public discussion up');
+  manager.submit(room,room.players[1],{text:'Tôi muốn đối chiếu bằng chứng của dự án.',stance:'UNSURE'});
+  await page.getByText('Tôi muốn đối chiếu bằng chứng của dự án.',{exact:true}).waitFor({state:'visible'});
+  await screenshot(page,'DESKTOP_AFTER_STATEMENT.png');
+  const roleButton=page.locator('#show-role');
+  const privateCard=page.locator('#role .gi-private-role-card');
+  const wallet=page.locator('#open-wallet');
+  const walletDialog=page.locator('#desktop-wallet-dialog');
+  await wallet.click();
+  const coin=walletDialog.locator('img');
+  await coin.waitFor();
+  assert.equal((await coin.boundingBox()).width,224);
+  await screenshot(page,'DESKTOP_COIN_SWIPE_POPUP.png');
+  const {x,y,width,height}=await coin.boundingBox();
+  await page.mouse.move(x+width/2,y+height/2);
+  await page.mouse.down();
+  await page.mouse.move(x+width/2,y+height/2+100,{steps:5});
+  await page.mouse.up();
+  await walletDialog.waitFor({state:'detached'});
+  assert.equal(await wallet.evaluate(el=>el===document.activeElement),true);
+  await wallet.click();
+  await page.keyboard.press('Escape');
+  await walletDialog.waitFor({state:'detached'});
+  assert.equal(await privateCard.isVisible(),false);
+  await roleButton.hover();
+  await page.mouse.down();
+  await privateCard.locator('img').waitFor();
+  await page.waitForFunction(()=>document.querySelector('#role .gi-private-role-card img')?.naturalWidth>0);
+  await screenshot(page,'DESKTOP_ROLE_CARD.png');
+  await page.mouse.up();
+  await privateCard.waitFor({state:'hidden'});
+  await roleButton.focus();
+  await page.keyboard.down('Space');
+  await privateCard.waitFor();
+  await page.keyboard.up('Space');
+  await privateCard.waitFor({state:'hidden'});
   // Compare the exact same renderer/state with and without the appended desktop block.
   const css=fs.readFileSync(path.join(__dirname,'../ui/style.css'),'utf8');
   const baseline=css.split('/* Desktop game — Garden table.')[0];
@@ -90,7 +134,29 @@ test('desktop game adapts its card to the viewport and preserves protected layou
   await page.setViewportSize({width:1440,height:900});await page.reload();
   for(const phase of ['BLIND_ACTION','REVEAL']){
    now=room.deadline;manager.tick();await page.waitForFunction(expected=>document.querySelector('.phase')?.textContent.includes(expected),phase==='BLIND_ACTION'?'HÀNH ĐỘNG':'CÔNG BỐ');
+   assert.ok(await page.evaluate(()=>document.documentElement.scrollHeight<=innerHeight),'dense '+phase+' content stays inside the desktop board');
    await screenshot(page,'DESKTOP_NEW_'+phase+'.png');
+   if(phase==='BLIND_ACTION'){
+    await page.setViewportSize({width:1280,height:720});
+    await page.locator('#bank').selectOption('EXPEL');
+    const expanded=await page.locator('.gi-action-panel').boundingBox();
+    await page.locator('#amount').scrollIntoViewIfNeeded();
+    assert.ok(await page.evaluate(()=>document.documentElement.scrollHeight<=innerHeight),'expanded bank fields stay inside the desktop board');
+    await page.locator('.gi-area-discussion .gi-statement').last().scrollIntoViewIfNeeded();
+    await page.waitForFunction(()=>{const rect=document.querySelector('.gi-area-discussion .gi-statement:last-child').getBoundingClientRect();return rect.top>=0&&rect.bottom<=innerHeight;});
+    await page.locator('#lock-action').click();
+    await page.locator('#action-form').waitFor({state:'detached'});
+    const locked=await page.locator('.gi-action-panel').boundingBox();
+    assert.ok(locked.height<expanded.height-100,'locking a secret action releases its form space');
+    assert.ok(await page.evaluate(()=>document.documentElement.scrollHeight<=innerHeight),'expanded bank fields remain reachable without scrolling the desktop page');
+    await screenshot(page,'DESKTOP_AFTER_LOCK.png');
+    await page.setViewportSize({width:1440,height:900});
+   }else{
+    await page.setViewportSize({width:1280,height:720});
+    await page.locator('.gi-history summary').click();
+    await page.locator('.gi-history .hist>div').last().scrollIntoViewIfNeeded();
+    await page.waitForFunction(()=>{const rect=document.querySelector('.gi-history .hist>div:last-child').getBoundingClientRect();return rect.top>=0&&rect.bottom<=innerHeight;});
+   }
   }
   while(room.state.phase!=='GAME_OVER'){now=room.deadline;manager.tick();}
   await page.waitForFunction(()=>document.querySelector('.phase')?.textContent.includes('KẾT THÚC'));

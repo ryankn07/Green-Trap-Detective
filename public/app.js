@@ -11,7 +11,7 @@ function acceptSnapshot(value){
  }
  const scrolls=Array.from(app.querySelectorAll('.people,#players-panel')).map(el=>({key:el.id||'player-list',left:el.scrollLeft,top:el.scrollTop,focused:document.activeElement===el}));
  const choiceOpen=app.querySelector('#statement-choice')?.open,choiceFocus=document.activeElement?.id,drawerFocused=peopleOpen&&app.querySelector('#players-panel')?.contains(document.activeElement);
- captureStatementDraft();snapshot=value;snapshotReceivedAt=performance.now();render();
+ captureStatementDraft();snapshot=value;snapshotReceivedAt=performance.now();render();updateDesktopWallet();
  if(choiceOpen){openStatementChoice();if(choiceFocus)document.getElementById(choiceFocus)?.focus();}
  if(drawerFocused)(document.getElementById(choiceFocus)||document.getElementById('close-players'))?.focus();
  for(const saved of scrolls){const el=saved.key==='player-list'?app.querySelector('.people'):document.getElementById(saved.key);if(el){el.scrollLeft=saved.left;el.scrollTop=saved.top;if(saved.focused)el.focus({preventScroll:true});}}
@@ -69,7 +69,7 @@ function recoverSession(error){
  if(!session)return;
  const expiredRoom=error.code==='ROOM_NOT_FOUND',kicked=error.code==='KICKED';
  peopleOpen=false;document.body.classList.remove('gi-drawer-open','gi-gameplay','gi-ending');
- aborter?.abort();session=null;snapshot=null;save();clearStatementDraft();
+ aborter?.abort();session=null;snapshot=null;updateDesktopWallet();save();clearStatementDraft();
  try{const url=new URL(location.href);url.searchParams.delete('room');history.replaceState({},'',url.pathname+url.search+url.hash);}catch{}
  statusEl.textContent=kicked?'Đã rời phòng':expiredRoom?'Phòng không còn tồn tại':'Phiên chơi hết hạn';
  app.innerHTML=`<section class="card welcome"><h1>${kicked?'Bạn đã được đưa ra khỏi phòng':expiredRoom?'Phòng đã kết thúc hoặc hết hạn':'Phiên chơi không còn hợp lệ'}.</h1><p>${kicked?'Chủ phòng đã kick bạn khỏi phòng.':expiredRoom?'Phòng này không còn trên máy chủ. Phòng có thể đã bị đóng hoặc hết thời gian lưu.':'Phiên xác thực đã hết hạn hoặc không còn hợp lệ.'} Bạn có thể quay về trang đầu để tạo phòng mới hoặc nhập mã phòng khác.</p><div class="actions"><button id="return-home" class="primary">Tạo hoặc tham gia phòng khác <span aria-hidden="true">→</span></button></div></section>`;
@@ -144,15 +144,17 @@ function render(){if(!snapshot||!session)return;const s=snapshot;const me=s.game
   </header>
   <aside class="card gi-area-players" id="players-panel" data-open="${peopleOpen}" aria-label="Danh sách người chơi">
    <div class="flex"><h2>Hội đồng · ${s.room.players.length}${s.room.maxPlayers?' / '+s.room.maxPlayers:''}</h2><button type="button" class="gi-close-players" id="close-players" aria-label="Đóng danh sách">×</button></div>
+   <button type="button" id="open-wallet" class="gi-desktop-wallet" aria-haspopup="dialog"><img src="/brand/green-coin.png" alt="" width="32" height="32"><strong>${me.coins} xu</strong><span>Xem ví</span></button>
    <div class="people" tabindex="0" role="region" aria-label="Danh sách thành viên">${playerList(s)}</div>
   </aside>
   <section class="card gi-area-project" aria-label="Dự án hiện tại">
    <span class="eyebrow">DỰ ÁN ĐANG ĐƯỢC ĐƯA RA</span>
    <section class="project"><small>HỒ SƠ ${escapeHTML(project.id)}</small><h2>${escapeHTML(project.title)}</h2><p>${escapeHTML(project.description)}</p></section>
   </section>
+  <div class="gi-center-column">
   <section class="gi-area-actions" aria-label="Hồ sơ và hành động cá nhân">
    <div class="card gi-profile-panel${me.inspections?.length?' gi-has-inspections':''}"><div class="flex"><h2>Hồ sơ cá nhân</h2><span class="coins"><img class="gi-coin-icon" src="/brand/green-coin.png" alt="" width="28" height="28"> ${me.coins}</span></div><p><b>${escapeHTML(me.name)}</b> · ${me.isAlive?'Còn trong ván':'Đã bị loại'}</p>
-    <div id="role" class="note" data-role="${escapeHTML(me.role)}">Vai trò của bạn: <b id="role-value">••••••</b><button id="show-role" type="button">Nhấn giữ để xem</button></div>
+    <div id="role" class="note" data-role="${escapeHTML(me.role)}">Vai trò của bạn: <b id="role-value">••••••</b><button id="show-role" type="button" aria-label="Nhấn giữ để xem thẻ vai trò"><svg viewBox="0 0 64 64" aria-hidden="true"><path d="M5 32c7-11 17-17 27-17s20 6 27 17c-7 11-17 17-27 17S12 43 5 32Z"/><circle cx="32" cy="32" r="10"/></svg><span>Nhấn giữ để xem</span></button></div>
     ${me.inspections?.length?'<div class="rule"><h3>Kiểm chứng riêng</h3>'+me.inspections.map(x=>'<p class="tiny">Lượt '+x.round+': '+escapeHTML(s.room.players.find(p=>p.id===x.targetId)?.name)+' — '+escapeHTML(labelRole(x.revealedRole))+'</p>').join('')+'</div>':''}
    </div>
    <div class="card gi-action-panel"><h2>${escapeHTML(phaseText[g.phase])}</h2>${content}</div>
@@ -161,6 +163,7 @@ function render(){if(!snapshot||!session)return;const s=snapshot;const me=s.game
    <div class="card"><h2>Nhận định trong phòng</h2><div class="hist">${discussion}</div></div>
    <details class="card gi-history"><summary>Nhật ký · ${g.history.length} lượt</summary><div class="hist">${g.history.map(h=>'<div>Lượt '+h.round+': '+escapeHTML(h.projectTitle)+' · '+(h.approved?'Thông qua':'Bác bỏ')+' · '+escapeHTML(h.verdictLabel)+'</div>').join('')||'<p class="tiny">Chưa có kết quả.</p>'}</div></details>
   </section>
+  </div>
  </div>
  <button id="players-backdrop" class="gi-players-backdrop" type="button" aria-label="Đóng danh sách người chơi" ${peopleOpen?'':'hidden'}></button><button id="toggle-players" class="gi-toggle-players" aria-controls="players-panel" aria-expanded="${peopleOpen}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-4M16 3a4 4 0 0 1 0 8"/></svg><span>Hội đồng · ${s.room.players.length}</span></button>`;
  if(peopleOpen)setPlayersOpen(true,false);
@@ -187,6 +190,63 @@ async function act(type,payload){
  catch(e){handleSessionError(e);return false;}
  finally{requesting=false;wireBank();}
 }
+function updateDesktopWallet(){
+ const dialog=document.getElementById('desktop-wallet-dialog');
+ if(!dialog)return;
+ if(!snapshot?.game?.myPlayer||!document.getElementById('open-wallet'))dialog.close();
+ else dialog.querySelector('strong').textContent=snapshot.game.myPlayer.coins+' xu';
+}
+function openDesktopWallet(){
+ if(document.getElementById('desktop-wallet-dialog'))return;
+ const dialog=document.createElement('dialog');
+ dialog.id='desktop-wallet-dialog';
+ dialog.setAttribute('aria-labelledby','desktop-wallet-title');
+ dialog.innerHTML=`<div class="gi-wallet-sheet">
+  <h2 id="desktop-wallet-title">Ví của bạn</h2>
+  <img src="/brand/green-coin.png" alt="Green Coin" width="224" height="224" draggable="false">
+  <strong></strong>
+  <p>Vuốt xuống để đóng</p>
+  <form method="dialog"><button autofocus>Đóng</button></form>
+ </div>`;
+ const sheet=dialog.firstElementChild;
+ let drag=null;
+ sheet.addEventListener('pointerdown',e=>{
+  if(!e.isPrimary||e.button!==0||e.target.closest('button'))return;
+  drag={id:e.pointerId,y:e.clientY};
+  sheet.setPointerCapture(e.pointerId);
+ });
+ sheet.addEventListener('pointermove',e=>{
+  if(drag?.id===e.pointerId)sheet.style.setProperty('--wallet-drag',Math.max(0,e.clientY-drag.y)+'px');
+ });
+ sheet.addEventListener('pointerup',e=>{
+  if(drag?.id!==e.pointerId)return;
+  const shouldClose=e.clientY-drag.y>=72;
+  drag=null;
+  if(shouldClose)dialog.close();
+  else sheet.style.removeProperty('--wallet-drag');
+ });
+ sheet.addEventListener('lostpointercapture',()=>{
+  if(!drag)return;
+  drag=null;sheet.style.removeProperty('--wallet-drag');
+ });
+ dialog.addEventListener('click',e=>{if(e.target===dialog)dialog.close();});
+ dialog.addEventListener('close',()=>{
+  // Keep the element through its CSS exit transition.
+  const animations=[...dialog.getAnimations(),...sheet.getAnimations()];
+  Promise.allSettled(animations.map(animation=>animation.finished)).then(()=>{
+   dialog.remove();
+   document.getElementById('open-wallet')?.focus({preventScroll:true});
+  });
+ });
+ const desktop=matchMedia('(min-width:1200px)');
+ const closeOnResize=()=>{if(!desktop.matches)dialog.close();};
+ desktop.addEventListener('change',closeOnResize,{once:true});
+ dialog.addEventListener('close',()=>desktop.removeEventListener('change',closeOnResize),{once:true});
+ document.body.append(dialog);
+ updateDesktopWallet();
+ dialog.showModal();
+}
+app.addEventListener('click',e=>{if(e.target.closest('#open-wallet'))openDesktopWallet();});
 function updateStatementCounter(){const field=document.getElementById('statement-text'),counter=document.getElementById('statement-counter');if(field&&counter)counter.textContent=field.value.length+' / 500';}
 function openStatementChoice(){const dialog=document.getElementById('statement-choice'),stance=document.getElementById('stance');if(!dialog||!stance||dialog.open)return;dialog.querySelectorAll('[data-stance]').forEach(button=>button.setAttribute('aria-pressed',String(button.dataset.stance===stance.value)));dialog.showModal();dialog.querySelector('[aria-pressed="true"]')?.focus();}
 app.addEventListener('input',e=>{if(e.target.id==='statement-text'){persistStatementDraft();updateStatementCounter();}});
@@ -221,8 +281,9 @@ app.addEventListener('click',e=>{
 app.addEventListener('pointerdown',e=>{if(['show-role','mobile-show-role'].includes(e.target.closest('button')?.id))showRoleText();});
 for(const ev of ['pointerup','pointercancel','pointerleave'])app.addEventListener(ev,e=>{if(['show-role','mobile-show-role'].includes(e.target.closest('button')?.id))hideRoleText();});
 clock=setInterval(()=>{if(snapshot?.deadline){const el=document.getElementById('clock');if(el)el.textContent=remainingSeconds()+'s';const progress=document.getElementById('phase-progress');if(progress)progress.value=remainingSeconds();}},300);
-function showRoleText(){const node=document.getElementById('role-value'),mobile=document.getElementById('mobile-role-value');if(node)node.textContent=labelRole(snapshot.game.myPlayer.role);if(mobile){mobile.hidden=false;const card=mobile.querySelector('.gi-private-role-card');if(card)card.hidden=false;}document.getElementById('mobile-show-role')?.setAttribute('aria-pressed','true');}
-function hideRoleText(){const node=document.getElementById('role-value'),mobile=document.getElementById('mobile-role-value');if(node)node.textContent='••••••';if(mobile){mobile.hidden=true;const card=mobile.querySelector('.gi-private-role-card');if(card)card.hidden=true;}document.getElementById('mobile-show-role')?.setAttribute('aria-pressed','false');}
+function setDesktopRoleCard(hidden){const card=document.querySelector('#role .gi-private-role-card');if(card&&(hidden||matchMedia('(min-width:1200px)').matches))card.hidden=hidden;}
+function showRoleText(){const node=document.getElementById('role-value'),mobile=document.getElementById('mobile-role-value');if(node)node.textContent=labelRole(snapshot.game.myPlayer.role);setDesktopRoleCard(false);if(mobile){mobile.hidden=false;const card=mobile.querySelector('.gi-private-role-card');if(card)card.hidden=false;}document.getElementById('mobile-show-role')?.setAttribute('aria-pressed','true');}
+function hideRoleText(){const node=document.getElementById('role-value'),mobile=document.getElementById('mobile-role-value');setDesktopRoleCard(true);if(node)node.textContent='••••••';if(mobile){mobile.hidden=true;const card=mobile.querySelector('.gi-private-role-card');if(card)card.hidden=true;}document.getElementById('mobile-show-role')?.setAttribute('aria-pressed','false');}
 document.addEventListener('pointerup',hideRoleText,true);document.addEventListener('pointercancel',hideRoleText,true);window.addEventListener('blur',hideRoleText);
 app.addEventListener('keydown',e=>{if(['show-role','mobile-show-role'].includes(e.target.id)&&(e.key===' '||e.key==='Enter')){e.preventDefault();showRoleText();}});
 document.addEventListener('keydown',e=>{
