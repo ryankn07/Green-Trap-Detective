@@ -93,6 +93,7 @@ function createServerlessHandler({ store } = {}) {
         if (loaded.receipt) return reply(res, 200, receiptValue(loaded.receipt, requestHash));
         if (authenticated && !loaded.record) throw new HttpError('ROOM_NOT_FOUND', 'Không tìm thấy phòng.', 404);
         let result, operation = 'write';
+        let endingDeparted = loaded.record?.payload.endingDeparted || [];
         const oldRevision = room?.revision;
         if (room && presenceChanged) manager.changed(room);
         if (path === '/api/create') {
@@ -111,6 +112,17 @@ function createServerlessHandler({ store } = {}) {
             case 'submit': validateSubmission(room, body); manager.submit(room, player, body.payload || {}); break;
             case 'next': validateSubmission(room, { ...body, payload: {} }); manager.next(room, player); break;
             case 'kick': manager.kick(room, player, body.targetId); break;
+            case 'finish_leave':
+              if (room.state?.phase !== 'GAME_OVER') {
+                throw new HttpError('INVALID_PHASE', 'Ván chưa kết thúc.');
+              }
+              if (!endingDeparted.includes(player.id)) {
+                endingDeparted = [...endingDeparted, player.id];
+              }
+              if (room.players.every(member => member.removed || endingDeparted.includes(member.id))) {
+                manager.removeRoom(room);
+              }
+              break;
             case 'leave': manager.leaveLobby(room, player); delete presence[player.id]; break;
             default: throw new HttpError('INVALID_ACTION', 'Lệnh không được hỗ trợ.');
           }
@@ -120,7 +132,7 @@ function createServerlessHandler({ store } = {}) {
           if (!freshPresence && room.revision === oldRevision) return reply(res, 200, result);
         } else result = { roomCode: room.code, playerId: player.id, token: player.secret, transport: 'poll' };
         const exists = manager.rooms.has(room.code);
-        const payload = exists ? { version: 1, rooms: [serializeRoom(room)], presence, online: Object.fromEntries(room.players.map(member => [member.id, member.online])) } : null;
+        const payload = exists ? { version: 1, rooms: [serializeRoom(room)], presence, ...(room.state?.phase === 'GAME_OVER' ? { endingDeparted } : {}), online: Object.fromEntries(room.players.map(member => [member.id, member.online])) } : null;
         const committed = await store.commit({ code: room.code, expectedVersion: loaded.record?.version || 0, payload, scope: writing ? scope : null, requestId: body.requestId || null, requestHash: writing ? requestHash : null, response: writing ? result : null, source, operation });
         if (committed.receipt) return reply(res, 200, receiptValue(committed.receipt, requestHash));
         if (committed.committed) return reply(res, 200, result);
