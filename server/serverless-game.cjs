@@ -92,11 +92,11 @@ function createServerlessHandler({ store } = {}) {
         if (authenticated && loaded.record) ({ room, player } = manager.authenticate(code, token));
         if (loaded.receipt) return reply(res, 200, receiptValue(loaded.receipt, requestHash));
         if (authenticated && !loaded.record) throw new HttpError('ROOM_NOT_FOUND', 'Không tìm thấy phòng.', 404);
-        if (authenticated && loaded.record.payload.completed) {
-          if(path==='/api/state')return reply(res,200,{...manager.view(room,player),transport:'poll'});
-          throw new HttpError('GAME_OVER','Ván đã kết thúc.');
-        }
         let result, operation = 'write';
+        let endingDeparted = loaded.record?.payload.endingDeparted || [];
+        let endingClosed = false;
+        const supportsEndingCache=req.headers['x-game-result-cache']==='1';
+        const completionProtocol=path==='/api/create'?supportsEndingCache:loaded.record?.payload.completionProtocol===1&&supportsEndingCache;
         const oldRevision = room?.revision;
         if (room && presenceChanged) manager.changed(room);
         if (path === '/api/create') {
@@ -110,11 +110,24 @@ function createServerlessHandler({ store } = {}) {
         const freshPresence = now - Number(presence[player.id] || 0) >= HEARTBEAT_MS;
         if (freshPresence) { presence[player.id] = now; if (!player.online) manager.connected(room, player); }
         if (path === '/api/action') {
+          if(room.state?.phase==='GAME_OVER'&&body.type!=='finish_leave')throw new HttpError('GAME_OVER','Ván đã kết thúc.');
           switch (body.type) {
             case 'start': manager.start(room, player); break;
             case 'submit': validateSubmission(room, body); manager.submit(room, player, body.payload || {}); break;
             case 'next': validateSubmission(room, { ...body, payload: {} }); manager.next(room, player); break;
             case 'kick': manager.kick(room, player, body.targetId); break;
+            case 'finish_leave':
+              if (room.state?.phase !== 'GAME_OVER') {
+                throw new HttpError('INVALID_PHASE', 'Ván chưa kết thúc.');
+              }
+              if (!endingDeparted.includes(player.id)) {
+                endingDeparted = [...endingDeparted, player.id];
+              }
+              if (room.players.every(member => member.removed || endingDeparted.includes(member.id))) {
+                manager.removeRoom(room);
+                endingClosed=true;
+              }
+              break;
             case 'leave': manager.leaveLobby(room, player); delete presence[player.id]; break;
             default: throw new HttpError('INVALID_ACTION', 'Lệnh không được hỗ trợ.');
           }
@@ -125,7 +138,7 @@ function createServerlessHandler({ store } = {}) {
         } else result = { roomCode: room.code, playerId: player.id, token: player.secret, transport: 'poll' };
         const exists = manager.rooms.has(room.code);
         const completed=room.state?.phase==='GAME_OVER';
-        const payload = exists||completed ? { version: 1, rooms: [serializeRoom(room)], presence, online: Object.fromEntries(room.players.map(member => [member.id, member.online])),...(completed?{completed:true}:{}) } : null;
+        const payload = !endingClosed&&(exists||completed) ? { version: 1, rooms: [serializeRoom(room)], presence, ...(completionProtocol?{completionProtocol:1}:{}),...(completed?{endingDeparted}:{}),online: Object.fromEntries(room.players.map(member => [member.id, member.online])) } : null;
         const committed = await store.commit({ code: room.code, expectedVersion: loaded.record?.version || 0, payload, scope: writing ? scope : null, requestId: body.requestId || null, requestHash: writing ? requestHash : null, response: writing ? result : null, source, operation });
         if (committed.receipt) return reply(res, 200, receiptValue(committed.receipt, requestHash));
         if (committed.committed) return reply(res, 200, result);

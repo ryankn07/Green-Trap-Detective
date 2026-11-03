@@ -64,7 +64,7 @@ if(remote){
     commit:()=>remote.commit({version:1,rooms:Array.from(manager.rooms.values(),serializeRoom)}),
     verify:()=>remote.verify(),
     onUnavailable:error=>{const type=['Error','TypeError','TimeoutError','AbortError','SyntaxError'].includes(error?.name)?error.name:'Error';const status=Number.isInteger(error?.status)&&error.status>=100&&error.status<=599?' HTTP_'+error.status:'';console.error('Remote storage unavailable:',type+status);for(const group of streams.values())for(const res of group.keys())res.destroy();},
-    onCommitted:rooms=>{for(const room of rooms)if(room&&manager.rooms.get(room.code)===room)emitRoom(room);}
+    onCommitted:rooms=>{for(const room of rooms)if(room&&manager.findRoom(room.code)===room)emitRoom(room);}
   });
 }
 const transaction=fn=>remote?coordinator.run(fn):Promise.resolve().then(fn);

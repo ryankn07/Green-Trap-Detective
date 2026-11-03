@@ -22,7 +22,7 @@ Verified against upstream main `340b8d2a8a6d15f7cd719d4085f2d6c7755b4062` (throu
 
 ## Deployment prerequisite
 
-**Apply `supabase/migrations/20261103_completed_results.sql` after the existing serverless migration and before deploying the updated serverless Function.** It creates the private final-result storage and updates the room RPCs. The isolated SQL checks do not substitute for applying it to hosted Supabase. No hosted database migration or production deployment was performed here.
+**Final PR #41/#43 integration supersedes the earlier archive migration: apply only `supabase/migrations/20261103_release_finished_rooms.sql` after the existing serverless migration and before deploying the updated Function.** The final design uses one private rooms table, releases terminal admission immediately, accepts authenticated departures, and gates fixed two-minute retention on browser ending-cache support. Legacy clients retain their existing delivery window. See `ROOM_COMPLETION.md`. The verification counts above describe the author's original branch; final integration results and hosted application are recorded separately.
 
 ## Review screenshots
 

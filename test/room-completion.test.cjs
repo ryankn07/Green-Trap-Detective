@@ -21,7 +21,8 @@ test('game over immediately releases the room and admission slots even with onli
  assert.throws(()=>manager.authenticate(room.code,'0'.repeat(64)),{code:'UNAUTHORIZED'});
  assert.throws(()=>manager.join(room.code,'Too late'),{code:'GAME_STARTED'});
  manager.create('Replacement',source);assert.equal(manager.rooms.size,10);
- now+=15*60*1000+1;assert.throws(()=>manager.getRoom(room.code),{code:'ROOM_NOT_FOUND'});
+ now+=2*60*1000-1;assert.equal(manager.getRoom(room.code).state.phase,'GAME_OVER');
+ now+=2;assert.throws(()=>manager.getRoom(room.code),{code:'ROOM_NOT_FOUND'});
 });
 test('startup removes legacy completed rooms from disk while preserving unfinished rooms',t=>{
  const directory=fs.mkdtempSync(path.join(os.tmpdir(),'green-trap-completion-')),filename=path.join(directory,'rooms.json');

@@ -7,7 +7,7 @@ const CODE_CHARS='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
 const clampName=raw=>typeof raw==='string'?raw.trim().replace(/\s+/g,' ').slice(0,24):'';
 const now=()=>Date.now();
 const PHASE_TIMES=Object.freeze({DEBATE:120000,BLIND_ACTION:60000,REVEAL:25000});
-const RESULT_TTL=15*60*1000;
+const RESULT_TTL=2*60*1000;
 const uid=()=>crypto.randomUUID();
 const token=()=>crypto.randomBytes(32).toString('hex');
 const fail=(code,message)=>{const err=Error(message);err.code=code;err.public=true;throw err;};

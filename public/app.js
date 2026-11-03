@@ -1,7 +1,7 @@
 'use strict';
 const app=document.getElementById('app'), statusEl=document.getElementById('connection'),toast=document.getElementById('toast');
 let session=null,snapshot=null,aborter=null,delay=750,clock=null,requesting=false,statementDraft=null,actionDraft=null;
-let clockAnchor=null,peopleOpen=false;
+let clockAnchor=null,peopleOpen=false,endingLeaveSent=false;
 let kickConfirmationId=null,kickSubmittingId=null;
 const kickEffects=new Map();
 const eliminationEffects=new Map();
@@ -182,12 +182,17 @@ function recoverSession(error){
 }
 function handleSessionError(error){if(error?.code==='ROOM_NOT_FOUND'||error?.code==='UNAUTHORIZED'){recoverSession(error);return;}gameError(error);}
 const pendingRequests=new Map();
-const api=async(path,data,authenticated=false)=>{const headers={'Content-Type':'application/json'};if(authenticated){headers.Authorization=`Bearer ${session.token}`;headers['x-room-code']=session.roomCode;}
+const api=async(path,data,authenticated=false,keepalive=false)=>{const headers={'Content-Type':'application/json','x-game-result-cache':'1'};if(authenticated){headers.Authorization=`Bearer ${session.token}`;headers['x-room-code']=session.roomCode;}
  const key=JSON.stringify([authenticated?session.playerId:'entry',path,data]);
  const requestId=pendingRequests.get(key)||crypto.randomUUID();pendingRequests.set(key,requestId);
  if(pendingRequests.size>20)pendingRequests.delete(pendingRequests.keys().next().value);
- const r=await fetch(path,{method:'POST',headers,body:JSON.stringify({...data,requestId}),signal:AbortSignal.timeout(15000)});const value=await r.json().catch(()=>({}));if(r.ok||r.status<500)pendingRequests.delete(key);if(!r.ok){const error=Error(value.message||value.error||`HTTP ${r.status}`);error.code=value.error;error.status=r.status;throw error;}return value;};
-const readState=async(signal)=>{const current=session;if(!current)return;if(snapshot?.room.code===current.roomCode&&snapshot.game?.phase==='GAME_OVER')return snapshot;const r=await fetch(`/api/state?room=${current.roomCode}`,{headers:{Authorization:`Bearer ${current.token}`},cache:'no-store',signal:signal||AbortSignal.timeout(12000)});const value=await r.json().catch(()=>({}));if(!r.ok){if(snapshot?.room.code===current.roomCode&&snapshot.game?.phase==='GAME_OVER')return snapshot;const error=Error(value.message||value.error||'Không thể tải trạng thái phòng');error.code=value.error;error.status=r.status;throw error;}if(session!==current)return;acceptSnapshot(value);return value;};
+ const r=await fetch(path,{method:'POST',headers,body:JSON.stringify({...data,requestId}),keepalive,signal:keepalive?undefined:AbortSignal.timeout(15000)});const value=await r.json().catch(()=>({}));if(r.ok||r.status<500)pendingRequests.delete(key);if(!r.ok){const error=Error(value.message||value.error||`HTTP ${r.status}`);error.code=value.error;error.status=r.status;throw error;}return value;};
+function leaveFinishedRoom(){
+ if(endingLeaveSent||!session||snapshot?.transport!=='poll'||snapshot.game?.phase!=='GAME_OVER')return;
+ endingLeaveSent=true;
+ void api('/api/action',{type:'finish_leave'},true,true).catch(()=>{});
+}
+const readState=async(signal)=>{const current=session;if(!current)return;if(snapshot?.room.code===current.roomCode&&snapshot.game?.phase==='GAME_OVER')return snapshot;const r=await fetch(`/api/state?room=${current.roomCode}`,{headers:{Authorization:`Bearer ${current.token}`,'x-game-result-cache':'1'},cache:'no-store',signal:signal||AbortSignal.timeout(12000)});const value=await r.json().catch(()=>({}));if(!r.ok){if(snapshot?.room.code===current.roomCode&&snapshot.game?.phase==='GAME_OVER')return snapshot;const error=Error(value.message||value.error||'Không thể tải trạng thái phòng');error.code=value.error;error.status=r.status;throw error;}if(session!==current)return;acceptSnapshot(value);return value;};
 const copyRoom=async()=>{const url=`${location.origin}/?room=${session.roomCode}`;try{await navigator.clipboard.writeText(url);showToast('Đã sao chép','success',3000);}catch{gameError({message:'Không thể sao chép. Hãy thử lại.'});}};
 function onSession(s) {
  const url=new URL(location.href);
@@ -197,6 +202,7 @@ function onSession(s) {
  }
  session=s;save();app.innerHTML='';try{const result=JSON.parse(sessionStorage.getItem('green-impact-finished-game')||'null');if(result?.roomCode===s.roomCode&&result.playerId===s.playerId&&result.view?.game?.phase==='GAME_OVER'){acceptSnapshot(result.view);return;}}catch{}if(s.transport==='poll')connectPoll();else readState().then(value=>{if(session!==s||value?.game?.phase==='GAME_OVER')return;if(value?.transport==='poll'){s.transport='poll';save();connectPoll();}else connectStream();}).catch(handleSessionError);}
 async function connectPoll(){
+ if(snapshot?.game?.phase==='GAME_OVER')return;
  aborter?.abort();const active=new AbortController();aborter=active;let backoff=1500;statusEl.textContent='Đang kết nối';
  active.signal.addEventListener('abort',()=>clearTimeout(active.pollTimer),{once:true});
  const poll=async()=>{
@@ -448,12 +454,12 @@ app.addEventListener('click',e=>{
  if(id==='confirm-statement'&&!requesting&&document.getElementById('statement')?.reportValidity()){const payload={text:document.getElementById('statement-text').value,stance:document.getElementById('stance').value};document.getElementById('statement-choice').close();act('submit',payload);}
  if(id==='copy')copyRoom();if(id==='start')act('start');if(id==='next')act('next');
  if(id==='leave')act('leave').then(ok=>{if(!ok)return;session=null;save();aborter?.abort();location.assign('/')});
- if(id==='home'||id==='return-home'){session=null;save();clearStatementDraft();aborter?.abort();location.assign('/')}
+ if(id==='home'||id==='return-home'){leaveFinishedRoom();session=null;save();clearStatementDraft();aborter?.abort();location.assign('/')}
 });
 app.addEventListener('pointerdown',e=>{if(['show-role','mobile-show-role'].includes(e.target.closest('button')?.id))showRoleText();});
 for(const ev of ['pointerup','pointercancel','pointerleave'])app.addEventListener(ev,e=>{if(['show-role','mobile-show-role'].includes(e.target.closest('button')?.id))hideRoleText();});
 document.addEventListener('visibilitychange',()=>{if(document.hidden){cancelAnimationFrame(clock);clock=null;}else scheduleClock();});
-window.addEventListener('pagehide',()=>{cancelAnimationFrame(clock);clock=null;});
+window.addEventListener('pagehide',()=>{leaveFinishedRoom();cancelAnimationFrame(clock);clock=null;});
 window.addEventListener('pageshow',scheduleClock);
 function setDesktopRoleCard(hidden){const card=document.querySelector('#role .gi-private-role-card');if(card&&(hidden||matchMedia('(min-width:1200px)').matches))card.hidden=hidden;}
 function showRoleText(){const node=document.getElementById('role-value'),mobile=document.getElementById('mobile-role-value');if(node)node.textContent=labelRole(snapshot.game.myPlayer.role);setDesktopRoleCard(false);if(mobile){mobile.hidden=false;const card=mobile.querySelector('.gi-private-role-card');if(card)card.hidden=false;}document.getElementById('mobile-show-role')?.setAttribute('aria-pressed','true');}
