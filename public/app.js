@@ -11,7 +11,7 @@ function acceptSnapshot(value){
  }
  const scrolls=Array.from(app.querySelectorAll('.people,#players-panel')).map(el=>({key:el.id||'player-list',left:el.scrollLeft,top:el.scrollTop,focused:document.activeElement===el}));
  const choiceOpen=app.querySelector('#statement-choice')?.open,choiceFocus=document.activeElement?.id,drawerFocused=peopleOpen&&app.querySelector('#players-panel')?.contains(document.activeElement);
- captureStatementDraft();snapshot=value;snapshotReceivedAt=performance.now();render();
+ captureStatementDraft();snapshot=value;snapshotReceivedAt=performance.now();render();updateDesktopWallet();
  if(choiceOpen){openStatementChoice();if(choiceFocus)document.getElementById(choiceFocus)?.focus();}
  if(drawerFocused)(document.getElementById(choiceFocus)||document.getElementById('close-players'))?.focus();
  for(const saved of scrolls){const el=saved.key==='player-list'?app.querySelector('.people'):document.getElementById(saved.key);if(el){el.scrollLeft=saved.left;el.scrollTop=saved.top;if(saved.focused)el.focus({preventScroll:true});}}
@@ -69,7 +69,7 @@ function recoverSession(error){
  if(!session)return;
  const expiredRoom=error.code==='ROOM_NOT_FOUND',kicked=error.code==='KICKED';
  peopleOpen=false;document.body.classList.remove('gi-drawer-open','gi-gameplay','gi-ending');
- aborter?.abort();session=null;snapshot=null;save();clearStatementDraft();
+ aborter?.abort();session=null;snapshot=null;updateDesktopWallet();save();clearStatementDraft();
  try{const url=new URL(location.href);url.searchParams.delete('room');history.replaceState({},'',url.pathname+url.search+url.hash);}catch{}
  statusEl.textContent=kicked?'Đã rời phòng':expiredRoom?'Phòng không còn tồn tại':'Phiên chơi hết hạn';
  app.innerHTML=`<section class="card welcome"><h1>${kicked?'Bạn đã được đưa ra khỏi phòng':expiredRoom?'Phòng đã kết thúc hoặc hết hạn':'Phiên chơi không còn hợp lệ'}.</h1><p>${kicked?'Chủ phòng đã kick bạn khỏi phòng.':expiredRoom?'Phòng này không còn trên máy chủ. Phòng có thể đã bị đóng hoặc hết thời gian lưu.':'Phiên xác thực đã hết hạn hoặc không còn hợp lệ.'} Bạn có thể quay về trang đầu để tạo phòng mới hoặc nhập mã phòng khác.</p><div class="actions"><button id="return-home" class="primary">Tạo hoặc tham gia phòng khác <span aria-hidden="true">→</span></button></div></section>`;
@@ -144,7 +144,7 @@ function render(){if(!snapshot||!session)return;const s=snapshot;const me=s.game
   </header>
   <aside class="card gi-area-players" id="players-panel" data-open="${peopleOpen}" aria-label="Danh sách người chơi">
    <div class="flex"><h2>Hội đồng · ${s.room.players.length}${s.room.maxPlayers?' / '+s.room.maxPlayers:''}</h2><button type="button" class="gi-close-players" id="close-players" aria-label="Đóng danh sách">×</button></div>
-   <div class="gi-desktop-wallet"><img src="/brand/green-coin.png" alt="" width="88" height="88"><strong>${me.coins} xu</strong></div>
+   <button type="button" id="open-wallet" class="gi-desktop-wallet" aria-haspopup="dialog"><img src="/brand/green-coin.png" alt="" width="32" height="32"><strong>${me.coins} xu</strong><span>Xem ví</span></button>
    <div class="people" tabindex="0" role="region" aria-label="Danh sách thành viên">${playerList(s)}</div>
   </aside>
   <section class="card gi-area-project" aria-label="Dự án hiện tại">
@@ -188,6 +188,63 @@ async function act(type,payload){
  catch(e){handleSessionError(e);return false;}
  finally{requesting=false;wireBank();}
 }
+function updateDesktopWallet(){
+ const dialog=document.getElementById('desktop-wallet-dialog');
+ if(!dialog)return;
+ if(!snapshot?.game?.myPlayer||!document.getElementById('open-wallet'))dialog.close();
+ else dialog.querySelector('strong').textContent=snapshot.game.myPlayer.coins+' xu';
+}
+function openDesktopWallet(){
+ if(document.getElementById('desktop-wallet-dialog'))return;
+ const dialog=document.createElement('dialog');
+ dialog.id='desktop-wallet-dialog';
+ dialog.setAttribute('aria-labelledby','desktop-wallet-title');
+ dialog.innerHTML=`<div class="gi-wallet-sheet">
+  <h2 id="desktop-wallet-title">Ví của bạn</h2>
+  <img src="/brand/green-coin.png" alt="Green Coin" width="224" height="224" draggable="false">
+  <strong></strong>
+  <p>Vuốt xuống để đóng</p>
+  <form method="dialog"><button autofocus>Đóng</button></form>
+ </div>`;
+ const sheet=dialog.firstElementChild;
+ let drag=null;
+ sheet.addEventListener('pointerdown',e=>{
+  if(!e.isPrimary||e.button!==0||e.target.closest('button'))return;
+  drag={id:e.pointerId,y:e.clientY};
+  sheet.setPointerCapture(e.pointerId);
+ });
+ sheet.addEventListener('pointermove',e=>{
+  if(drag?.id===e.pointerId)sheet.style.setProperty('--wallet-drag',Math.max(0,e.clientY-drag.y)+'px');
+ });
+ sheet.addEventListener('pointerup',e=>{
+  if(drag?.id!==e.pointerId)return;
+  const shouldClose=e.clientY-drag.y>=72;
+  drag=null;
+  if(shouldClose)dialog.close();
+  else sheet.style.removeProperty('--wallet-drag');
+ });
+ sheet.addEventListener('lostpointercapture',()=>{
+  if(!drag)return;
+  drag=null;sheet.style.removeProperty('--wallet-drag');
+ });
+ dialog.addEventListener('click',e=>{if(e.target===dialog)dialog.close();});
+ dialog.addEventListener('close',()=>{
+  // Keep the element through its CSS exit transition.
+  const animations=[...dialog.getAnimations(),...sheet.getAnimations()];
+  Promise.allSettled(animations.map(animation=>animation.finished)).then(()=>{
+   dialog.remove();
+   document.getElementById('open-wallet')?.focus({preventScroll:true});
+  });
+ });
+ const desktop=matchMedia('(min-width:1200px)');
+ const closeOnResize=()=>{if(!desktop.matches)dialog.close();};
+ desktop.addEventListener('change',closeOnResize,{once:true});
+ dialog.addEventListener('close',()=>desktop.removeEventListener('change',closeOnResize),{once:true});
+ document.body.append(dialog);
+ updateDesktopWallet();
+ dialog.showModal();
+}
+app.addEventListener('click',e=>{if(e.target.closest('#open-wallet'))openDesktopWallet();});
 function updateStatementCounter(){const field=document.getElementById('statement-text'),counter=document.getElementById('statement-counter');if(field&&counter)counter.textContent=field.value.length+' / 500';}
 function openStatementChoice(){const dialog=document.getElementById('statement-choice'),stance=document.getElementById('stance');if(!dialog||!stance||dialog.open)return;dialog.querySelectorAll('[data-stance]').forEach(button=>button.setAttribute('aria-pressed',String(button.dataset.stance===stance.value)));dialog.showModal();dialog.querySelector('[aria-pressed="true"]')?.focus();}
 app.addEventListener('input',e=>{if(e.target.id==='statement-text'){persistStatementDraft();updateStatementCounter();}});

@@ -77,8 +77,23 @@ test('desktop game adapts its card to the viewport and preserves protected layou
   }
   const roleButton=page.locator('#show-role');
   const privateCard=page.locator('#role .gi-private-role-card');
-  const coin=page.locator('.gi-desktop-wallet img');
-  assert.equal((await coin.boundingBox()).width,88);
+  const wallet=page.locator('#open-wallet');
+  const walletDialog=page.locator('#desktop-wallet-dialog');
+  await wallet.click();
+  const coin=walletDialog.locator('img');
+  await coin.waitFor();
+  assert.equal((await coin.boundingBox()).width,224);
+  await screenshot(page,'DESKTOP_COIN_SWIPE_POPUP.png');
+  const {x,y,width,height}=await coin.boundingBox();
+  await page.mouse.move(x+width/2,y+height/2);
+  await page.mouse.down();
+  await page.mouse.move(x+width/2,y+height/2+100,{steps:5});
+  await page.mouse.up();
+  await walletDialog.waitFor({state:'detached'});
+  assert.equal(await wallet.evaluate(el=>el===document.activeElement),true);
+  await wallet.click();
+  await page.keyboard.press('Escape');
+  await walletDialog.waitFor({state:'detached'});
   assert.equal(await privateCard.isVisible(),false);
   await roleButton.hover();
   await page.mouse.down();

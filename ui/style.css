@@ -837,11 +837,12 @@ body.copy-confirmed::after{content:"";position:fixed;z-index:99;inset:0;pointer-
  body.gi-gameplay .gi-profile-panel>.rule {grid-area:2/1}
  body.gi-gameplay .gi-action-panel>h2 {padding-inline-end:56px;font-size:26px}
  body.gi-gameplay .gi-desktop-wallet {
-  display:flex;align-items:center;justify-content:center;gap:10px;
-  padding:4px 0 10px;border-bottom:1px solid var(--entry-rule);
-  color:var(--entry-ink);font-size:20px;font-variant-numeric:tabular-nums;
+  display:flex;align-items:center;gap:7px;width:100%;padding:5px 8px;
+  border:1px solid var(--entry-rule);border-radius:10px;
+  background:var(--gold-light);color:var(--entry-ink);font-variant-numeric:tabular-nums;
  }
- body.gi-gameplay .gi-desktop-wallet img {display:block;width:88px;height:88px;object-fit:contain}
+ body.gi-gameplay .gi-desktop-wallet img {display:block;width:32px;height:32px;object-fit:contain}
+ body.gi-gameplay .gi-desktop-wallet span {margin-inline-start:auto;font-size:12px}
  body.gi-gameplay .gi-action-panel>p {margin-top:7px;font-size:12px;line-height:1.5}
  body.gi-gameplay .gi-action-panel form {gap:8px;margin-top:12px}
  body.gi-gameplay .gi-action-panel label {gap:5px;font-size:12px}
@@ -860,4 +861,31 @@ body.copy-confirmed::after{content:"";position:fixed;z-index:99;inset:0;pointer-
  body.gi-gameplay .gi-area-discussion .gi-statement {margin-bottom:8px}
  body.gi-gameplay .gi-history {flex:none;width:100%}
  body.gi-gameplay .gi-history summary {font-size:16px}
+}
+
+#desktop-wallet-dialog {
+ width:min(360px,90vw);max-height:90dvh;padding:0;overflow:visible;
+ border:0;background:transparent;color:var(--entry-ink);
+ opacity:0;transition:opacity 180ms,display 180ms allow-discrete,overlay 180ms allow-discrete;
+}
+#desktop-wallet-dialog[open] {opacity:1}
+#desktop-wallet-dialog::backdrop {
+ background:#142e2466;backdrop-filter:blur(5px);opacity:0;
+ transition:opacity 180ms,display 180ms allow-discrete,overlay 180ms allow-discrete;
+}
+#desktop-wallet-dialog[open]::backdrop {opacity:1}
+@starting-style {
+ #desktop-wallet-dialog[open],#desktop-wallet-dialog[open]::backdrop {opacity:0}
+}
+.gi-wallet-sheet {
+ display:grid;justify-items:center;gap:8px;padding:20px;border-radius:16px;
+ background:var(--entry-surface);box-shadow:0 16px 48px #142e2440;
+ touch-action:none;user-select:none;transform:translateY(var(--wallet-drag,0px));
+}
+.gi-wallet-sheet h2 {margin:0;font-family:var(--font-editorial)}
+.gi-wallet-sheet img {display:block;width:min(224px,45dvh);height:auto;object-fit:contain}
+.gi-wallet-sheet strong {font-size:24px;font-variant-numeric:tabular-nums}
+.gi-wallet-sheet p,.gi-wallet-sheet form {margin:0}
+@media(prefers-reduced-motion:reduce) {
+ #desktop-wallet-dialog,#desktop-wallet-dialog::backdrop {transition:none}
 }
