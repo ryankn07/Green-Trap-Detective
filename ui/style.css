@@ -857,6 +857,30 @@ body.copy-confirmed::after{content:"";position:fixed;z-index:99;inset:0;pointer-
    background-repeat:no-repeat;
   }
  }
+  body.gi-gameplay .gi-action-panel>h2[data-phase="BLIND_ACTION"] {
+   border-radius:12px;
+   padding-inline-start:12px;
+   background:linear-gradient(100deg,#e1efea,transparent);
+  }
+  @media(min-width:1440px) {
+  body.gi-gameplay .gi-action-panel>h2[data-phase="BLIND_ACTION"] {
+    padding-inline-start:48px;
+    background:url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2064%2064%22%20fill%3D%22none%22%20stroke%3D%22%23468779%22%20stroke-width%3D%222.6%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Crect%20x%3D%2212%22%20y%3D%2224%22%20width%3D%2240%22%20height%3D%2230%22%20rx%3D%227%22%2F%3E%3Cpath%20d%3D%22M21%2024v-8a11%2011%200%200%201%2022%200v8M32%2036v8%22%2F%3E%3C%2Fsvg%3E") left 12px center / 28px auto no-repeat,
+               linear-gradient(100deg,#e1efea,transparent);
+   }
+  }
+  body.gi-gameplay .gi-action-panel>h2[data-phase="REVEAL"] {
+   border-radius:12px;
+   padding-inline-start:12px;
+   background:linear-gradient(100deg,#f5eccf,transparent);
+  }
+  @media(min-width:1440px) {
+  body.gi-gameplay .gi-action-panel>h2[data-phase="REVEAL"] {
+    padding-inline-start:48px;
+    background:url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2064%2064%22%20fill%3D%22none%22%20stroke%3D%22%2398763d%22%20stroke-width%3D%222.6%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M7%2048V17h19l6%207h22v24M7%2048l8-19h44l-7%2019Z%22%2F%3E%3Cpath%20d%3D%22M39%205v9m14-5-5%207%22%2F%3E%3C%2Fsvg%3E") left 12px center / 28px auto no-repeat,
+               linear-gradient(100deg,#f5eccf,transparent);
+   }
+  }
  body.gi-gameplay .gi-desktop-wallet {
   position:absolute;inset-block-start:12px;inset-inline-end:68px;
   display:flex;align-items:center;gap:6px;color:var(--entry-ink);
