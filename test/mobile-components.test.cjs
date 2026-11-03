@@ -56,6 +56,15 @@ test('mobile components work across small phones, landscape, and every game phas
     }
     await entry.locator('.gi-card-button').click();assert.equal(await entry.locator('.gi-card-dialog').isVisible(),true);await entry.locator('.gi-card-dialog button').click();await entry.locator('.gi-card-dialog').waitFor({state:'detached'});
     await entry.locator('#toggle-players').click();const panel=entry.locator('#players-panel');assert.equal(await panel.isVisible(),true);const panelBox=await panel.boundingBox();assert.ok(panelBox.x>=0&&panelBox.y>=0&&panelBox.x+panelBox.width<=width+1&&panelBox.y+panelBox.height<=height+1,'drawer fits '+width+'x'+height);
+    const compact=await panel.locator('.people').evaluate(list=>{
+     const rows=[...list.querySelectorAll('.person')];
+     for(const row of rows.slice(3))row.hidden=true;
+     const rects=rows.slice(0,3).map(row=>row.getBoundingClientRect());
+     const height=rects[2].bottom-rects[0].top;
+     for(const row of rows.slice(3))row.hidden=false;
+     return height;
+    });
+    assert.ok(compact<390,'three council rows total '+compact+'px at '+width+'x'+height);
     await entry.locator('#close-players').click();assert.equal(await panel.isVisible(),false);assert.equal(await entry.locator('#toggle-players').getAttribute('aria-expanded'),'false');
    }
    if(phase==='DEBATE'){
