@@ -18,6 +18,13 @@ function states(room,winner,prefixTruth=false){
 }
 
 async function assertEndingScroll(page,width,height){
+ const recordContrast=await page.evaluate(()=>{
+  const records=document.querySelector('.ending-records');if(!records)return [];
+  const luminance=color=>color.match(/[\d.]+/g).slice(0,3).map(Number).reduce((sum,value,index)=>{const c=value/255;return sum+(c<=.04045?c/12.92:((c+.055)/1.055)**2.4)*[.2126,.7152,.0722][index];},0);
+  const background=luminance(getComputedStyle(records).backgroundColor);
+  return [...records.querySelectorAll('summary,.ending-last-result p')].map(element=>{const text=luminance(getComputedStyle(element).color);return (Math.max(text,background)+.05)/(Math.min(text,background)+.05);});
+ });
+ assert.ok(recordContrast.every(ratio=>ratio>=4.5),'ending record text stays readable against its themed panel');
  assert.equal(await page.locator('.ending-projects,.ending-project-strip').count(),0,'the removed ending card gallery stays absent');
  for(const truth of await page.locator('.gi-verdict[data-verdict="TRUTH"]').all())assert.equal(await truth.evaluate(element=>getComputedStyle(element).color),'rgb(141, 250, 183)','Truth is green independently of the ending winner');
  assert.equal(await page.locator('.ending-scan,.ending-qr,[data-ending-qr],script[src*="qr-code"]').count(),0,'ending shows the film directly without a QR flow');

@@ -174,3 +174,13 @@ body.gi-ending .gi-ending-screen{width:100%;max-width:1920px;margin:0 auto}
 @media(max-width:540px){.ending-renewal-scene{top:115px;left:-12%;width:175%;opacity:.75}.ending-sun{top:20px;right:-16px;width:100px;opacity:.24}.ending-sunlight{top:0;right:-180px;width:360px}.ending-renewal-ground{height:260px;width:190%;left:-45%}}
 @media(max-width:900px){.ending-forest{top:170px;width:clamp(120px,20vw,180px)}}
 @media(max-width:540px){.ending-forest{top:147px;width:clamp(88px,25vw,110px)}.renewal-tree-crown{opacity:.4}.renewal-tree-trunk{opacity:.19}}
+
+/* Connect the ending records to the gameplay panels. */
+.ending-records {
+ background:var(--surface);
+ border:1px solid var(--border);
+ border-radius:12px;
+ padding:0 clamp(12px,2vw,22px);
+}
+.ending-details:first-child {border-top:0}
+.ending-details>summary::marker {color:var(--ending-ink)}
