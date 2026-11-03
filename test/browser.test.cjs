@@ -53,7 +53,8 @@ test('desktop game adapts its card to the viewport and preserves protected layou
   for(let i=1;i<13;i++)manager.join(room.code,'Player '+i);
   for(const peer of room.players)manager.connected(room,peer);
   browser=await chromium.launch({channel:process.env.BROWSER_CHANNEL||'chrome',headless:true});
-  const page=await browser.newPage({viewport:{width:1440,height:900}});
+  // This matrix measures settled layout; motion.test.cjs exercises live transitions.
+  const page=await browser.newPage({viewport:{width:1440,height:900},reducedMotion:'reduce'});
   await page.addInitScript(session=>{performance.now=()=>0;sessionStorage.setItem('green-impact-multiplayer-session',JSON.stringify(session));},{roomCode:room.code,playerId:player.id,token:player.secret});
   await page.goto('http://127.0.0.1:'+server.address().port);await page.locator('#start').click();
   await page.locator('.gi-area-project img').waitFor();

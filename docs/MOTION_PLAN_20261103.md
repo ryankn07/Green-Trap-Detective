@@ -1,6 +1,6 @@
 # Website motion plan — 3 November 2026
 
-Status: proposal only. No effects implemented or released by this task. Baseline: main `9a7eed2ce997a868a9417d19899bd10253fd1b7d`.
+Status: implemented and locally verified; release pending. Original baseline: main `9a7eed2ce997a868a9417d19899bd10253fd1b7d`. Verification details: `docs/MOTION_VERIFICATION_20261103.md`.
 
 The owner assigns this work to effects, independently of Plus 2's visual-design proposal. The motion direction below is authored for the investigation/card-game interaction; it does not adopt Plus 2's proposed palette, materials, composition or redesign. Existing product assets, game rules and functional layout remain authoritative.
 
@@ -27,16 +27,16 @@ Treat a round as a dossier arriving on a table and the reveal as its conclusion 
 
 ## Ordered implementation checklist
 
-1. [ ] Inventory actual motion triggers and current source revision, then establish short feedback, layout-transition and focal-sequence durations. Preserve existing author-owned ending effects.
-2. [ ] Prototype the submit/lock expansion-collapse sequence on the existing PC layout. Compare before/after snapshots and animate only on confirmed state changes.
-3. [ ] Implement the new-project entrance using original card artwork. Trigger once per game/round/project, not per poll or reconnect.
-4. [ ] Implement the reveal focal sequence without hiding, delaying or inferring any authoritative result. Respect the server deadline and immediate next-action availability.
-5. [ ] Add own-balance and new-public-statement feedback. Key events by stable identity and preserve the message-list reading position.
-6. [ ] Add bounded home/lobby/panel feedback and reuse existing copy acknowledgment; prevent double animation of controls that already have an effect.
-7. [ ] Verify interruption, rapid repeated actions, replayed snapshots, reconnect, page hiding, keyboard use, reduced motion and narrow screens. Retain all current draft/privacy/layout/ending regressions.
+1. [x] Inventory actual motion triggers and current source revision, then establish short feedback, layout-transition and focal-sequence durations. Preserve existing author-owned ending effects.
+2. [x] Prototype the submit/lock expansion-collapse sequence on the existing PC layout. Compare before/after snapshots and animate only on confirmed state changes.
+3. [x] Implement the new-project entrance using original card artwork. Trigger once per game/round/project, not per poll or reconnect.
+4. [x] Implement the reveal focal sequence without hiding, delaying or inferring any authoritative result. Respect the server deadline and immediate next-action availability.
+5. [x] Add own-balance and new-public-statement feedback. Key events by stable identity and preserve the message-list reading position.
+6. [x] Add bounded home/lobby/panel feedback and reuse existing copy acknowledgment; prevent double animation of controls that already have an effect.
+7. [x] Verify interruption, rapid repeated actions, replayed snapshots, reconnect, page hiding, keyboard use, reduced motion and narrow screens. Retain all current draft/privacy/layout/ending regressions.
 8. [ ] Capture actual before/after motion evidence, profile a representative PC/mobile-emulation session, and commit each verified unit. Release only the tested integration with current main.
 
-Estimated first implementation and verification: 90–150 minutes, subject to the renderer lifecycle work found in step 1. This is an estimate, not a completion claim. The first bounded deliverable is submit/lock motion; the other effects follow after that sequence is visually reviewed.
+Implementation uses the Web Animations API in a separate motion module with no new dependencies. Drawer feedback is opacity-only so its bounds remain inside narrow viewports; closing and private-role hiding remain immediate. The reveal uses one brief accent on the existing result rather than delaying its individual text blocks.
 
 ## Implementation acceptance criteria
 
