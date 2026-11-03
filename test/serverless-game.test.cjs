@@ -57,6 +57,42 @@ test('guests with the host name get separate authenticated IDs in the requested 
     assert.deepEqual(new Set(state.value.room.players.map(player => player.id)), new Set(sessions.map(session => session.playerId)));
   }
 });
+
+test('finished room remains readable until all players leave the ending', async t => {
+  const { store, request } = await fixture(t);
+  const { value: host } = await request('/api/create', { name: 'Chủ phòng' });
+  const sessions = [host];
+  for (const name of ['An', 'Bình']) {
+    const guest = await request('/api/join', { roomCode: host.roomCode, name });
+    assert.equal(guest.status, 200);
+    sessions.push(guest.value);
+  }
+
+  const leave = { type: 'finish_leave' };
+  assert.equal((await request('/api/action', leave, host)).value.error, 'INVALID_PHASE');
+  assert.equal((await request('/api/action', { type: 'start' }, host)).status, 200);
+  store.time += 35 * 60_000;
+
+  for (const session of sessions) {
+    const ending = await request('/api/state?room=' + host.roomCode, null, session);
+    assert.equal(ending.status, 200);
+    assert.equal(ending.value.game.phase, 'GAME_OVER');
+  }
+
+  const lastLeave = { ...leave, requestId: randomUUID() };
+  const firstLeaves = await Promise.all(sessions.slice(0, 2).map(session =>
+    request('/api/action', leave, session)));
+  assert.ok(firstLeaves.every(result => result.status === 200));
+  assert.equal(store.rooms.has(host.roomCode), true);
+  assert.equal((await request('/api/action', leave, host)).status, 200);
+  assert.equal(store.rooms.has(host.roomCode), true);
+
+  assert.equal((await request('/api/action', lastLeave, sessions[2])).status, 200);
+  assert.equal(store.rooms.has(host.roomCode), false);
+  assert.equal((await request('/api/action', lastLeave, sessions[2])).status, 200);
+  assert.equal((await request('/api/state?room=' + host.roomCode, null, host)).status, 404);
+});
+
 test('a room survives separate Function invocations and a concurrent join does not lose players', async t => {
   const { request } = await fixture(t);
   const created = await request('/api/create', { name: 'Chủ phòng' });
