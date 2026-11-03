@@ -64,7 +64,7 @@ test('ending roster strikes only eliminated names and shows real causes and all 
   const page=await browser.newPage({viewport:{width:1440,height:900},reducedMotion:'reduce'}),errors=[];page.on('pageerror',error=>errors.push(error.message));
   await page.addInitScript(session=>sessionStorage.setItem('green-impact-multiplayer-session',JSON.stringify(session)),{roomCode:room.code,playerId:host.id,token:host.secret});
   await page.goto('http://127.0.0.1:'+server.address().port);
-  const target=page.locator('[data-player-id="'+room.players[2].id+'"]');await target.waitFor();
+  const target=page.locator('.person[data-player-id="'+room.players[2].id+'"]');await target.waitFor();
   assert.equal(await target.locator('.player-name').evaluate(element=>getComputedStyle(element).textDecorationLine),'line-through');
   assert.doesNotMatch(await target.locator('.person-info small').textContent(),/Mai Anh|Minh Quân/,'contributors remain hidden during reveal');
   manager.kick(room,host,room.players[3].id);await page.locator('.gi-ending-screen').waitFor();await page.locator('.gi-phase-transition').waitFor({state:'detached'});

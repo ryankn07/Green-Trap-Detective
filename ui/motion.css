@@ -1,0 +1,7 @@
+:root{
+ --gi-motion-feedback:140ms;
+ --gi-motion-layout:260ms;
+ --gi-motion-scene:340ms;
+ --gi-motion-ease:cubic-bezier(.16,1,.3,1);
+}
+button[aria-busy="true"]{cursor:progress}

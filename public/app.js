@@ -55,7 +55,7 @@ function showPhaseTransition(previous,current){
  // Close old top-layer card previews before covering the new phase.
  document.querySelectorAll('dialog[open]').forEach(dialog=>dialog.close());
  phaseScreen=screen;document.body.appendChild(screen);
- const dismiss=()=>{if(phaseScreen===screen){clearPhaseTransition();playEliminationEffects();}};
+ const dismiss=()=>{if(phaseScreen===screen){clearPhaseTransition();window.GreenTrapMotion?.resumeScene?.();playEliminationEffects();}};
  screen.addEventListener('animationend',event=>{if(event.target===screen&&event.animationName==='gi-phase-screen')dismiss();});
  phaseScreenTimer=setTimeout(dismiss,duration);
 }
@@ -63,6 +63,7 @@ document.addEventListener('visibilitychange',()=>{if(document.hidden){clearPhase
 window.addEventListener('pagehide',()=>{clearPhaseTransition();clearEliminationState(false);});
 function acceptSnapshot(value){
  if(snapshot&&snapshot.room.code===value.room.code&&snapshot.room.revision>value.room.revision)return;
+ if(snapshot?.room.code===value.room.code&&typeof value.room.revision==='number'&&snapshot.room.revision===value.room.revision){snapshot.serverTime=value.serverTime;snapshot.deadline=value.deadline;snapshotReceivedAt=performance.now();return;}
  if(eliminationHold&&snapshot?.game?.gameId===value.game?.gameId&&snapshot.room.code===value.room.code&&value.game.phase==='GAME_OVER'){
   snapshot=value;snapshotReceivedAt=performance.now();refreshPlayerLists();finishClientSession(value);return;
  }
@@ -74,23 +75,28 @@ function acceptSnapshot(value){
  if(snapshot?.game?.phase==='GAME_OVER'&&value.game?.phase==='GAME_OVER'&&snapshot.game.gameId===value.game.gameId&&snapshot.game.outcome?.winner===value.game.outcome?.winner&&app.querySelector('.gi-ending-screen')){
   snapshot=value;snapshotReceivedAt=performance.now();refreshPlayerLists();finishClientSession(value);return;
  }
- const scrolls=Array.from(app.querySelectorAll('.people,#players-panel')).map(el=>({key:el.id||'player-list',left:el.scrollLeft,top:el.scrollTop,focused:document.activeElement===el}));
+ const sameRound=snapshot?.game&&snapshot.room.code===value.room.code&&snapshot.game.gameId===value.game?.gameId&&snapshot.game.round===value.game?.round;
+ const scrollSelectors=['.people','#players-panel',...(sameRound?['.gi-center-column','.gi-area-discussion>.card:first-child>.hist','.gi-history .hist']:[])];
+ const scrolls=scrollSelectors.flatMap(selector=>{const el=app.querySelector(selector);return el?[{selector,left:el.scrollLeft,top:el.scrollTop,focused:document.activeElement===el}]:[];});
  const choiceOpen=app.querySelector('#statement-choice')?.open,choiceFocus=document.activeElement?.id,drawerFocused=peopleOpen&&app.querySelector('#players-panel')?.contains(document.activeElement);
  const previous=snapshot;
+ const motionFrame=window.GreenTrapMotion?.capture(snapshot);
  const newlyExpelled=rememberEliminations(previous,value);
  if(newlyExpelled.length&&value.game.phase==='GAME_OVER'&&app.querySelector('.gi-area-players')&&!document.hidden){
   captureStatementDraft();snapshot=value;snapshotReceivedAt=performance.now();clearStatementDraft();actionDraft=null;
+  window.GreenTrapMotion?.commit(value,motionFrame);
   clearPhaseTransition();document.querySelectorAll('dialog[open]').forEach(dialog=>dialog.close());
   eliminationHold={previous};app.inert=true;refreshPlayerLists();
   const label=app.querySelector('.gi-phase-header .phase');if(label)label.textContent='Công bố · Trục xuất';
   playEliminationEffects();finishClientSession(value);return;
  }
  const kickFocus=document.activeElement?.closest('.kick-confirmation')?document.activeElement.id:null;
- captureStatementDraft();snapshot=value;snapshotReceivedAt=performance.now();render();updateDesktopWallet();
+ captureStatementDraft();snapshot=value;snapshotReceivedAt=performance.now();render();
  if(choiceOpen){openStatementChoice();if(choiceFocus)document.getElementById(choiceFocus)?.focus();}
  if(drawerFocused)(document.getElementById(choiceFocus)||document.getElementById('close-players'))?.focus();
- for(const saved of scrolls){const el=saved.key==='player-list'?app.querySelector('.people'):document.getElementById(saved.key);if(el){el.scrollLeft=saved.left;el.scrollTop=saved.top;if(saved.focused)el.focus({preventScroll:true});}}
+ for(const saved of scrolls){const el=app.querySelector(saved.selector);if(el){el.scrollLeft=saved.left;el.scrollTop=saved.top;if(saved.focused)el.focus({preventScroll:true});}}
  applyKickEffects();applyEliminationEffects();if(kickFocus)document.getElementById(kickFocus)?.focus({preventScroll:true});
+ window.GreenTrapMotion?.commit(value,motionFrame);
  showPhaseTransition(previous,value);
  playEliminationEffects();
  finishClientSession(value);
@@ -101,7 +107,7 @@ const draftStorageKey='green-impact-statement-draft';
 const storeKey='green-impact-multiplayer-session';
 const escapeHTML=(v)=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const labelRole=r=>r==='PROTECTOR'?'Người Bảo Vệ':r==='SABOTEUR'?'Người Phá Hoại':'Hòa';
-const phaseText={DEBATE:'THẢO LUẬN',BLIND_ACTION:'HÀNH ĐỘNG BÍ MẬT',REVEAL:'CÔNG BỐ',GAME_OVER:'KẾT THÚC'};
+const phaseText={DEBATE:'Thảo luận',BLIND_ACTION:'Hành động bí mật',REVEAL:'Công bố',GAME_OVER:'Kết thúc'};
 const outcomeText={TEN_ROUNDS:'Đã hoàn thành 10 lượt',FACTION_ELIMINATED:'Một phe đã bị loại toàn bộ',MUTUAL_ELIMINATION:'Hai phe cùng bị loại'};
 let toastTimer;
 function showToast(message,kind='error',duration=4700){
@@ -152,7 +158,7 @@ function recoverSession(error){
  clearEliminationState(false);
  const expiredRoom=error.code==='ROOM_NOT_FOUND',kicked=error.code==='KICKED';
  peopleOpen=false;document.body.classList.remove('gi-drawer-open','gi-gameplay','gi-ending');
- aborter?.abort();session=null;snapshot=null;updateDesktopWallet();save();clearStatementDraft();
+ aborter?.abort();session=null;snapshot=null;save();clearStatementDraft();
  try{const url=new URL(location.href);url.searchParams.delete('room');history.replaceState({},'',url.pathname+url.search+url.hash);}catch{}
  statusEl.textContent=kicked?'Đã rời phòng':expiredRoom?'Phòng không còn tồn tại':'Phiên chơi hết hạn';
  app.innerHTML=`<section class="card welcome"><h1>${kicked?'Bạn đã được đưa ra khỏi phòng':expiredRoom?'Phòng đã kết thúc hoặc hết hạn':'Phiên chơi không còn hợp lệ'}.</h1><p>${kicked?'Chủ phòng đã kick bạn khỏi phòng.':expiredRoom?'Phòng này không còn trên máy chủ. Phòng có thể đã bị đóng hoặc hết thời gian lưu.':'Phiên xác thực đã hết hạn hoặc không còn hợp lệ.'} Bạn có thể quay về trang đầu để tạo phòng mới hoặc nhập mã phòng khác.</p><div class="actions"><button id="return-home" class="primary">Tạo hoặc tham gia phòng khác <span aria-hidden="true">→</span></button></div></section>`;
@@ -166,7 +172,13 @@ const api=async(path,data,authenticated=false)=>{const headers={'Content-Type':'
  const r=await fetch(path,{method:'POST',headers,body:JSON.stringify({...data,requestId}),signal:AbortSignal.timeout(15000)});const value=await r.json().catch(()=>({}));if(r.ok||r.status<500)pendingRequests.delete(key);if(!r.ok){const error=Error(value.message||value.error||`HTTP ${r.status}`);error.code=value.error;error.status=r.status;throw error;}return value;};
 const readState=async(signal)=>{const current=session;if(!current)return;if(snapshot?.room.code===current.roomCode&&snapshot.game?.phase==='GAME_OVER')return snapshot;const r=await fetch(`/api/state?room=${current.roomCode}`,{headers:{Authorization:`Bearer ${current.token}`},cache:'no-store',signal:signal||AbortSignal.timeout(12000)});const value=await r.json().catch(()=>({}));if(!r.ok){if(snapshot?.room.code===current.roomCode&&snapshot.game?.phase==='GAME_OVER')return snapshot;const error=Error(value.message||value.error||'Không thể tải trạng thái phòng');error.code=value.error;error.status=r.status;throw error;}if(session!==current)return;if(current.transport==='poll'&&snapshot?.room.code===value.room.code&&snapshot.room.revision===value.room.revision){snapshot.serverTime=value.serverTime;snapshot.deadline=value.deadline;snapshotReceivedAt=performance.now();}else acceptSnapshot(value);return value;};
 const copyRoom=async()=>{const url=`${location.origin}/?room=${session.roomCode}`;try{await navigator.clipboard.writeText(url);showToast('Đã sao chép','success',3000);}catch{gameError({message:'Không thể sao chép. Hãy thử lại.'});}};
-function onSession(s) {session=s;save();app.innerHTML='';try{const result=JSON.parse(sessionStorage.getItem('green-impact-finished-game')||'null');if(result?.roomCode===s.roomCode&&result.playerId===s.playerId&&result.view?.game?.phase==='GAME_OVER'){acceptSnapshot(result.view);return;}}catch{}if(s.transport==='poll')connectPoll();else readState().then(value=>{if(session!==s||value?.game?.phase==='GAME_OVER')return;if(value?.transport==='poll'){s.transport='poll';save();connectPoll();}else connectStream();}).catch(handleSessionError);}
+function onSession(s) {
+ const url=new URL(location.href);
+ if(url.searchParams.has('room')&&url.searchParams.get('room')!==s.roomCode){
+  url.searchParams.set('room',s.roomCode);
+  history.replaceState(history.state,'',url);
+ }
+ session=s;save();app.innerHTML='';try{const result=JSON.parse(sessionStorage.getItem('green-impact-finished-game')||'null');if(result?.roomCode===s.roomCode&&result.playerId===s.playerId&&result.view?.game?.phase==='GAME_OVER'){acceptSnapshot(result.view);return;}}catch{}if(s.transport==='poll')connectPoll();else readState().then(value=>{if(session!==s||value?.game?.phase==='GAME_OVER')return;if(value?.transport==='poll'){s.transport='poll';save();connectPoll();}else connectStream();}).catch(handleSessionError);}
 async function connectPoll(){
  aborter?.abort();const active=new AbortController();aborter=active;let backoff=1500;statusEl.textContent='Đang kết nối';
  active.signal.addEventListener('abort',()=>clearTimeout(active.pollTimer),{once:true});
@@ -214,7 +226,7 @@ function eliminationKey(s,id){return s.room.code+':'+s.game.gameId+':'+id;}
 function clearEliminationState(flush){
  clearTimeout(eliminationTimer);eliminationEffects.clear();const held=eliminationHold;eliminationHold=null;app.inert=false;
  const announcement=document.getElementById('elimination-announcement');if(announcement)announcement.textContent='';
- if(flush&&snapshot){if(held){render();updateDesktopWallet();}else refreshPlayerLists();}
+ if(flush&&snapshot){if(held){render();}else refreshPlayerLists();}
 }
 function rememberEliminations(previous,current){
  const before=previous?.game,next=current.game;
@@ -252,7 +264,7 @@ function playEliminationEffects(){
  clearTimeout(eliminationTimer);eliminationTimer=setTimeout(()=>{
   const held=eliminationHold;eliminationHold=null;eliminationEffects.clear();app.inert=false;
   if(!snapshot)return;
-  if(held){render();updateDesktopWallet();applyKickEffects();if(!document.hidden)showPhaseTransition(held.previous,snapshot);}
+  if(held){render();applyKickEffects();if(!document.hidden)showPhaseTransition(held.previous,snapshot);}
   else refreshPlayerLists();
  },2000);
 }
@@ -292,9 +304,9 @@ function render(){if(!snapshot||!session)return;const s=snapshot;const me=s.game
   app.innerHTML=window.GreenTrapEnding.render(s,playerList(s));window.GreenTrapEnding.enhance(app);document.getElementById('ending-title')?.focus({preventScroll:true});return;
  }
  if(g.phase==='DEBATE'){
- content=`<p>Bạn ủng hộ hay phản đối dự án? Hãy giải thích lý do.</p>${!me.isAlive?'<p class="note">Bạn đã bị loại và đang theo dõi trận.</p>':g.players.find(p=>p.id===me.id)?.hasStatement?'<div class="note">Đã gửi ý kiến. Chờ hết thời gian thảo luận.</div>':`<form id="statement"><label class="gi-stance-select">Quan điểm<select id="stance"><option value="UNSURE">Chưa chắc chắn</option><option value="SUPPORT">Ủng hộ</option><option value="OPPOSE">Phản đối</option></select></label><label>Lý do<textarea id="statement-text" maxlength="500" required placeholder="Ví dụ: dự án cần làm rõ tác động tới hệ sinh thái..."></textarea></label><span class="gi-statement-counter" id="statement-counter">0 / 500</span><button type="submit" class="primary">Gửi ý kiến công khai</button></form><dialog id="statement-choice" class="gi-statement-choice" aria-labelledby="statement-choice-title"><h2 id="statement-choice-title">Quan điểm của bạn?</h2><div class="gi-stance-choices" role="group" aria-label="Chọn quan điểm"><button type="button" data-stance="SUPPORT" aria-pressed="false">Ủng hộ</button><button type="button" data-stance="UNSURE" aria-pressed="true">Chưa chắc</button><button type="button" data-stance="OPPOSE" aria-pressed="false">Phản đối</button></div><div class="gi-choice-actions"><button type="button" id="edit-statement">Sửa ý kiến</button><button type="button" id="confirm-statement" class="primary">Gửi ý kiến</button></div></dialog>`}`;
+ content=`${!me.isAlive?'<p class="note">Bạn đã bị loại và đang theo dõi trận.</p>':g.players.find(p=>p.id===me.id)?.hasStatement?'<div class="note">Đã gửi ý kiến. Chờ hết thời gian thảo luận.</div>':`<form id="statement"><label class="gi-stance-select">Quan điểm<select id="stance"><option value="UNSURE">Chưa chắc chắn</option><option value="SUPPORT">Ủng hộ</option><option value="OPPOSE">Phản đối</option></select></label><label>Lý do<textarea id="statement-text" maxlength="500" required placeholder="Ví dụ: dự án cần làm rõ tác động tới hệ sinh thái..."></textarea></label><span class="gi-statement-counter" id="statement-counter">0 / 500</span><button type="submit" class="primary">Gửi ý kiến công khai</button></form><dialog id="statement-choice" class="gi-statement-choice" aria-labelledby="statement-choice-title"><h2 id="statement-choice-title">Quan điểm của bạn?</h2><div class="gi-stance-choices" role="group" aria-label="Chọn quan điểm"><button type="button" data-stance="SUPPORT" aria-pressed="false">Ủng hộ</button><button type="button" data-stance="UNSURE" aria-pressed="true">Chưa chắc</button><button type="button" data-stance="OPPOSE" aria-pressed="false">Phản đối</button></div><div class="gi-choice-actions"><button type="button" id="edit-statement">Sửa ý kiến</button><button type="button" id="confirm-statement" class="primary">Gửi ý kiến</button></div></dialog>`}`;
  }else if(g.phase==='BLIND_ACTION'){
- content=!me.isAlive?'<div class="note">Bạn đang quan sát, không thể thực hiện hành động.</div>':me.lockedAction?'<div class="note">Đã chốt hành động: '+(me.lockedAction.invest?'đầu tư 1 xu':'không đầu tư')+' · '+(me.lockedAction.bankAction.type==='NONE'?'không dùng hành động bổ sung':me.lockedAction.bankAction.type==='INSPECT'?'kiểm chứng vai trò':'góp '+me.lockedAction.bankAction.amount+' xu trục xuất')+'. Chờ công bố kết quả.</div>':`<p>Người chơi khác sẽ không thấy lựa chọn của bạn.</p><form id="action-form"><label class="choice"><input type="checkbox" id="invest"> Đầu tư 1 xu vào dự án</label><label>Hành động bổ sung<select id="bank"><option value="NONE">Không dùng</option><option value="INSPECT">Kiểm chứng vai trò (3 xu)</option><option value="EXPEL">Góp xu trục xuất người chơi (1–5 xu)</option></select></label><div id="bank-details" class="hidden"><label>Mục tiêu<select id="target">${g.players.filter(p=>p.isAlive&&p.id!==me.id).map(p=>`<option value="${escapeHTML(p.id)}">${escapeHTML(s.room.players.find(x=>x.id===p.id)?.name||p.id)}</option>`).join('')}</select></label><label id="amount-row" class="hidden">Số xu góp trục xuất<select id="amount">${[1,2,3,4,5].map(n=>`<option value="${n}">${n} xu</option>`).join('')}</select></label></div><p id="action-cost" class="note" role="status"></p><button id="lock-action" type="submit" class="primary">Chốt hành động</button></form>`;
+ content=!me.isAlive?'<div class="note">Bạn đang quan sát, không thể thực hiện hành động.</div>':me.lockedAction?'<div class="note">Đã chốt hành động: '+(me.lockedAction.invest?'đầu tư 1 xu':'không đầu tư')+' · '+(me.lockedAction.bankAction.type==='NONE'?'không dùng hành động bổ sung':me.lockedAction.bankAction.type==='INSPECT'?'kiểm chứng vai trò':'góp '+me.lockedAction.bankAction.amount+' xu trục xuất')+'. Chờ công bố kết quả.</div>':`<form id="action-form"><label class="choice"><input type="checkbox" id="invest"> Đầu tư 1 xu vào dự án</label><label>Hành động bổ sung<select id="bank"><option value="NONE">Không dùng</option><option value="INSPECT">Kiểm chứng vai trò (3 xu)</option><option value="EXPEL">Góp xu trục xuất người chơi (1–5 xu)</option></select></label><div id="bank-details" class="hidden"><label>Mục tiêu<select id="target">${g.players.filter(p=>p.isAlive&&p.id!==me.id).map(p=>`<option value="${escapeHTML(p.id)}">${escapeHTML(s.room.players.find(x=>x.id===p.id)?.name||p.id)}</option>`).join('')}</select></label><label id="amount-row" class="hidden">Số xu góp trục xuất<select id="amount">${[1,2,3,4,5].map(n=>`<option value="${n}">${n} xu</option>`).join('')}</select></label></div><p id="action-cost" class="note" role="status"></p><button id="lock-action" type="submit" class="primary">Chốt hành động</button></form>`;
  }else if(g.phase==='REVEAL'){
  content=`<div class="summary ${latest.alignment==='PROTECTOR'?'success':'danger'}"><b>${latest.approved?'DỰ ÁN ĐƯỢC THÔNG QUA':'DỰ ÁN KHÔNG ĐƯỢC THÔNG QUA'}</b><p>${latest.investorCount}/${latest.eligibleCount} người đầu tư · Cần ${latest.requiredVotes}</p><h2 class="gi-verdict" data-verdict="${escapeHTML(latest.verdictLabel)}">${escapeHTML(latest.verdictLabel)}</h2><p>${escapeHTML(latest.explanation)}</p><p>${latest.newlyEliminatedIds.length?'Bị loại: '+latest.newlyEliminatedIds.map(id=>escapeHTML(s.room.players.find(x=>x.id===id)?.name||id)).join(', '):'Không có người bị loại lượt này.'}</p></div>${host?'<button id="next" class="primary">Sang lượt tiếp theo</button>':'<p class="muted">Chờ chủ phòng chuyển lượt hoặc đồng hồ đếm hết.</p>'}`;
  }else{
@@ -303,19 +315,18 @@ function render(){if(!snapshot||!session)return;const s=snapshot;const me=s.game
  const project = g.phase==='GAME_OVER'?latest?{id:latest.projectId,title:latest.projectTitle,description:'Các dự án đã hoàn thành. Xem lịch sử bên dưới.'}:g.project:g.project;
  const statements=(g.phase==='REVEAL'||g.phase==='GAME_OVER')?(latest?.statements||[]):g.currentStatements;
  const stanceLabel={SUPPORT:'Ủng hộ',OPPOSE:'Phản đối',UNSURE:'Chưa chắc chắn'};
- const discussion=statements.map(st=>{const name=s.room.players.find(p=>p.id===st.playerId)?.name||'Người chơi';return '<div class="gi-statement"><span class="gi-chat-avatar" aria-hidden="true">'+escapeHTML(name.charAt(0).toUpperCase())+'</span><div class="gi-chat-bubble"><b>'+escapeHTML(name)+'</b><span class="pill">'+escapeHTML(stanceLabel[st.stance]||'Ý kiến')+'</span><p>'+escapeHTML(st.text)+'</p></div></div>';}).join('')||'<p class="tiny">Chưa có ý kiến nào trong lượt này.</p>';
+ const discussion=statements.map(st=>{const name=s.room.players.find(p=>p.id===st.playerId)?.name||'Người chơi';return '<div class="gi-statement" data-player-id="'+escapeHTML(st.playerId)+'"><span class="gi-chat-avatar" aria-hidden="true">'+escapeHTML(name.charAt(0).toUpperCase())+'</span><div class="gi-chat-bubble"><b>'+escapeHTML(name)+'</b><span class="pill">'+escapeHTML(stanceLabel[st.stance]||'Ý kiến')+'</span><p>'+escapeHTML(st.text)+'</p></div></div>';}).join('');
  app.innerHTML=`
  <div class="gi-mobile-topbar"><div class="gi-top-wallet"><img src="/brand/green-coin.png" alt="" width="24" height="24"><b>${me.coins}</b><span>xu</span></div><button id="mobile-show-role" type="button" aria-label="Nhấn giữ để xem vai trò" aria-describedby="mobile-role-value" aria-pressed="false"><svg viewBox="0 0 64 64" aria-hidden="true"><path d="M5 32c7-11 17-17 27-17s20 6 27 17c-7 11-17 17-27 17S12 43 5 32Z"/><circle cx="32" cy="32" r="10"/></svg></button><span id="mobile-role-value" role="status" data-role="${escapeHTML(me.role)}" hidden></span><span class="gi-round-chip">Lượt ${g.round} / ${g.roundLimit}</span></div>
  <div class="gi-game-grid" data-game-layout="four-areas">
   <header class="card gi-phase-header">
    <div class="gi-mobile-wallet"><img class="gi-coin-icon" src="/brand/green-coin.png" alt="" width="28" height="28"> ${me.coins} xu</div>
-   <div class="flex"><span class="phase">${escapeHTML(phaseText[g.phase])} · LƯỢT ${g.round}/${g.roundLimit}</span>${timer(s)}</div>
+   <div class="flex"><span class="phase">${escapeHTML(phaseText[g.phase].toUpperCase())} · LƯỢT ${g.round}/${g.roundLimit}</span>${timer(s)}</div>
    ${g.phase!=='GAME_OVER'?'<progress id="phase-progress" max="'+phaseSeconds[g.phase]+'" value="'+remainingSeconds()+'" aria-label="Thời gian còn lại"></progress>':''}
    <div class="flex muted"><span>Bảo vệ: ${g.approvedProtectorCount}</span><span>Phá hoại: ${g.approvedSaboteurCount}</span></div>
   </header>
   <aside class="card gi-area-players" id="players-panel" data-open="${peopleOpen}" aria-label="Danh sách người chơi">
    <div class="flex"><h2>Hội đồng · ${s.room.players.length}${s.room.maxPlayers?' / '+s.room.maxPlayers:''}</h2><button type="button" class="gi-close-players" id="close-players" aria-label="Đóng danh sách">×</button></div>
-   <button type="button" id="open-wallet" class="gi-desktop-wallet" aria-haspopup="dialog"><img src="/brand/green-coin.png" alt="" width="32" height="32"><strong>${me.coins} xu</strong><span>Xem ví</span></button>
    <div class="people" tabindex="0" role="region" aria-label="Danh sách thành viên">${playerList(s)}</div>
   </aside>
   <section class="card gi-area-project" aria-label="Dự án hiện tại">
@@ -328,7 +339,7 @@ function render(){if(!snapshot||!session)return;const s=snapshot;const me=s.game
     <div id="role" class="note" data-role="${escapeHTML(me.role)}">Vai trò của bạn: <b id="role-value">••••••</b><button id="show-role" type="button" aria-label="Nhấn giữ để xem thẻ vai trò"><svg viewBox="0 0 64 64" aria-hidden="true"><path d="M5 32c7-11 17-17 27-17s20 6 27 17c-7 11-17 17-27 17S12 43 5 32Z"/><circle cx="32" cy="32" r="10"/></svg><span>Nhấn giữ để xem</span></button></div>
     ${me.inspections?.length?'<div class="rule"><h3>Kết quả kiểm chứng</h3>'+me.inspections.map(x=>'<p class="tiny">Lượt '+x.round+': '+escapeHTML(s.room.players.find(p=>p.id===x.targetId)?.name)+' — '+escapeHTML(labelRole(x.revealedRole))+'</p>').join('')+'</div>':''}
    </div>
-   <div class="card gi-action-panel"><h2>${escapeHTML(phaseText[g.phase])}</h2>${content}</div>
+   <div class="card gi-action-panel"><div class="gi-desktop-wallet"><img src="/brand/green-coin.png" alt="" width="112" height="112"><strong>${me.coins} xu</strong></div><h2${g.phase==='DEBATE'?' class="gi-discussion-title"':''}>${escapeHTML(phaseText[g.phase])}</h2>${content}</div>
   </section>
   <section class="gi-area-discussion" aria-label="Ý kiến công khai">
    <div class="card"><h2>Ý kiến trong phòng</h2><div class="hist">${discussion}</div></div>
@@ -357,67 +368,12 @@ function wireBank(){
 async function act(type,payload){
  if(requesting||eliminationHold)return false;
  requesting=true;
- try{await api('/api/action',{type,...(type==='kick'?{targetId:payload.targetId}:{payload}),...(['submit','next'].includes(type)?{context:{gameId:snapshot.game.gameId,round:snapshot.game.round,phase:snapshot.game.phase}}:{})},true);if(type!=='leave')await readState();return true;}
+ const finishMotion=type==='submit'?window.GreenTrapMotion?.pending(app.querySelector('#statement button[type=submit],#lock-action')):null;
+ let confirmed=false;
+ try{await api('/api/action',{type,...(type==='kick'?{targetId:payload.targetId}:{payload}),...(['submit','next'].includes(type)?{context:{gameId:snapshot.game.gameId,round:snapshot.game.round,phase:snapshot.game.phase}}:{})},true);if(type!=='leave')await readState();confirmed=true;return true;}
  catch(e){handleSessionError(e);return false;}
- finally{requesting=false;wireBank();}
+ finally{finishMotion?.(confirmed);requesting=false;wireBank();}
 }
-function updateDesktopWallet(){
- const dialog=document.getElementById('desktop-wallet-dialog');
- if(!dialog)return;
- if(!snapshot?.game?.myPlayer||!document.getElementById('open-wallet'))dialog.close();
- else dialog.querySelector('strong').textContent=snapshot.game.myPlayer.coins+' xu';
-}
-function openDesktopWallet(){
- if(document.getElementById('desktop-wallet-dialog'))return;
- const dialog=document.createElement('dialog');
- dialog.id='desktop-wallet-dialog';
- dialog.setAttribute('aria-labelledby','desktop-wallet-title');
- dialog.innerHTML=`<div class="gi-wallet-sheet">
-  <h2 id="desktop-wallet-title">Ví của bạn</h2>
-  <img src="/brand/green-coin.png" alt="Green Coin" width="224" height="224" draggable="false">
-  <strong></strong>
-  <p>Vuốt xuống để đóng</p>
-  <form method="dialog"><button autofocus>Đóng</button></form>
- </div>`;
- const sheet=dialog.firstElementChild;
- let drag=null;
- sheet.addEventListener('pointerdown',e=>{
-  if(!e.isPrimary||e.button!==0||e.target.closest('button'))return;
-  drag={id:e.pointerId,y:e.clientY};
-  sheet.setPointerCapture(e.pointerId);
- });
- sheet.addEventListener('pointermove',e=>{
-  if(drag?.id===e.pointerId)sheet.style.setProperty('--wallet-drag',Math.max(0,e.clientY-drag.y)+'px');
- });
- sheet.addEventListener('pointerup',e=>{
-  if(drag?.id!==e.pointerId)return;
-  const shouldClose=e.clientY-drag.y>=72;
-  drag=null;
-  if(shouldClose)dialog.close();
-  else sheet.style.removeProperty('--wallet-drag');
- });
- sheet.addEventListener('lostpointercapture',()=>{
-  if(!drag)return;
-  drag=null;sheet.style.removeProperty('--wallet-drag');
- });
- dialog.addEventListener('click',e=>{if(e.target===dialog)dialog.close();});
- dialog.addEventListener('close',()=>{
-  // Keep the element through its CSS exit transition.
-  const animations=[...dialog.getAnimations(),...sheet.getAnimations()];
-  Promise.allSettled(animations.map(animation=>animation.finished)).then(()=>{
-   dialog.remove();
-   document.getElementById('open-wallet')?.focus({preventScroll:true});
-  });
- });
- const desktop=matchMedia('(min-width:1200px)');
- const closeOnResize=()=>{if(!desktop.matches)dialog.close();};
- desktop.addEventListener('change',closeOnResize,{once:true});
- dialog.addEventListener('close',()=>desktop.removeEventListener('change',closeOnResize),{once:true});
- document.body.append(dialog);
- updateDesktopWallet();
- dialog.showModal();
-}
-app.addEventListener('click',e=>{if(e.target.closest('#open-wallet'))openDesktopWallet();});
 function updateStatementCounter(){const field=document.getElementById('statement-text'),counter=document.getElementById('statement-counter');if(field&&counter)counter.textContent=field.value.length+' / 500';}
 function openStatementChoice(){const dialog=document.getElementById('statement-choice'),stance=document.getElementById('stance');if(!dialog||!stance||dialog.open)return;dialog.querySelectorAll('[data-stance]').forEach(button=>button.setAttribute('aria-pressed',String(button.dataset.stance===stance.value)));dialog.showModal();dialog.querySelector('[aria-pressed="true"]')?.focus();}
 app.addEventListener('input',e=>{if(e.target.id==='statement-text'){persistStatementDraft();updateStatementCounter();}});
@@ -436,17 +392,34 @@ app.addEventListener('click',async e=>{
  refreshPlayerLists();if(ok)app.querySelector('.gi-area-players .people,.lobby-members .people')?.focus({preventScroll:true});
 });
 app.addEventListener('change',e=>{if(e.target.id==='stance')persistStatementDraft();});
-app.addEventListener('submit',async e=>{if(e.target.id==='form-create'){e.preventDefault();try{onSession(await api('/api/create',{name:document.getElementById('create-name').value}));}catch(err){gameError(err)}}
- if(e.target.id==='form-join'){e.preventDefault();try{onSession(await api('/api/join',{roomCode:document.getElementById('join-code').value.trim().toUpperCase(),name:document.getElementById('join-name').value}));}catch(err){gameError(err)}}
+app.addEventListener('submit',async e=>{
+ const formId=e.target.id;
+ if(formId==='form-create'||formId==='form-join'){
+  e.preventDefault();
+  if(requesting||session)return;
+  const joining=formId==='form-join';
+  const roomCode=joining?document.getElementById('join-code').value.trim().toUpperCase():null;
+  const name=document.getElementById(joining?'join-name':'create-name').value;
+  requesting=true;
+  try{
+   const next=await api(joining?'/api/join':'/api/create',joining?{roomCode,name}:{name});
+   if(joining&&next.roomCode!==roomCode)throw Error('Phản hồi không khớp mã phòng. Hãy thử lại.');
+   onSession(next);
+  }catch(err){gameError(err);}
+  finally{requesting=false;}
+  return;
+ }
  if(e.target.id==='statement'){e.preventDefault();if(matchMedia('(max-width:759px)').matches)openStatementChoice();else act('submit',{text:document.getElementById('statement-text').value,stance:document.getElementById('stance').value});}
  if(e.target.id==='action-form'){e.preventDefault();const kind=document.getElementById('bank').value;const bankAction=kind==='NONE'?{type:'NONE'}:kind==='INSPECT'?{type:'INSPECT',targetId:document.getElementById('target').value}:{type:'EXPEL',targetId:document.getElementById('target').value,amount:Number(document.getElementById('amount').value)};act('submit',{action:{invest:document.getElementById('invest').checked,bankAction}});}
 });
 function setPlayersOpen(open,moveFocus=true){
+ const changed=peopleOpen!==open;
  peopleOpen=open;const panel=document.getElementById('players-panel'),toggle=document.getElementById('toggle-players'),backdrop=document.getElementById('players-backdrop');
  panel?.setAttribute('data-open',String(open));toggle?.setAttribute('aria-expanded',String(open));if(backdrop)backdrop.hidden=!open;
  document.body.classList.toggle('gi-drawer-open',open);
  if(open){panel?.setAttribute('role','dialog');panel?.setAttribute('aria-modal','true');if(moveFocus)document.getElementById('close-players')?.focus();}
  else{panel?.removeAttribute('role');panel?.removeAttribute('aria-modal');if(moveFocus)toggle?.focus();}
+ if(changed&&open)window.GreenTrapMotion?.drawer(panel);
 }
 app.addEventListener('click',e=>{
  const button=e.target.closest('button'),id=button?.id||e.target.id;
@@ -474,5 +447,14 @@ document.addEventListener('keydown',e=>{
 });
 matchMedia('(max-width:1199px)').addEventListener('change',()=>{if(peopleOpen)setPlayersOpen(false);});
 app.addEventListener('keyup',hideRoleText);document.addEventListener('visibilitychange',()=>{if(document.hidden)hideRoleText();});
-const saved=sessionStorage.getItem(storeKey);if(saved){try{session=JSON.parse(saved);onSession(session)}catch{session=null;save()}}
-if(!session){const q=new URLSearchParams(location.search).get('room');if(q&&/^[A-Z2-9]{6}$/i.test(q)){document.getElementById('join-code').value=q.toUpperCase();}}
+const inviteCode=new URLSearchParams(location.search).get('room')?.toUpperCase();
+const invitedRoom=inviteCode&&/^[A-Z2-9]{6}$/.test(inviteCode)?inviteCode:null;
+const saved=sessionStorage.getItem(storeKey);
+if(saved){
+ try{
+  const previous=JSON.parse(saved);
+  if(previous&&(!invitedRoom||previous.roomCode===invitedRoom))onSession(previous);
+ }catch{session=null;save();}
+}
+if(!session&&invitedRoom)document.getElementById('join-code').value=invitedRoom;
+if(!session)window.GreenTrapMotion?.home();

@@ -53,7 +53,8 @@ test('desktop game adapts its card to the viewport and preserves protected layou
   for(let i=1;i<13;i++)manager.join(room.code,'Player '+i);
   for(const peer of room.players)manager.connected(room,peer);
   browser=await chromium.launch({channel:process.env.BROWSER_CHANNEL||'chrome',headless:true});
-  const page=await browser.newPage({viewport:{width:1440,height:900}});
+  // This matrix measures settled layout; motion.test.cjs exercises live transitions.
+  const page=await browser.newPage({viewport:{width:1440,height:900},reducedMotion:'reduce'});
   await page.addInitScript(session=>{performance.now=()=>0;sessionStorage.setItem('green-impact-multiplayer-session',JSON.stringify(session));},{roomCode:room.code,playerId:player.id,token:player.secret});
   await page.goto('http://127.0.0.1:'+server.address().port);await page.locator('#start').click();
   await page.locator('.gi-area-project img').waitFor();
@@ -62,7 +63,7 @@ test('desktop game adapts its card to the viewport and preserves protected layou
    await page.setViewportSize({width,height});
    const geometry=await page.evaluate(()=>{
     const rect=selector=>document.querySelector(selector).getBoundingClientRect().toJSON();
-    return {frame:rect('.gi-area-project .gi-card-image-viewport'),project:rect('.gi-area-project'),actions:rect('.gi-area-actions'),panel:rect('.gi-action-panel'),discussion:rect('.gi-area-discussion'),players:rect('.gi-area-players'),phase:rect('.gi-phase-header'),overflow:document.documentElement.scrollWidth>innerWidth,verticalOverflow:document.documentElement.scrollHeight>innerHeight,font:getComputedStyle(document.querySelector('.phase')).fontFamily};
+    return {frame:rect('.gi-area-project .gi-card-image-viewport'),project:rect('.gi-area-project'),center:rect('.gi-center-column'),actions:rect('.gi-area-actions'),panel:rect('.gi-action-panel'),discussion:rect('.gi-area-discussion'),players:rect('.gi-area-players'),phase:rect('.gi-phase-header'),overflow:document.documentElement.scrollWidth>innerWidth,verticalOverflow:document.documentElement.scrollHeight>innerHeight,font:getComputedStyle(document.querySelector('.phase')).fontFamily};
    });
    assert.equal(geometry.overflow,false,'no horizontal overflow at '+width+'x'+height);
    assert.equal(geometry.verticalOverflow,false,'desktop does not require page scrolling');
@@ -72,6 +73,11 @@ test('desktop game adapts its card to the viewport and preserves protected layou
    assert.ok(Math.abs((geometry.frame.left+geometry.frame.right-geometry.project.left-geometry.project.right)/2)<2,'card centered on table');
    assert.ok(geometry.actions.left>=geometry.project.right,'controls beside card');
    assert.ok(geometry.players.left>=geometry.actions.right,'compact participants are at the right');
+   assert.ok(geometry.panel.height>=geometry.center.height*.55,'the editable discussion form uses the available center-column height');
+   assert.ok(geometry.discussion.bottom>=geometry.project.bottom-2,'the center column uses the board height instead of leaving empty space below');
+   const submitButton=await page.locator('#statement button[type=submit]').boundingBox();
+   const submitInset=geometry.panel.bottom-submitButton.y-submitButton.height;
+   assert.ok(submitInset>=0&&submitInset<=32,'the expanded form uses its frame instead of leaving blank space or overflowing after the button');
    const discussionGap=geometry.discussion.top-geometry.panel.bottom;
    assert.ok(discussionGap>=0&&discussionGap<=16,'public discussion follows the action card without overlap or an empty grid track');
    assert.ok(geometry.font.includes('Hanken'),'phase uses requested sans-serif font');
@@ -86,28 +92,16 @@ test('desktop game adapts its card to the viewport and preserves protected layou
   await page.waitForFunction(()=>!requesting);await page.locator('.gi-area-discussion').waitFor({state:'visible'});
   const discussionAfter=await page.locator('.gi-area-discussion').boundingBox();
   assert.ok(discussionAfter.y<discussionBefore.y-100,'sending a statement moves public discussion up');
+  assert.ok(discussionAfter.height>discussionBefore.height+100,'submitted discussion gives the released space to public statements');
   manager.submit(room,room.players[1],{text:'Tôi muốn đối chiếu bằng chứng của dự án.',stance:'UNSURE'});
   await page.getByText('Tôi muốn đối chiếu bằng chứng của dự án.',{exact:true}).waitFor({state:'visible'});
   await screenshot(page,'DESKTOP_AFTER_STATEMENT.png');
   const roleButton=page.locator('#show-role');
   const privateCard=page.locator('#role .gi-private-role-card');
-  const wallet=page.locator('#open-wallet');
-  const walletDialog=page.locator('#desktop-wallet-dialog');
-  await wallet.click();
-  const coin=walletDialog.locator('img');
+  const coin=page.locator('.gi-desktop-wallet img');
   await coin.waitFor();
-  assert.equal((await coin.boundingBox()).width,224);
-  await screenshot(page,'DESKTOP_COIN_SWIPE_POPUP.png');
-  const {x,y,width,height}=await coin.boundingBox();
-  await page.mouse.move(x+width/2,y+height/2);
-  await page.mouse.down();
-  await page.mouse.move(x+width/2,y+height/2+100,{steps:5});
-  await page.mouse.up();
-  await walletDialog.waitFor({state:'detached'});
-  assert.equal(await wallet.evaluate(el=>el===document.activeElement),true);
-  await wallet.click();
-  await page.keyboard.press('Escape');
-  await walletDialog.waitFor({state:'detached'});
+  assert.ok((await coin.boundingBox()).width>=90);
+  await screenshot(page,'DESKTOP_SHORTER_PHASE_BAR.png');
   assert.equal(await privateCard.isVisible(),false);
   await roleButton.hover();
   await page.mouse.down();
@@ -139,12 +133,15 @@ test('desktop game adapts its card to the viewport and preserves protected layou
    assert.ok(await page.evaluate(()=>document.documentElement.scrollHeight<=innerHeight),'dense '+phase+' content stays inside the desktop board');
    await screenshot(page,'DESKTOP_NEW_'+phase+'.png');
    if(phase==='BLIND_ACTION'){
+    const panel=await page.locator('.gi-action-panel').boundingBox(),lock=await page.locator('#lock-action').boundingBox();
+    const lockInset=panel.y+panel.height-lock.y-lock.height;
+    assert.ok(lockInset>=0&&lockInset<=32,'the secret-action controls fill their expanded frame without overflowing');
     await page.setViewportSize({width:1280,height:720});
     await page.locator('#bank').selectOption('EXPEL');
     const expanded=await page.locator('.gi-action-panel').boundingBox();
     await page.locator('#amount').scrollIntoViewIfNeeded();
     assert.ok(await page.evaluate(()=>document.documentElement.scrollHeight<=innerHeight),'expanded bank fields stay inside the desktop board');
-    await page.locator('.gi-area-discussion .gi-statement').last().scrollIntoViewIfNeeded();
+    await page.locator('.gi-area-discussion .gi-statement').last().evaluate(el=>el.scrollIntoView({block:'center',behavior:'instant'}));
     await page.waitForFunction(()=>{const rect=document.querySelector('.gi-area-discussion .gi-statement:last-child').getBoundingClientRect();return rect.top>=0&&rect.bottom<=innerHeight;});
     await page.locator('#lock-action').click();
     await page.locator('#action-form').waitFor({state:'detached'});
@@ -163,6 +160,14 @@ test('desktop game adapts its card to the viewport and preserves protected layou
   }
   while(room.state.phase!=='GAME_OVER'){now=room.deadline;manager.tick();}
   await page.waitForFunction(()=>document.querySelector('.phase')?.textContent.includes('KẾT THÚC'));
+  const ending=page.locator('.gi-ending-screen');
+  await ending.locator('details summary').first().click();
+  await page.evaluate(()=>window.scrollTo(0,0));
+  await page.mouse.move(600,350);
+  await page.mouse.wheel(0,900);
+  await page.waitForFunction(()=>window.scrollY>0);
+  await ending.locator('.ending-home').scrollIntoViewIfNeeded();
+  assert.ok((await ending.locator('.ending-home').boundingBox()).y>=0);
   await screenshot(page,'DESKTOP_NEW_GAME_OVER.png');
  }finally{if(browser)await browser.close();server.closeAllConnections();await new Promise(resolve=>server.close(resolve));}
 });
@@ -335,4 +340,37 @@ test('mobile gameplay follows server time, validates costs and completes ten rou
   } finally {
     if(browser)await browser.close();server.closeAllConnections();await new Promise(resolve=>server.close(resolve));
   }
+});
+
+test('an invite takes precedence over a saved session and accepts matching display names', {skip: !playwrightPath}, async () => {
+ const {chromium}=require(playwrightPath);
+ const {server,manager}=require('../server/server.cjs');
+ await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));
+ let browser;
+ try{
+  const base='http://127.0.0.1:'+server.address().port;
+  const {room,player}=manager.create('Minh');
+  browser=await chromium.launch({channel:process.env.BROWSER_CHANNEL||'chrome',headless:true});
+  const guest=await browser.newPage();
+  await guest.goto(base);
+  await guest.locator('#create-name').fill('Minh');
+  await guest.locator('#form-create button').click();
+  await guest.locator('#leave').waitFor();
+  const oldCode=await guest.locator('.lobby-invite .code').textContent();
+  assert.notEqual(oldCode,room.code);
+  const roomCount=manager.rooms.size;
+  await guest.goto(base+'/?room='+room.code.toLowerCase());
+  assert.equal(await guest.locator('#join-code').inputValue(),room.code);
+  await guest.locator('#join-name').fill('Minh');
+  await guest.locator('#form-join button').click();
+  await guest.locator('.lobby-invite .code').filter({hasText:room.code}).waitFor();
+  assert.equal(await guest.locator('#start').count(),0);
+  assert.equal(room.hostId,player.id);
+  assert.equal(room.players.length,2);
+  assert.notEqual(room.players[0].id,room.players[1].id);
+  assert.equal(manager.rooms.size,roomCount);
+  await guest.reload();
+  await guest.locator('.lobby-invite .code').filter({hasText:room.code}).waitFor();
+  assert.equal(room.players.length,2);
+ }finally{if(browser)await browser.close();server.closeAllConnections();await new Promise(resolve=>server.close(resolve));}
 });
