@@ -150,6 +150,7 @@ function render(){if(!snapshot||!session)return;const s=snapshot;const me=s.game
    <span class="eyebrow">DỰ ÁN ĐANG ĐƯỢC ĐƯA RA</span>
    <section class="project"><small>HỒ SƠ ${escapeHTML(project.id)}</small><h2>${escapeHTML(project.title)}</h2><p>${escapeHTML(project.description)}</p></section>
   </section>
+  <div class="gi-center-column">
   <section class="gi-area-actions" aria-label="Hồ sơ và hành động cá nhân">
    <div class="card gi-profile-panel${me.inspections?.length?' gi-has-inspections':''}"><div class="flex"><h2>Hồ sơ cá nhân</h2><span class="coins"><img class="gi-coin-icon" src="/brand/green-coin.png" alt="" width="28" height="28"> ${me.coins}</span></div><p><b>${escapeHTML(me.name)}</b> · ${me.isAlive?'Còn trong ván':'Đã bị loại'}</p>
     <div id="role" class="note" data-role="${escapeHTML(me.role)}">Vai trò của bạn: <b id="role-value">••••••</b><button id="show-role" type="button">Nhấn giữ để xem</button></div>
@@ -161,6 +162,7 @@ function render(){if(!snapshot||!session)return;const s=snapshot;const me=s.game
    <div class="card"><h2>Nhận định trong phòng</h2><div class="hist">${discussion}</div></div>
    <details class="card gi-history"><summary>Nhật ký · ${g.history.length} lượt</summary><div class="hist">${g.history.map(h=>'<div>Lượt '+h.round+': '+escapeHTML(h.projectTitle)+' · '+(h.approved?'Thông qua':'Bác bỏ')+' · '+escapeHTML(h.verdictLabel)+'</div>').join('')||'<p class="tiny">Chưa có kết quả.</p>'}</div></details>
   </section>
+  </div>
  </div>
  <button id="players-backdrop" class="gi-players-backdrop" type="button" aria-label="Đóng danh sách người chơi" ${peopleOpen?'':'hidden'}></button><button id="toggle-players" class="gi-toggle-players" aria-controls="players-panel" aria-expanded="${peopleOpen}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-4M16 3a4 4 0 0 1 0 8"/></svg><span>Hội đồng · ${s.room.players.length}</span></button>`;
  if(peopleOpen)setPlayersOpen(true,false);
