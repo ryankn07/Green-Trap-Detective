@@ -655,8 +655,8 @@ body.copy-confirmed::after{content:"";position:fixed;z-index:99;inset:0;pointer-
  body.gi-gameplay>.top{display:none}
  body.gi-gameplay #app{padding:0 12px calc(84px + env(safe-area-inset-bottom))}
  .gi-mobile-topbar{position:sticky;z-index:25;top:0;display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:56px;margin:0 -12px 12px;padding:8px 14px;background:#fffef8;border-bottom:1px solid #dce5d8}
- .gi-top-wallet{display:flex;align-items:center;gap:5px;color:#0c4c34;font-size:20px;font-variant-numeric:tabular-nums}
- .gi-top-wallet img{width:26px;height:26px;object-fit:contain}
+ .gi-top-wallet{display:flex;align-items:center;gap:5px;padding:3px 8px 3px 4px;border:1px solid #dce5d8;border-radius:12px;background:#edf6e9;color:#0c4c34;font-size:20px;font-variant-numeric:tabular-nums}
+ .gi-top-wallet img{width:48px;height:48px;flex:none;object-fit:contain}
  .gi-top-wallet>span{font-size:11px}
  #mobile-show-role{display:grid;place-items:center;width:44px;height:40px;padding:5px;background:#edf6e9;border:1px solid #dce5d8;border-radius:12px;color:#0c4c34;touch-action:none;user-select:none}
  #mobile-show-role svg{width:33px;height:29px;fill:none;stroke:currentColor;stroke-width:3}
