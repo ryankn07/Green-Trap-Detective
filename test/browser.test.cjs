@@ -75,6 +75,23 @@ test('desktop game adapts its card to the viewport and preserves protected layou
    assert.ok(geometry.font.includes('Hanken'),'phase uses requested sans-serif font');
    if(width===1440)await screenshot(page,'DESKTOP_NEW_DEBATE.png');
   }
+  const roleButton=page.locator('#show-role');
+  const privateCard=page.locator('#role .gi-private-role-card');
+  const coin=page.locator('.gi-phase-header .gi-coin-icon');
+  assert.equal((await coin.boundingBox()).width,40);
+  assert.equal(await privateCard.isVisible(),false);
+  await roleButton.hover();
+  await page.mouse.down();
+  await privateCard.locator('img').waitFor();
+  await page.waitForFunction(()=>document.querySelector('#role .gi-private-role-card img')?.naturalWidth>0);
+  await screenshot(page,'DESKTOP_ROLE_CARD.png');
+  await page.mouse.up();
+  await privateCard.waitFor({state:'hidden'});
+  await roleButton.focus();
+  await page.keyboard.down('Space');
+  await privateCard.waitFor();
+  await page.keyboard.up('Space');
+  await privateCard.waitFor({state:'hidden'});
   // Compare the exact same renderer/state with and without the appended desktop block.
   const css=fs.readFileSync(path.join(__dirname,'../ui/style.css'),'utf8');
   const baseline=css.split('/* Desktop game — Garden table.')[0];
