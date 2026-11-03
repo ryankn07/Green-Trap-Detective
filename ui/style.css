@@ -842,6 +842,7 @@ body.copy-confirmed::after{content:"";position:fixed;z-index:99;inset:0;pointer-
   display:flex;align-items:center;min-height:clamp(90px,8vw,112px);
   padding-inline-end:calc(clamp(76px,8vw,112px) + 110px);font-size:26px;
  }
+ body.gi-gameplay .gi-action-panel>.gi-discussion-title {font-size:36px}
  body.gi-gameplay .gi-desktop-wallet {
   position:absolute;inset-block-start:12px;inset-inline-end:68px;
   display:flex;align-items:center;gap:6px;color:var(--entry-ink);

@@ -23,6 +23,8 @@ Integrated main through `3cf5626` (the separately authored heading/copy, sentenc
 
 ## Local visual and timing evidence
 
+After main advanced again to `2c8e64c`, preserved its larger discussion heading and removal of redundant notes. Rechecked all affected browser/mobile/motion/static-build cases: **10 passed, 0 failed, 0 skipped**; repository and regenerated bundle checks also passed. The motion hook retains the public statement identity attribute without restoring removed copy.
+
 Artifacts are outside the repository at `../outputs/motion-verification/`: three screenshots capture expanded, contracting and confirmed states; another shows the mobile panel. `MOTION_MEASUREMENTS.json` records exact geometry and one natural transition sample.
 
 At 1440×900, the action card measured **538.66 → 258.23 → 250.09 px** high; discussion top moved **626.66 → 346.23 → 338.09 px**. The intermediate screenshot holds the actual WAAPI animation at 130 ms for inspection. A separate natural lock transition sample recorded no long task during its roughly 900 ms observation. At 390×844 the panel remained inside the viewport, with no horizontal overflow or page error.
