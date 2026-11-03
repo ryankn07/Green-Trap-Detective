@@ -144,6 +144,7 @@ function render(){if(!snapshot||!session)return;const s=snapshot;const me=s.game
   </header>
   <aside class="card gi-area-players" id="players-panel" data-open="${peopleOpen}" aria-label="Danh sách người chơi">
    <div class="flex"><h2>Hội đồng · ${s.room.players.length}${s.room.maxPlayers?' / '+s.room.maxPlayers:''}</h2><button type="button" class="gi-close-players" id="close-players" aria-label="Đóng danh sách">×</button></div>
+   <div class="gi-desktop-wallet"><img src="/brand/green-coin.png" alt="" width="88" height="88"><strong>${me.coins} xu</strong></div>
    <div class="people" tabindex="0" role="region" aria-label="Danh sách thành viên">${playerList(s)}</div>
   </aside>
   <section class="card gi-area-project" aria-label="Dự án hiện tại">

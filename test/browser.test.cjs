@@ -77,8 +77,8 @@ test('desktop game adapts its card to the viewport and preserves protected layou
   }
   const roleButton=page.locator('#show-role');
   const privateCard=page.locator('#role .gi-private-role-card');
-  const coin=page.locator('.gi-phase-header .gi-coin-icon');
-  assert.equal((await coin.boundingBox()).width,40);
+  const coin=page.locator('.gi-desktop-wallet img');
+  assert.equal((await coin.boundingBox()).width,88);
   assert.equal(await privateCard.isVisible(),false);
   await roleButton.hover();
   await page.mouse.down();
