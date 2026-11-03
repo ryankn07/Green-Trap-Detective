@@ -138,7 +138,7 @@ test('desktop game adapts its card to the viewport and preserves protected layou
     const expanded=await page.locator('.gi-action-panel').boundingBox();
     await page.locator('#amount').scrollIntoViewIfNeeded();
     assert.ok(await page.evaluate(()=>document.documentElement.scrollHeight<=innerHeight),'expanded bank fields stay inside the desktop board');
-    await page.locator('.gi-area-discussion .gi-statement').last().scrollIntoViewIfNeeded();
+    await page.locator('.gi-area-discussion .gi-statement').last().evaluate(el=>el.scrollIntoView({block:'center',behavior:'instant'}));
     await page.waitForFunction(()=>{const rect=document.querySelector('.gi-area-discussion .gi-statement:last-child').getBoundingClientRect();return rect.top>=0&&rect.bottom<=innerHeight;});
     await page.locator('#lock-action').click();
     await page.locator('#action-form').waitFor({state:'detached'});
