@@ -2,6 +2,13 @@
 .gi-action-fx-layer{position:fixed;inset:0;z-index:10050;overflow:hidden;pointer-events:none;contain:strict}
 .gi-action-fx-coin{position:absolute;left:0;top:0;width:44px;height:44px;will-change:transform,opacity;filter:drop-shadow(0 5px 5px #66481755)}
 .gi-action-fx-coin img{display:block;width:100%;height:100%;object-fit:contain}
+.gi-investment-focus{position:absolute;inset:0;background:#061e17a6;backdrop-filter:blur(7px) saturate(.7);-webkit-backdrop-filter:blur(7px) saturate(.7);pointer-events:none}
+.gi-investment-preview{position:absolute;display:grid;place-items:center;overflow:hidden;border-radius:12px;background:#fffdf4;box-shadow:0 18px 60px #00180d88;pointer-events:none}
+.gi-investment-preview img{display:block;width:100%;height:100%;object-fit:contain}
+.gi-investment-target{position:absolute;border:1px solid #c7db9bb3;border-radius:12px;box-shadow:0 0 28px #9cc87255;pointer-events:none}
+.gi-investment-coin{filter:drop-shadow(0 14px 15px #00150ca6) drop-shadow(0 0 14px #c4dc7977);transform-style:preserve-3d}
+.gi-investment-coin::before{content:"";position:absolute;inset:8%;border:3px solid #e0c766;border-radius:50%;box-shadow:0 0 16px #e4cf8670}
+.gi-investment-coin img{position:relative}
 .gi-action-fx-ring{position:absolute;width:76px;height:76px;border:2px solid #93bd63;border-radius:50%;box-shadow:0 0 28px #b6d98866;pointer-events:none}
 .gi-action-fx-ring[data-kind="inspect"]{border-color:#74baa4;box-shadow:0 0 28px #8edac466}
 .gi-action-fx-ring[data-kind="expel"]{border-color:#df9b78;box-shadow:0 0 28px #e6a88c66}
@@ -28,3 +35,4 @@
 @keyframes gi-inspection-scan{from{transform:translateX(-100%);opacity:0}30%{opacity:1}to{transform:translateX(100%);opacity:0}}
 @keyframes gi-kick-pending{from{background-position:0 50%}to{background-position:100% 50%}}
 @media(prefers-reduced-motion:reduce){.gi-action-fx-layer{display:none}.gi-private-role-card:not([hidden]) img,.person .kick-confirmation{animation:none!important}}
+@media(prefers-reduced-motion:reduce){.gi-action-fx-layer.gi-investment-active{display:block}}

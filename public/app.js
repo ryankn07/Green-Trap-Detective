@@ -22,6 +22,7 @@ function showPhaseTransition(previous,current){
  if(!previous||previous.room.code!==current.room.code)return;
  const newProject=next.phase==='DEBATE'&&Boolean(next.project?.id)&&(!before||before.gameId!==next.gameId||before.round!==next.round||before.project?.id!==next.project.id);
  if(before?.gameId===next.gameId&&before.round===next.round&&before.phase===next.phase&&!newProject)return;
+ window.GreenTrapActionFX?.clear();
  clearPhaseTransition();
  if(document.hidden)return;
  const remaining=current.deadline?current.deadline-current.serverTime:Infinity;
@@ -258,6 +259,7 @@ function recoverSession(error){
  peopleOpen=false;document.body.classList.remove('gi-drawer-open','gi-gameplay','gi-ending');
  aborter?.abort();session=null;snapshot=null;save();clearStatementDraft();
  window.GreenTrapTutorial?.receive(null);
+ window.GreenTrapActionFX?.clear();
  try{const url=new URL(location.href);url.searchParams.delete('room');history.replaceState({},'',url.pathname+url.search+url.hash);}catch{}
  statusEl.textContent=kicked?'Đã rời phòng':expiredRoom?'Phòng không còn tồn tại':'Phiên chơi hết hạn';
  app.innerHTML=`<section class="card welcome"><h1>${kicked?'Bạn đã được đưa ra khỏi phòng':expiredRoom?'Phòng đã kết thúc hoặc hết hạn':'Phiên chơi không còn hợp lệ'}.</h1><p>${kicked?'Chủ phòng đã kick bạn khỏi phòng.':expiredRoom?'Phòng này không còn trên máy chủ. Phòng có thể đã bị đóng hoặc hết thời gian lưu.':'Phiên xác thực đã hết hạn hoặc không còn hợp lệ.'} Bạn có thể quay về trang đầu để tạo phòng mới hoặc nhập mã phòng khác.</p><div class="actions"><button id="return-home" class="primary">Tạo hoặc tham gia phòng khác <span aria-hidden="true">→</span></button></div></section>`;
