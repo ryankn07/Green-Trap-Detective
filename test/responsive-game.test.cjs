@@ -28,9 +28,10 @@ test('resizing keeps the current design, drafts and privacy; a resumed tab accep
    }
   }
   await page.locator('#show-role').hover();await page.mouse.down();await page.locator('#role .gi-private-role-card').waitFor({state:'visible'});
-  await page.setViewportSize({width:1000,height:700});assert.equal(await page.locator('#role .gi-private-role-card').isVisible(),false,'resize conceals a held role');await page.mouse.up();
+  await page.evaluate(()=>{window.roleHiddenAtResize=null;addEventListener('resize',()=>{if(innerWidth===1000)window.roleHiddenAtResize=document.querySelector('#role .gi-private-role-card').hidden;},{once:true});});
+  await page.setViewportSize({width:1000,height:700});await page.waitForFunction(()=>window.roleHiddenAtResize!==null);assert.equal(await page.evaluate(()=>window.roleHiddenAtResize),true,'the resize event immediately conceals a held role');await page.mouse.up();
   await page.locator('#toggle-players').click();assert.equal(await page.locator('#players-panel').isVisible(),true);
-  await page.setViewportSize({width:1440,height:900});assert.equal(await page.locator('#players-panel').getAttribute('data-open'),'false','returning to desktop clears the drawer state');assert.equal(await page.locator('#players-panel').isVisible(),true,'desktop council is inline');
+  await page.setViewportSize({width:1440,height:900});await page.waitForFunction(()=>document.getElementById('players-panel').dataset.open==='false');assert.equal(await page.locator('#players-panel').isVisible(),true,'returning to desktop closes the drawer and shows the inline council');
   const cdp=await page.context().newCDPSession(page);
   await cdp.send('Page.setWebLifecycleState',{state:'frozen'});manager.submit(room,room.players[1],{text:'Cần thêm bằng chứng.',stance:'UNSURE'});await cdp.send('Page.setWebLifecycleState',{state:'active'});
   await page.waitForFunction(()=>snapshot?.game?.currentStatements?.some(item=>item.text==='Cần thêm bằng chứng.'));

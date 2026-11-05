@@ -21,11 +21,11 @@
  }
  const firstVisible=selector=>[...document.querySelectorAll(selector)].find(onScreen);
  function point(node){if(!onScreen(node))return null;const box=node.getBoundingClientRect();return {x:box.left+box.width/2,y:box.top+box.height/2};}
- function track(node,key,frames,duration=700,delay=0){
+ function track(node,key,frames,duration=700,delay=0,easing='cubic-bezier(.2,.8,.2,1)',allowInvestmentMotion=false){
   if(document.hidden||!node?.animate)return null;
-  if(reduced.matches){frames=frames.map(frame=>({opacity:frame.opacity??1}));duration=Math.min(duration,160);delay=0;}
+  if(reduced.matches&&!allowInvestmentMotion){frames=frames.map(frame=>({opacity:frame.opacity??1}));duration=Math.min(duration,160);delay=0;}
   try{
-   const animation=node.animate(frames,{id:'gt-action-'+key,duration,delay,easing:'cubic-bezier(.2,.8,.2,1)',fill:'both'});
+   const animation=node.animate(frames,{id:'gt-action-'+key,duration,delay,easing,fill:'both'});
    animations.add(animation);animation.finished.catch(()=>{}).finally(()=>animations.delete(animation));return animation;
   }catch{return null;}
  }
@@ -37,8 +37,8 @@
  function overlay(){
   if(!layer?.isConnected){layer=document.createElement('div');layer.className='gi-action-fx-layer';layer.setAttribute('aria-hidden','true');document.body.append(layer);}return layer;
  }
- function transient(node,key,frames,duration,delay=0){
-  overlay().append(node);flying.add(node);const animation=track(node,key,frames,duration,delay);
+ function transient(node,key,frames,duration,delay=0,easing,allowInvestmentMotion=false){
+  overlay().append(node);flying.add(node);const animation=track(node,key,frames,duration,delay,easing,allowInvestmentMotion);
   if(!animation){node.remove();flying.delete(node);return;}
   animation.finished.catch(()=>{}).finally(()=>{node.remove();flying.delete(node);animation.cancel();if(layer&&!layer.childElementCount){layer.remove();layer=null;}});
  }
@@ -54,7 +54,9 @@
   transient(badge,'seal-'+kind,[{opacity:0,transform:'translate(-50%,-50%) scale(.45) rotate(-18deg)'},{opacity:.95,transform:'translate(-50%,-50%) scale(1.1) rotate(0deg)',offset:.3},{opacity:.9,transform:'translate(-50%,-50%) scale(1)',offset:.7},{opacity:0,transform:'translate(-50%,-58%) scale(1.15)'}],1000);
  }
  function coins(origin,destination,count,kind){
-  if(!origin||!destination||reduced.matches||document.hidden)return;
+  if(!origin||document.hidden)return;
+  if(kind==='invest'){investment(origin,destination);return;}
+  if(!destination||reduced.matches)return;
   for(let i=0;i<Math.min(count,5);i++){
    const token=document.createElement('span');token.className='gi-action-fx-coin';token.dataset.kind=kind;
    const image=document.createElement('img');image.src='/brand/green-coin.png';image.alt='';token.append(image);
@@ -63,6 +65,52 @@
    transient(token,'coin-'+kind,[{opacity:0,transform:`translate3d(${x}px,${y}px,0) rotateY(0deg) scale(.6)`},{opacity:1,transform:`translate3d(${x-7}px,${y-18}px,0) rotateY(80deg) scale(1)`,offset:.15},{opacity:1,transform:`translate3d(${midX}px,${midY}px,0) rotateY(220deg) scale(1.05)`,offset:.52},{opacity:1,transform:`translate3d(${tx}px,${ty}px,0) rotateY(360deg) scale(.7)`,offset:.88},{opacity:0,transform:`translate3d(${tx}px,${ty+9}px,0) rotateY(380deg) scale(.25)`}],760,i*60);
   }
   ripple(destination,kind);
+ }
+ function investment(origin,fallback){
+  // Owner-requested investment feedback also runs in Codex's reduced-motion browser.
+  overlay().classList.add('gi-investment-active');
+  const duration=2600,size=Math.min(136,innerWidth*.28,innerHeight*.24),source=document.querySelector('.gi-area-project .gi-card-image-viewport');
+  const original=source?.querySelector('img'),rect=source?.getBoundingClientRect();
+  const fullyVisible=rect&&onScreen(source)&&rect.left>=8&&rect.right<=innerWidth-8&&rect.top>=12&&rect.bottom<=innerHeight-12;
+  let target=null,destination=fallback||{x:innerWidth/2,y:innerHeight*.4},stage={x:innerWidth*.56,y:Math.max(90,innerHeight*.38)},preview=null;
+  if(fullyVisible){
+   target={left:rect.left-6,top:rect.top-6,width:rect.width+12,height:rect.height+12};destination={x:rect.left+rect.width/2,y:rect.top+rect.height/2};
+  }else if(original?.naturalWidth){
+   const height=Math.min(260,innerHeight*.4,innerWidth*.58*original.naturalHeight/original.naturalWidth),width=height*original.naturalWidth/original.naturalHeight;
+   target={left:(innerWidth-width)/2,top:Math.max(12,innerHeight*.1),width,height};destination={x:innerWidth/2,y:target.top+height/2};
+   stage={x:innerWidth/2,y:Math.min(innerHeight-size*.7,target.top+height+size*.75)};
+   preview=document.createElement('div');preview.className='gi-investment-preview';const image=document.createElement('img');image.src=original.currentSrc||original.src;image.alt='';preview.append(image);
+  }
+  const focus=document.createElement('div');focus.className='gi-investment-focus';
+  if(target&&!preview){
+   const l=target.left,t=target.top,r=l+target.width,b=t+target.height,k=12;
+   focus.style.clipPath=`path(evenodd, "M0 0H${innerWidth}V${innerHeight}H0Z M${l+k} ${t}H${r-k}Q${r} ${t} ${r} ${t+k}V${b-k}Q${r} ${b} ${r-k} ${b}H${l+k}Q${l} ${b} ${l} ${b-k}V${t+k}Q${l} ${t} ${l+k} ${t}Z")`;
+  }
+  const fade=[{opacity:0},{opacity:1,offset:.09},{opacity:1,offset:.74},{opacity:0}];
+  transient(focus,'investment-focus',fade,duration,0,'linear',true);
+  if(target){
+   const position=node=>{Object.assign(node.style,{left:target.left+'px',top:target.top+'px',width:target.width+'px',height:target.height+'px'});};
+   if(preview){position(preview);transient(preview,'investment-preview',fade,duration,0,'linear',true);}
+   const halo=document.createElement('div');halo.className='gi-investment-target';position(halo);
+   transient(halo,'investment-target',[{opacity:0},{opacity:.5,offset:.14},{opacity:.6,offset:.62},{opacity:1,boxShadow:'0 0 0 4px #d4dd8655,0 0 54px #b2dc8588',offset:.75},{opacity:0}],duration,0,'linear',true);
+  }
+  const token=document.createElement('span');token.className='gi-action-fx-coin gi-investment-coin';token.dataset.kind='invest';token.style.width=token.style.height=size+'px';
+  const image=document.createElement('img');image.src='/brand/green-coin.png';image.alt='';token.append(image);
+  const pose=(p,scale,turn,lift=0,tilt=0)=>`translate3d(${p.x-size/2}px,${p.y-size/2+lift}px,0) perspective(850px) rotateY(${turn}deg) rotateZ(${tilt}deg) scale(${scale})`;
+  const middle={x:(stage.x+destination.x)/2,y:Math.min(stage.y,destination.y)-60};
+  transient(token,'coin-invest',[
+   {opacity:0,transform:pose(origin,.32,0,0,-18)},
+   {opacity:1,transform:pose(stage,.8,0,22,-12),offset:.12},
+   {opacity:1,transform:pose(stage,1.12,0,-15),offset:.2},
+   {opacity:1,transform:pose(stage,1.16,180,-30,4),offset:.32},
+   {opacity:1,transform:pose(stage,1.12,360,-10),offset:.42},
+   {opacity:1,transform:pose(stage,1.12,360),offset:.47},
+   {opacity:1,transform:pose(middle,1,450),offset:.57},
+   {opacity:1,transform:pose(destination,.55,680,-20),offset:.67},
+   {opacity:1,transform:pose(destination,.32,720),offset:.72},
+   {opacity:0,transform:pose(destination,.07,720),offset:.8},
+   {opacity:0,transform:pose(destination,.07,720)}
+  ],duration,0,'linear',true);
  }
  function clearTransient(){
   cancelAnimationFrame(queued);queued=0;
@@ -96,7 +144,7 @@
   const key=turnKey(value),privateAction={invest:action.invest,bank:{...action.bankAction}};
   queued=requestAnimationFrame(()=>{
    queued=0;if(document.hidden||turnKey(view)!==key||document.querySelector('.gi-phase-transition'))return;
-   const panel=firstVisible('.gi-action-panel'),center=point(panel),wallet=origin||point(firstVisible('.gi-desktop-wallet img,.gi-top-wallet img'))||center;
+   const panel=firstVisible('.gi-action-panel'),center=point(panel),wallet=origin||point(firstVisible('.gi-desktop-wallet img,.gi-top-wallet img'))||center||{x:innerWidth/2,y:Math.min(60,innerHeight/3)};
    pulse(panel,'locked');
    if(privateAction.invest){
     const project=point(firstVisible('.gi-area-project .gi-card-image-viewport,.gi-area-project'))||center;
@@ -169,5 +217,5 @@
  window.addEventListener('resize',()=>{hideRolePeek();clearTransient();resume();});
  window.addEventListener('pagehide',()=>{hideRolePeek();clearTransient();pendingInspections.clear();});
  reduced.addEventListener('change',()=>{hideRolePeek();clearTransient();resume();});
- window.GreenTrapActionFX={preview,receive,rendered,resume,rolePeek,hideRolePeek};
+ window.GreenTrapActionFX={preview,receive,rendered,resume,rolePeek,hideRolePeek,clear:clearTransient};
 })();
