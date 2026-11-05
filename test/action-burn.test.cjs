@@ -56,11 +56,15 @@ test('flame follows a rapidly shrinking bar before reveal/expulsion/ending on PC
    if(mode==='vote'){await page.locator('#bank').selectOption('EXPEL');await page.locator('#target').selectOption(target);await page.locator('#amount').selectOption('3');}
    await page.evaluate(()=>{
     window.burnFrames=[];window.burnEvents=[];
-    new MutationObserver(records=>{for(const record of records)for(const node of record.addedNodes){
-     if(node.nodeType!==1)continue;
-     if(node.matches('.gi-clock-fire')){window.burnEvents.push({type:'fire',time:performance.now()});const sample=()=>{const progress=document.querySelector('#phase-progress'),fire=document.querySelector('.gi-clock-fire');if(!fire)return;const bar=progress.getBoundingClientRect(),tip=fire.getBoundingClientRect();window.burnFrames.push({time:performance.now(),value:progress.value,error:Math.abs(tip.x+tip.width/2-bar.left-bar.width*progress.value/progress.max)});requestAnimationFrame(sample);};requestAnimationFrame(sample);}
-     if(node.matches('.gi-phase-transition'))window.burnEvents.push({type:node.dataset.phase,time:performance.now()});
-    }for(const record of records)for(const node of record.removedNodes)if(node.nodeType===1&&node.matches('.gi-clock-fire'))window.burnEvents.push({type:'fire-end',time:performance.now()});}).observe(document.body,{subtree:true,childList:true});
+    // Removal and the following chapter can share one delivery: retain record order.
+    new MutationObserver(records=>{for(const record of records){
+     for(const node of record.removedNodes)if(node.nodeType===1&&node.matches('.gi-clock-fire'))window.burnEvents.push({type:'fire-end',time:performance.now()});
+     for(const node of record.addedNodes){
+      if(node.nodeType!==1)continue;
+      if(node.matches('.gi-clock-fire')){window.burnEvents.push({type:'fire',time:performance.now()});const sample=()=>{const progress=document.querySelector('#phase-progress'),fire=document.querySelector('.gi-clock-fire');if(!fire)return;const bar=progress.getBoundingClientRect(),tip=fire.getBoundingClientRect();window.burnFrames.push({time:performance.now(),value:progress.value,error:Math.abs(tip.x+tip.width/2-bar.left-bar.width*progress.value/progress.max)});requestAnimationFrame(sample);};requestAnimationFrame(sample);}
+      if(node.matches('.gi-phase-transition'))window.burnEvents.push({type:node.dataset.phase,time:performance.now()});
+     }
+    }}).observe(document.body,{subtree:true,childList:true});
    });
    await page.locator('#lock-action').click();await page.locator('.gi-clock-fire').waitFor();
    const started=await page.evaluate(()=>actionBurnHold.started);assert.equal(await page.evaluate(()=>app.inert),true);
@@ -96,6 +100,7 @@ test('flame follows a rapidly shrinking bar before reveal/expulsion/ending on PC
    const empty=frames.filter(frame=>frame.value===0);assert.ok(empty.length>=3&&burnEnd.time-empty[0].time>=100,'the empty bar remains visible briefly before the chapter');
    assert.equal(await page.locator('.gi-clock-burn-layer').count(),0,'the burn layer is removed with the effect');
    assert.ok(events.find(e=>!['fire','fire-end'].includes(e.type)).time>=burnEnd.time,'the chapter follows the completed burn');
+   assert.ok(events.findIndex(e=>!['fire','fire-end'].includes(e.type))>events.indexOf(burnEnd),'DOM mutations remove the fire before adding its chapter');
    assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);
    await page.reload();await page.locator(mode==='vote'?'.gi-ending-screen':'#next').waitFor();assert.equal(await page.locator('.gi-clock-fire').count(),0,'refresh never replays a completed burn');
    await page.close();

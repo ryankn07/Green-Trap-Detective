@@ -17,9 +17,12 @@ GREEN TRAP DETECTIVE is a browser-based Vietnamese multiplayer social-deduction 
 Read the current design record that matches the surface being changed:
 
 - `docs/UI_REDESIGN.md` for the entry page and overall visual direction.
-- `docs/DESKTOP_GAME_RELEASE_20261103.md` for the current PC gameplay layout (the earlier plan is archived).
+- `docs/DESKTOP_GAME_RELEASE_20261103.md` for the current PC gameplay layout and the owner-approved 760–1199px compact-window adaptation (the earlier plan is archived).
 - `docs/BRAND_AND_CARD_FINISH.md` and `docs/CARD_HD_FIX.md` for brand treatment and original card assets.
 - `docs/ENDINGS.md` for winner-based video playback, ending presentation and the team's no-QR decision.
+- `docs/TUTORIAL_VIDEO.md` for the owner-requested right masthead guide button and fast tutorial player.
+- `docs/GAME_RULES.md` for the full rules reader opened from the lobby's Cách chơi panel.
+- `docs/ACTION_EFFECTS.md` for private, server-confirmed action feedback and immediate role-hiding requirements.
 
 `docs/history/briefs/UI_REFACTOR_BRIEF.md` and `docs/history/briefs/LOBBY_REDESIGN.md` are historical task records. Their older layout and capacity assumptions are superseded where they conflict with later owner-approved work. Always verify current behavior against source code and tests.
 
@@ -47,7 +50,10 @@ Read the current design record that matches the surface being changed:
 - `ui/style.css`: current visual system and responsive styling.
 - `ui/card-ui.js`: Canva-card integration, private role-card presentation, and current DOM/layout enhancement logic.
 - `ui/ending-ui.js`, `ui/ending.css`, `ui/ending.html`: final results, supplied films and the standalone ending viewer.
-- `server/ending-media.cjs`: exact media allowlist, streaming and byte-range handling.
+- `ui/tutorial-ui.js`, `ui/tutorial.css`, `ui/tutorials/`: in-page guide player and the approved fast tutorial.
+- `ui/rules-ui.js`, `ui/rules.css`: full rules dialog behavior and presentation; its content is in `ui/index.html`.
+- `ui/action-fx.js`, `ui/action-fx.css`: local choice feedback, confirmed coin flights and authorized private role effects; renderer hooks live in `public/app.js`.
+- `server/ending-media.cjs`: exact ending/tutorial media allowlists, streaming and byte-range handling.
 - `ui/cards/PROJ_01.png` … `PROJ_25.png`: original project-card images.
 - `ui/cards-hd/`: canonical native-resolution PNG artwork; never modify it as part of WebP conversion.
 - `ui/cards-hd-webp/`: generated pixel-exact WebP derivatives; retain the PNG fallback.

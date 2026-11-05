@@ -1,6 +1,10 @@
 # GREEN IMPACT — UI design finish
 
+Owner addition — 5 November 2026, subsequently refined: the shared masthead has a right-side tutorial-video control. The player fits the film's 16:9 ratio inside the browser, with modest outer margins and no side letterboxing. The original logo and title remain at the left gutter. The guide includes real inspection and host AFK-kick demonstrations. This explicit request supersedes the older removal of extra header actions for this single control. See [tutorial video](TUTORIAL_VIDEO.md).
+
 Date: 2026-11-01. Git baseline: `4b7eb19f3402cfbec7b14ede1a7ed92453f32b6d`.
+
+Owner addition — 5 November 2026: the lobby's Cách chơi panel includes **Xem toàn bộ luật chơi**, above Rời phòng. It opens a paper-colored rules reader with a contents list and internal scrolling. The content follows the current engine and room manager; see [full rules reader](GAME_RULES.md).
 
 ## Delivered design
 

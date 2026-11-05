@@ -11,6 +11,12 @@
 <link rel="stylesheet" href="/motion.css">
 <script defer src="/card-webp-manifest.js"></script>
 <link rel="stylesheet" href="/ending.css">
+<link rel="stylesheet" href="/tutorial.css">
+<script defer src="/tutorial-ui.js"></script>
+<link rel="stylesheet" href="/rules.css">
+<script defer src="/rules-ui.js"></script>
+<link rel="stylesheet" href="/action-fx.css">
+<script defer src="/action-fx.js"></script>
 <script defer src="/ending-ui.js"></script>
 <script defer src="/motion.js"></script>
 <script defer src="/app.js"></script>
@@ -35,6 +41,10 @@
   <div class="brand"><img class="brand-logo" src="/brand/green-trap-detective.png" alt="" width="799" height="1030" decoding="async"><div><b class="wordmark">Green Trap Detective</b><small>Trò chơi suy luận môi trường</small></div></div>
   <span id="connection" hidden></span>
   <span id="ending-nav-label" class="ending-edition ending-nav-label" hidden></span>
+  <button type="button" id="tutorial-open" class="tutorial-open" aria-label="Xem video hướng dẫn" aria-haspopup="dialog" aria-controls="tutorial-dialog" title="Xem video hướng dẫn">
+    <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m9 5 11 7-11 7Z"/><path d="M4 5v14"/></svg>
+    <span>Xem video hướng dẫn</span>
+  </button>
 </header>
 <main id="app">
   <section class="welcome">
@@ -62,6 +72,88 @@
     </div>
   </section>
 </main>
+<dialog id="rules-dialog" class="rules-dialog" aria-labelledby="rules-title">
+  <div class="rules-heading">
+    <div><p>GREEN TRAP DETECTIVE</p><h2 id="rules-title">Toàn bộ luật chơi</h2></div>
+    <button type="button" id="rules-close" class="rules-close" aria-label="Đóng luật chơi" autofocus><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m6 6 12 12M18 6 6 18"/></svg></button>
+  </div>
+  <div id="rules-content" class="rules-content" tabindex="0" role="region" aria-label="Nội dung luật chơi">
+    <p class="rules-intro">Từ 3 người chơi · Mỗi người bắt đầu với 2 xu · Tối đa 10 lượt</p>
+    <nav class="rules-index" aria-label="Mục lục luật chơi">
+      <a href="#rules-setup">01 · Chuẩn bị &amp; chia phe</a><a href="#rules-phases">02 · Một lượt chơi</a>
+      <a href="#rules-coins">03 · Đầu tư &amp; tính xu</a><a href="#rules-inspect">04 · Kiểm chứng vai trò</a>
+      <a href="#rules-expel">05 · Góp xu trục xuất</a><a href="#rules-eliminated">06 · Bị loại &amp; mất kết nối</a>
+      <a href="#rules-host">07 · Quyền của chủ phòng</a><a href="#rules-winning">08 · Thắng, thua &amp; kết thúc</a>
+    </nav>
+
+    <section aria-labelledby="rules-setup"><h3 id="rules-setup" tabindex="-1">01 · Chuẩn bị &amp; chia phe</h3>
+      <p>Tạo phòng hoặc nhập mã phòng gồm 6 ký tự do bạn bè gửi. Cần ít nhất 3 người và tất cả đã kết nối để chủ phòng bắt đầu. Ván đã bắt đầu thì không nhận thêm người mới; người chơi cũ có thể kết nối lại bằng phiên chơi của mình.</p>
+      <p>Mỗi người nhận <strong>2 xu</strong> và một vai trò ngẫu nhiên, bí mật:</p>
+      <ul><li><strong>Người Bảo Vệ:</strong> muốn các dự án tốt được thông qua.</li><li><strong>Người Phá Hoại:</strong> muốn các dự án xấu, tẩy xanh được thông qua.</li></ul>
+      <p>Số vai Phá Hoại bằng phần nguyên của <strong>(số người − 1) ÷ 2</strong>; các vai còn lại là Bảo Vệ. Ví dụ, 5 người được chia thành 3 Bảo Vệ và 2 Phá Hoại.</p>
+      <p>Nhấn giữ biểu tượng mắt để xem vai trò của mình, không tốn xu. Vai trò, ví xu, hành động bí mật và kết quả kiểm chứng của bạn được giữ riêng trong lúc chơi.</p>
+    </section>
+
+    <section aria-labelledby="rules-phases"><h3 id="rules-phases" tabindex="-1">02 · Một lượt chơi</h3>
+      <p>Mỗi ván chọn ngẫu nhiên 10 dự án khác nhau, mỗi lượt xét một dự án. <strong>Mọi người thao tác đồng thời theo đồng hồ.</strong></p>
+      <h4>Thảo luận · 120 giây</h4>
+      <ul><li>Đọc thẻ dự án, chọn Ủng hộ, Phản đối hoặc Chưa chắc chắn và gửi lý do công khai dài 1–500 ký tự.</li><li>Mỗi người gửi một nhận định trong lượt; đã gửi thì không sửa lại. Quan điểm công khai không khóa lựa chọn đầu tư sau đó.</li><li>Gửi đủ nhận định vẫn chờ hết giờ. Muốn kết thúc sớm, <strong>tất cả người còn trong ván phải bấm Skip</strong>. Người tạm mất kết nối vẫn được tính; người bị loại hoặc bị kick không được tính.</li><li>Khi hết giờ hoặc đủ lượt Skip, người chưa gửi được ghi nhận là Chưa chắc chắn với nội dung “Không gửi ý kiến.”.</li></ul>
+      <p>Bấm Skip độc lập với việc gửi nhận định. Mỗi người chỉ có một phiếu đồng ý Skip và không rút lại trong lượt.</p>
+      <h4>Hành động bí mật · 60 giây</h4>
+      <ul><li>Chọn đầu tư 1 xu hoặc giữ lại, đồng thời chọn tối đa một hành động bổ sung: không dùng, kiểm chứng vai trò, hoặc góp xu trục xuất.</li><li>Bấm <strong>Chốt hành động</strong> để xác nhận. Đã chốt thì không thể đổi trong lượt đó.</li><li>Khi tất cả người còn trong ván đã chốt, trò chơi công bố ngay. Nếu hết giờ mà chưa chốt, mặc định là không đầu tư và không dùng hành động bổ sung.</li></ul>
+      <h4>Công bố · 25 giây</h4>
+      <p>Xem số người đầu tư, dự án được thông qua hay không, bản chất dự án, lời giải thích và những người bị loại. Chủ phòng có thể bấm sang lượt tiếp theo; hết đồng hồ, trò chơi tự chuyển lượt. Nếu đã đủ điều kiện kết thúc, kết quả chung được hiện ngay.</p>
+    </section>
+
+    <section aria-labelledby="rules-coins"><h3 id="rules-coins" tabindex="-1">03 · Đầu tư &amp; tính xu</h3>
+      <p>Dự án được thông qua khi số người đầu tư đạt ít nhất <strong>một nửa số người còn trong ván, làm tròn lên</strong> tại lúc tính kết quả. Ví dụ, 5 người cần ít nhất 3 người đầu tư; 4 người cần 2.</p>
+      <table><caption>Chi phí cho từng lựa chọn</caption><thead><tr><th scope="col">Lựa chọn</th><th scope="col">Chi phí</th></tr></thead><tbody><tr><td>Đầu tư vào dự án</td><td>1 xu</td></tr><tr><td>Kiểm chứng vai trò</td><td>3 xu</td></tr><tr><td>Góp xu trục xuất</td><td>1–5 xu</td></tr></tbody></table>
+      <p>Đầu tư có thể đi cùng một hành động bổ sung. Bạn phải đủ xu trả <strong>tổng chi phí ngay lúc chốt</strong>, chưa tính phần thưởng sắp nhận. Ví dụ, vừa đầu tư vừa kiểm chứng cần 4 xu. Không đầu tư và không dùng hành động bổ sung thì không tốn xu.</p>
+      <ul><li><strong>Đầu tư cùng phe với dự án:</strong> trả 1 xu rồi nhận 2 xu, tức lãi 1 xu trước khi tính chi phí bổ sung.</li><li><strong>Đầu tư khác phe với dự án:</strong> mất 1 xu đầu tư, không nhận thưởng đầu tư.</li><li><strong>Không đầu tư:</strong> giữ phần xu đầu tư, không nhận thưởng đầu tư; vẫn trả chi phí bổ sung nếu có chọn.</li></ul>
+      <p class="rules-note"><strong>Khoản thưởng đầu tư vẫn được tính kể cả khi dự án không được thông qua.</strong> Chỉ các dự án được thông qua mới cộng vào điểm chung của phe mà dự án thuộc về.</p>
+    </section>
+
+    <section aria-labelledby="rules-inspect"><h3 id="rules-inspect" tabindex="-1">04 · Kiểm chứng vai trò</h3>
+      <p>Tốn <strong>3 xu</strong> để chọn một người khác đang còn trong ván và kiểm chứng vai trò của họ. Chọn mục tiêu trong phần Hành động bổ sung, rồi chốt cùng lựa chọn đầu tư của bạn.</p>
+      <p>Kết quả xuất hiện sau khi công bố trong mục <strong>Kết quả kiểm chứng</strong>, chỉ người kiểm chứng được xem. Chi phí được trừ khi tính lượt. Không thể vừa kiểm chứng vừa góp xu trục xuất trong cùng một lượt.</p>
+    </section>
+
+    <section aria-labelledby="rules-expel"><h3 id="rules-expel" tabindex="-1">05 · Góp xu trục xuất</h3>
+      <ul><li>Mỗi người góp một số nguyên từ <strong>1 đến 5 xu</strong>, vào một người khác đang còn trong ván.</li><li>Các khoản góp cho <strong>cùng mục tiêu trong cùng lượt</strong> được cộng lại. Tổng từ 5 xu trở lên thì mục tiêu bị trục xuất khi công bố. Ví dụ, 3 xu + 2 xu cùng vào một người là đủ.</li><li>Xu đã góp vẫn mất nếu chưa đủ 5 xu; khoản góp không được chuyển sang lượt sau. Nhiều mục tiêu có thể bị loại trong một lượt nếu từng người đều nhận đủ tổng góp.</li><li>Không thể chọn chính mình hay người đã bị loại. Người bị kick trước lúc tính lượt không còn đóng góp hành động vào lượt đó.</li></ul>
+      <p>Trong lúc chơi, danh tính và số xu của người góp được giữ kín. Kết quả chỉ công bố người bị trục xuất. Khi ván kết thúc, game cho biết những ai đã góp vào lần trục xuất thành công; không công khai số xu từng người góp.</p>
+    </section>
+
+    <section aria-labelledby="rules-eliminated"><h3 id="rules-eliminated" tabindex="-1">06 · Bị loại &amp; mất kết nối</h3>
+      <p>Bạn bị loại nếu bị trục xuất, hoặc còn <strong>0 xu sau khi tính đủ chi phí và thưởng của lượt</strong>. Nếu cả hai cùng xảy ra, lý do được ghi nhận là bị trục xuất.</p>
+      <p>Người bị loại vẫn được theo dõi trận, nhưng không gửi nhận định, bấm Skip hay chốt hành động ở những lượt sau. Tên bị gạch ngang để cả phòng nhận biết.</p>
+      <p>Mất kết nối không tự động làm bạn bị loại. Bạn vẫn được tính vào số người còn trong ván; nếu không gửi lựa chọn kịp giờ thì áp dụng mặc định ở phần “Một lượt chơi”. Chủ phòng có thể quyết định kick người vắng mặt.</p>
+    </section>
+
+    <section aria-labelledby="rules-host"><h3 id="rules-host" tabindex="-1">07 · Quyền của chủ phòng</h3>
+      <ul><li>Bắt đầu khi đủ người và mọi người đã kết nối.</li><li>Chuyển sang lượt tiếp theo ở giai đoạn Công bố; đồng hồ vẫn tự chuyển nếu không bấm.</li><li>Kick một người khác ở phòng chờ hoặc trong trận: bấm Kick ngay trong ô người đó, chọn <strong>X đỏ để xác nhận</strong> hoặc <strong>mũi tên xanh để hủy</strong>. Thao tác kick không tốn xu và chỉ chủ phòng có quyền thực hiện.</li><li>Người bị kick không còn tham gia phòng hoặc được tính vào số người đang chơi. Các hành động chưa được tính của họ không tham gia kết quả lượt; kết quả các lượt đã xong vẫn được giữ.</li><li>Trong phòng chờ, nếu chủ phòng rời đi thì quyền chủ phòng chuyển cho một người còn lại.</li></ul>
+      <p>Chủ phòng vẫn giữ quyền quản lý phòng nếu họ bị loại trong trận.</p>
+    </section>
+
+    <section aria-labelledby="rules-winning"><h3 id="rules-winning" tabindex="-1">08 · Thắng, thua &amp; kết thúc</h3>
+      <ul><li><strong>Kết thúc sớm:</strong> một phe không còn người đang chơi thì phe còn lại thắng ngay. Nếu cả hai phe đều không còn người thì hòa.</li><li><strong>Sau lượt 10, nếu hai phe vẫn còn người:</strong> so số dự án của từng phe đã được thông qua trong cả ván. Phe có nhiều hơn thắng; bằng nhau thì hòa.</li></ul>
+      <p>Kết quả tính theo phe, bao gồm cả đồng đội đã bị loại. Phe Bảo Vệ thắng thì cả phòng xem <strong>Good Ending</strong>; phe Phá Hoại thắng thì xem <strong>Bad Ending</strong>. Nếu hòa, game hiện kết quả hòa.</p>
+      <p>Khi kết thúc, vai trò của mọi người được công bố. Lịch sử các lượt giúp xem lại dự án và kết quả. Bạn có thể quay về trang chủ để tạo hoặc tham gia một ván mới.</p>
+    </section>
+  </div>
+</dialog>
+<dialog id="tutorial-dialog" class="tutorial-dialog" aria-labelledby="tutorial-title">
+  <div class="tutorial-heading">
+    <div><p>GREEN TRAP DETECTIVE · MẶC ĐỊNH 1.25×</p><h2 id="tutorial-title">Cách chơi trong một video</h2></div>
+    <button type="button" id="tutorial-close" class="tutorial-close" aria-label="Đóng video hướng dẫn" autofocus><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m6 6 12 12M18 6 6 18"/></svg></button>
+  </div>
+  <video id="tutorial-video" controls playsinline preload="none" aria-label="Video hướng dẫn cách chơi Green Trap Detective"></video>
+  <div class="tutorial-navigation" id="tutorial-navigation">
+    <div class="tutorial-context"><p id="tutorial-context" role="status" aria-live="polite">Chọn mốc để xem nhanh.</p><button type="button" id="tutorial-mode" hidden>Xem toàn bộ video</button></div>
+    <div class="tutorial-timeline" aria-hidden="true"><span id="tutorial-progress"></span></div>
+    <nav id="tutorial-chapters" class="tutorial-chapters" aria-label="Các mốc trong video hướng dẫn"></nav>
+  </div>
+  <p id="tutorial-error" class="tutorial-error" role="status" hidden>Không tải được video. <button type="button" id="tutorial-retry">Thử lại</button></p>
+</dialog>
 <div id="toast" role="status" aria-live="polite"></div>
 </body>
 </html>

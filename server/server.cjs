@@ -12,7 +12,7 @@ const {HttpError,readBody,checkOrigin,validateContext,validateSubmission}=requir
 const {GameError}=require('../engine/dist/errors.js');
 const {RateLimiter,clientAddress}=require('./rate-limit.cjs');
 const {MAX_STREAMS}=require('./limits.cjs');
-const {serveEndingMedia}=require('./ending-media.cjs');
+const {serveEndingMedia,serveTutorialMedia}=require('./ending-media.cjs');
 const limiter=new RateLimiter();
 const trustedProxies=new Set((process.env.TRUSTED_PROXY_IPS||'').split(',').map(x=>x.trim()).filter(Boolean));
 function rate(res,key,limit){const retry=limiter.take(key,limit);if(retry){res.setHeader('Retry-After',String(retry));throw new HttpError('RATE_LIMITED','Quá nhiều yêu cầu. Hãy thử lại sau.',429);}}
@@ -70,7 +70,7 @@ if(remote){
 const transaction=fn=>remote?coordinator.run(fn):Promise.resolve().then(fn);
 const MIME={'.html':'text/html; charset=utf-8','.js':'text/javascript; charset=utf-8','.css':'text/css; charset=utf-8','.svg':'image/svg+xml','.ico':'image/x-icon'};
 const HEADERS={'X-Content-Type-Options':'nosniff','Referrer-Policy':'no-referrer','X-Frame-Options':'DENY','Content-Security-Policy':"default-src 'self'; connect-src 'self'; img-src 'self' data:; style-src 'self'; script-src 'self'; object-src 'none'; base-uri 'none'; frame-ancestors 'none'"};
-const allowedPaths=new Set(['/','/index.html','/app.js','/style.css','/motion.css','/motion.js','/card-webp-manifest.js','/ending.html','/ending.css','/ending-ui.js']);
+const allowedPaths=new Set(['/','/index.html','/app.js','/style.css','/motion.css','/motion.js','/card-webp-manifest.js','/ending.html','/ending.css','/ending-ui.js','/tutorial.css','/tutorial-ui.js','/rules.css','/rules-ui.js','/action-fx.css','/action-fx.js']);
 const staticAssetCache=new Map();
 function acceptsGzip(req){
   const header=req.headers['accept-encoding'];
@@ -150,6 +150,7 @@ const server=http.createServer(async(req,res)=>{
       return serveStatic(req,res,filepath);
     }
     if(await serveEndingMedia(req,res,url.pathname))return;
+    if(await serveTutorialMedia(req,res,url.pathname))return;
 
     if(req.method==='GET' && (url.pathname==='/brand/green-trap-detective.png'||url.pathname==='/brand/green-coin.png')){
       const filename=url.pathname==='/brand/green-coin.png'?'green-coin.png':'green-trap-detective.png';
