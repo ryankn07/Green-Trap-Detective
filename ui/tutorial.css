@@ -1,0 +1,85 @@
+/* The guide belongs to the shared masthead, outside the live game renderer. */
+body .top:has(.tutorial-open){justify-content:flex-start;gap:18px}
+.top:has(.tutorial-open) .ending-nav-label{margin-left:auto}
+.top:has(.ending-nav-label:not([hidden])) .tutorial-open{margin-left:0}
+.tutorial-open{
+ display:inline-flex;align-items:center;justify-content:center;gap:9px;flex:none;
+ min-height:44px;margin-left:auto;padding:10px 14px;border:1px solid #82916c;border-radius:12px;
+ background:#e9eddb;color:#1f402d;font:600 13px/1.2 var(--font-body);white-space:nowrap;
+ box-shadow:0 2px 0 #203f2c0a;transition:background .16s ease,transform .16s ease;
+}
+.tutorial-open svg{width:21px;height:21px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.tutorial-mobile-open{display:grid;place-items:center;flex:none;width:44px;height:44px;min-height:44px;padding:10px;border:1px solid #c5d8bd;border-radius:12px;background:#e9f3e5;color:#245539}
+.tutorial-mobile-open svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.tutorial-open:hover{background:#dbe5c7;transform:translateY(-1px)}
+.tutorial-open:focus-visible,.tutorial-mobile-open:focus-visible,.tutorial-close:focus-visible,.tutorial-error button:focus-visible{outline:3px solid #ad7c22;outline-offset:4px}
+html.tutorial-showing{overflow:hidden}
+.tutorial-dialog{
+ --tutorial-gutter:32px;
+ width:min(calc(100vw - var(--tutorial-gutter) * 2),max(280px,calc((100dvh - var(--tutorial-gutter) * 2 - var(--tutorial-chrome,88px)) * 16 / 9 + 2px)));height:fit-content;max-width:none;
+ max-height:calc(100dvh - var(--tutorial-gutter) * 2);margin:auto;padding:0;overflow:auto;
+ border:1px solid #b4c19e;border-radius:20px;background:#f8f5eb;color:#203f2c;
+ box-shadow:0 24px 100px #061d17a6;
+}
+.tutorial-dialog[open]{display:flex;flex-direction:column}
+.tutorial-dialog::backdrop{background:#061d17d9;backdrop-filter:blur(7px)}
+.tutorial-heading{display:flex;align-items:center;justify-content:space-between;gap:24px;flex:none;padding:14px 24px}
+.tutorial-heading p{margin:0 0 6px;color:#617348;font:700 11px/1.4 var(--font-body);letter-spacing:.09em}
+.tutorial-heading h2{margin:0;font:600 clamp(22px,2.5vw,30px)/1.2 var(--font-editorial);letter-spacing:-.025em}
+.tutorial-close{display:grid;place-items:center;flex:none;width:44px;height:44px;min-height:44px;padding:10px;border:1px solid #c6cfb6;border-radius:10px;background:#e9eddb;color:#203f2c}
+.tutorial-close:hover{background:#dbe5c7}
+.tutorial-close svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round}
+.tutorial-dialog video{display:block;flex:none;min-height:0;width:100%;height:auto;aspect-ratio:16/9;object-fit:contain;background:#0a241b}
+.tutorial-error{margin:0;padding:14px 24px;font:500 14px/1.5 var(--font-body)}
+.tutorial-error button{padding:8px 12px;margin-left:8px;min-height:44px;color:#203f2c;background:#e9eddb;border:1px solid #82916c;border-radius:8px}
+.tutorial-navigation{flex:none;min-width:0;padding:0 18px 12px;border-top:1px solid #d5dbc9;background:#f8f5eb}
+.tutorial-context{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:44px}
+.tutorial-context p{margin:0;font:500 12px/1.4 var(--font-body);color:#53664c;overflow-wrap:anywhere}
+.tutorial-context button{flex:none;min-height:44px;padding:6px 0;border:0;border-radius:0;background:transparent;color:#245539;font:700 12px/1.3 var(--font-body);text-decoration:underline;text-underline-offset:3px}
+.tutorial-timeline{position:relative;height:5px;margin:3px 4px 12px;border-radius:3px;background:#dce3cd}
+.tutorial-timeline>span{position:absolute;inset:0 auto 0 0;width:0;border-radius:inherit;background:#496e42}
+.tutorial-timeline i{position:absolute;top:-2px;width:3px;height:9px;background:#8f9b76;transform:translateX(-50%)}
+.tutorial-timeline i.is-current{background:#ae7d24;box-shadow:0 0 0 2px #f8f5eb}
+.tutorial-chapters{position:relative;display:grid;grid-auto-flow:column;grid-template-rows:44px;grid-auto-columns:max-content;gap:4px 6px;overflow-x:auto;overscroll-behavior-x:contain;scrollbar-width:thin;padding:0 0 4px}
+.tutorial-chapters button{display:flex;align-items:center;gap:8px;min-height:44px;padding:7px 10px;border:1px solid #d5ddc7;border-radius:8px;background:#f3f3e7;color:#294c35;font:600 12px/1.2 var(--font-body);white-space:nowrap}
+.tutorial-chapters button:hover{background:#e6edd7}
+.tutorial-chapters button[aria-current="true"]{background:#214e37;color:#fffcec;border-color:#214e37}
+.tutorial-chapter-time{font-variant-numeric:tabular-nums;opacity:.75;font-weight:500}
+.tutorial-chapters button:focus-visible,.tutorial-context button:focus-visible{outline:3px solid #ad7c22;outline-offset:-3px}
+@media(max-width:759px){
+ .gi-mobile-topbar:has(.tutorial-mobile-open){gap:6px}
+ body .top:has(.tutorial-open){gap:10px}
+ .tutorial-open{width:44px;padding:10px}
+ .tutorial-open span{display:none}
+ .tutorial-dialog{--tutorial-gutter:12px;border-radius:14px}
+ .tutorial-heading{padding:16px;gap:12px}
+ .tutorial-heading p{font-size:9px;letter-spacing:.04em}
+ .tutorial-heading h2{font-size:22px}
+ .tutorial-error{padding:12px 16px}
+ .tutorial-navigation{padding:0 12px 10px}
+ .tutorial-context{gap:8px;min-height:54px}
+ .tutorial-context p{font-size:11px}
+ .tutorial-context button{max-width:96px;font-size:11px;text-align:right}
+}
+@media(max-height:500px){
+ .tutorial-dialog{--tutorial-gutter:12px}
+ .tutorial-heading{padding:8px 16px;gap:12px}
+ .tutorial-heading>div{min-width:0}
+ .tutorial-heading h2{font-size:18px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+ .tutorial-heading p{font-size:9px;margin-bottom:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+ .tutorial-navigation{padding-bottom:6px}
+ .tutorial-context{min-height:44px}
+ .tutorial-context p{min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+ .tutorial-context button{max-width:96px;font-size:11px}
+ .tutorial-timeline{margin:0 4px 6px}
+ .tutorial-chapters{scrollbar-width:none}
+}
+@media(min-width:1200px){
+ body.gi-gameplay .tutorial-open{width:44px;padding:10px}
+ body.gi-gameplay .tutorial-open span{display:none}
+ body.gi-gameplay .gi-phase-header{right:calc(clamp(24px,3.1vw,100px) + 62px)}
+}
+@media(max-height:350px){
+ .tutorial-dialog{width:min(calc(100vw - 24px),max(180px,calc((100dvh - 24px - var(--tutorial-chrome,173px)) * 16 / 9 + 2px)))}
+}
+@media(prefers-reduced-motion:reduce){.tutorial-open{transition:none}.tutorial-open:hover{transform:none}}

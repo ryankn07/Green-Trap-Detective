@@ -25,7 +25,7 @@ The standalone viewer deliberately needs no room credentials. Its ordinary link 
 
 The two MP4 files in `ui/endings/` are byte-for-byte copies of the owner's supplied videos, with portable filenames. Both are H.264, 3840 × 2160: Good Ending is approximately 8.03 seconds, Bad Ending 7.23 seconds. The JPEG posters are frames extracted from those videos; no generated illustration replaces the supplied footage.
 
-`server/ending-media.cjs` exposes only those two filenames and their posters. It streams files and implements single byte ranges, suffix ranges, HEAD and 416 responses, so playback and seeking do not require buffering whole films in server memory. `scripts/build-web.cjs` also copies the videos, posters and viewer into the Vercel static output.
+The ending allowlist in `server/ending-media.cjs` exposes only those two filenames and their posters. It streams files and implements single byte ranges, suffix ranges, HEAD and 416 responses, so playback and seeking do not require buffering whole films in server memory. The separate tutorial allowlist reuses that streaming implementation; see [tutorial video](TUTORIAL_VIDEO.md). `scripts/build-web.cjs` also copies the videos, posters and viewer into the Vercel static output.
 
 The unused QR generator, public script route and build output have been removed. No QR service or camera permission is involved in video playback.
 

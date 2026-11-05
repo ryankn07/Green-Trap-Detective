@@ -117,9 +117,11 @@ test('desktop game adapts its card to the viewport and preserves protected layou
   await privateCard.waitFor({state:'hidden'});
   // Compare the exact same renderer/state with and without the appended desktop block.
   const css=fs.readFileSync(path.join(__dirname,'../ui/style.css'),'utf8');
-  const baseline=css.split('/* Desktop game — Garden table.')[0];
+  const baseline=css.split('/* Garden gameplay shared')[0];
+  assert.ok(baseline.length<css.length,'the phone comparison actually removes the Garden appendix');
   const fingerprint=()=>page.evaluate(()=>[...document.querySelectorAll('.gi-phase-header,.gi-area-project,.gi-card-image-viewport,.gi-area-actions,.gi-area-discussion')].map(el=>{const box=el.getBoundingClientRect(),s=getComputedStyle(el);return [box.x,box.y,box.width,box.height,s.display,s.fontFamily,s.fontSize,s.backgroundColor,s.padding,s.borderRadius];}));
-  for(const width of [390,768,1199]){
+  // Owner-approved compact Garden layout now starts at 760px; phones stay protected.
+  for(const width of [320,390,759]){
    await page.setViewportSize({width,height:900});await page.reload();await page.locator('.gi-card-image-viewport img').waitFor();await page.evaluate(()=>document.fonts.ready);
    const redesigned=await fingerprint();
    await page.route('**/style.css',route=>route.fulfill({contentType:'text/css',body:baseline}));
