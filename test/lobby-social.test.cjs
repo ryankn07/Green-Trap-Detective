@@ -74,7 +74,7 @@ test('two browsers share avatars and keep lobby reactions within the rendering b
   const peers=Array.from({length:10},(_,i)=>manager.join(room.code,'Guest '+i).player);
   await host.waitForFunction(()=>document.querySelectorAll('.lobby-members .person').length===12);
   await host.locator('.lobby-members .people').evaluate(list=>list.scrollIntoView({block:'start'}));
-  await host.waitForTimeout(1200);
+  await host.waitForTimeout(2700);
   await host.evaluate(()=>{
    window.reactionSample=new Promise(resolve=>{
     let flights=0,particles=0;
@@ -91,6 +91,39 @@ test('two browsers share avatars and keep lobby reactions within the rendering b
   peers.forEach((sender,i)=>manager.react(room,sender,i%2===0?hostId:guestId,'confetti','burst-'+i));
   const burst=await host.evaluate(()=>window.reactionSample);
   assert.deepEqual(burst,{flights:2,particles:16});
+  for(const page of [host,guest])await page.evaluate(()=>{
+   window.rockFlights=[];
+   document.addEventListener('click',event=>{
+    if(event.target.closest('button')?.getAttribute('aria-label')==='Ném đá')window.rockClickedAt=performance.now();
+   },true);
+   new MutationObserver(records=>{
+    for(const record of records)for(const node of record.addedNodes){
+     if(node.matches?.('.social-projectile-rock'))window.rockFlights.push(performance.now());
+    }
+   }).observe(document.body,{childList:true});
+  });
+  await avatar(host,guestId).click();
+  let releaseAction;
+  const actionGate=new Promise(resolve=>{releaseAction=resolve;});
+  await host.route('**/api/action',async route=>{await actionGate;await route.continue();});
+  let rockDelay;
+  try{
+   await host.getByRole('button',{name:'Ném đá',exact:true}).click();
+   await host.waitForFunction(()=>window.rockFlights.length===1,null,{timeout:500});
+   const rock=await host.locator('.social-projectile-rock').evaluate(node=>({
+    delay:window.rockFlights[0]-window.rockClickedAt,
+    duration:node.getAnimations()[0].effect.getTiming().duration
+   }));
+   rockDelay=rock.delay;
+   assert.ok(rock.duration>=550&&rock.duration<=850,'rock flight should keep its original pace');
+   assert.ok(rockDelay<250,'throw should start on click, saw '+rockDelay+'ms');
+   assert.equal(await guest.evaluate(()=>window.rockFlights.length),0);
+   await host.waitForTimeout(2750);
+  }finally{releaseAction();}
+  await guest.waitForFunction(()=>window.rockFlights.length===1);
+  await host.waitForTimeout(250);
+  assert.equal(await host.evaluate(()=>window.rockFlights.length),1,'sender must not replay the confirmed throw');
+  t.diagnostic('Rock launch after click with network held: '+Math.round(rockDelay)+'ms');
   assert.deepEqual(errors,[]);
   const budgets={optimizedAvatar:firstAvatar.src.endsWith('.webp')&&firstAvatar.width<=192,avatarRetained,
    pickerUnder500KB:pickerBytes>0&&pickerBytes<500000,menuEffectsUnderFour:menuEffects<4};

@@ -5,10 +5,11 @@
  const flying=new Set(),activeTargets=new Map();
  const maxConcurrentReactions=2;
  // Covers the longest flight plus the attached impact animation.
- const reactionWindowMs=1200;
+ const reactionWindowMs=2700;
  const avatars=Array.from({length:30},(_,i)=>'a'+String(i+1).padStart(2,'0'));
  function close(){dialog?.close();dialog?.remove();dialog=null;}
- function clear(){for(const node of flying)node.remove();flying.clear();activeTargets.clear();close();clearTimeout(hold);}
+ function clearEffects(){for(const node of flying)node.remove();flying.clear();activeTargets.clear();}
+ function clear(){clearEffects();close();clearTimeout(hold);}
  function avatarElement(id){
   return [...document.querySelectorAll('.lobby-members .person')].find(p=>p.dataset.playerId===id)?.querySelector('.avatar');
  }
@@ -51,13 +52,13 @@
   for(let i=0;i<2;i++){
    const star=document.createElement('span');star.className='social-dizzy-star';ring.append(star);
    const frames=Array.from({length:17},(_,n)=>{const angle=n/16*Math.PI*4+i*Math.PI;return {transform:'translate('+Math.cos(angle)*rx+'px,'+Math.sin(angle)*ry+'px) translate(-50%,-50%) rotate('+n*12+'deg)',opacity:.65+.35*(Math.sin(angle)+1)/2};});
-   star.animate(frames,{duration:620,easing:'linear'});
+   star.animate(frames,{duration:1700,easing:'linear'});
   }
-  finish(ring,[{transform:'translate(-50%,-50%) scale(.4)',opacity:0},{transform:'translate(-50%,-50%) scale(1)',opacity:1,offset:.12},{transform:'translate(-50%,-60%) scale(1)',opacity:1,offset:.8},{transform:'translate(-50%,-90%) scale(.9)',opacity:0}],{duration:650});
+  finish(ring,[{transform:'translate(-50%,-50%) scale(.4)',opacity:0},{transform:'translate(-50%,-50%) scale(1)',opacity:1,offset:.12},{transform:'translate(-50%,-60%) scale(1)',opacity:1,offset:.8},{transform:'translate(-50%,-90%) scale(.9)',opacity:0}],{duration:1850});
  }
  function popMenu(panel){
   if(matchMedia('(prefers-reduced-motion: reduce)').matches)return;
-  panel.animate([{transform:'translateY(12px) scale(.96)',opacity:0},{transform:'none',opacity:1}],{duration:220,easing:'cubic-bezier(.16,.8,.3,1)'});
+  panel.animate([{transform:'translateY(22px) scale(.88)',opacity:0},{transform:'translateY(-5px) scale(1.025)',opacity:1,offset:.65},{transform:'none',opacity:1}],{duration:420,easing:'cubic-bezier(.16,.8,.3,1)'});
  }
  function impactArt(kind){
   const art={
@@ -98,9 +99,9 @@
   ]:[
    {transform:'none'},{transform:'translateX('+kick+'px) rotate('+direction*7+'deg) scale(.91,1.04)',offset:.1},{transform:'translateX('+(-kick*.4)+'px) rotate('+(-direction*3)+'deg) scale(1.035,.98)',offset:.33},{transform:'translateX('+kick*.15+'px) rotate('+direction+'deg)',offset:.6},{transform:'none'}
   ];
-  target.animate(reaction,{duration:gentle?500:cold?480:420,easing:'cubic-bezier(.2,.7,.25,1)'});
+  target.animate(reaction,{duration:gentle?720:cold?650:540,easing:'cubic-bezier(.2,.7,.25,1)'});
   const accent=attachedEffect(target,'social-impact social-impact-'+kind);accent.innerHTML=impactArt(kind);accent.style.width=accent.style.height=rect.width*1.12+'px';
-  const duration=kind==='confetti'?280:650;
+  const duration=kind==='confetti'?280:['tomato','egg','snow'].includes(kind)?1700:gentle?1250:kind==='water'?1100:680;
   finish(accent,[{transform:'translate(-50%,-50%) scale(.45)',opacity:0},{transform:'translate(-50%,-50%) scale(1.08)',opacity:1,offset:.08},{transform:'translate(-50%,-50%) scale(1)',opacity:1,offset:.2},{transform:'translate(-50%,-50%) scale(1)',opacity:1,offset:.72},{transform:'translate(-50%,-46%) scale(.98)',opacity:0}],{duration,easing:'ease-out'});
   if(hard){
    const snap=attachedEffect(target,'social-contact social-contact-'+kind);
@@ -137,19 +138,19 @@
     const scale=t<.08?.65+t*4:1-t*.35;
     return {transform:'translate(calc(-50% + '+dx+'px),calc(-50% + '+dy+'px)) rotate('+rotation*t+'deg) scale('+scale+','+scale*(flutter?.65+.35*Math.cos(t*9+i):1)+')',opacity:t>.65?(1-t)/.35:1};
    });
-   finish(dot,frames,{duration:flowers?580+i%3*30:confetti?590+i%5*15:hard?440+i%4*35:620,delay:confetti?i%6*10:i%3*8,easing:'linear',fill:'backwards'});
+   finish(dot,frames,{duration:flowers?1350+i%3*90:confetti?1350+i%5*100:kind==='snow'?1200:water?850:hard?650+i%4*70:1000,delay:confetti?i%6*10:i%3*8,easing:'linear',fill:'backwards'});
   }
  }
  function wet(target){
   const box=target.getBoundingClientRect(),overlay=attachedEffect(target,'social-wet');
   overlay.style.width=box.width+'px';overlay.style.height=box.height+'px';
   const sheet=document.createElement('span');sheet.className='social-water-sheet';overlay.append(sheet);
-  sheet.animate([{transform:'translateY(-15%) scaleX(.65)',opacity:0},{transform:'translateY(5%) scaleX(1)',opacity:.5,offset:.12},{transform:'translateY(55%) scaleX(.9)',opacity:.25,offset:.55},{transform:'translateY(110%) scaleX(.75)',opacity:0}],{duration:670,easing:'linear',fill:'both'});
+  sheet.animate([{transform:'translateY(-15%) scaleX(.65)',opacity:0},{transform:'translateY(5%) scaleX(1)',opacity:.5,offset:.12},{transform:'translateY(55%) scaleX(.9)',opacity:.25,offset:.55},{transform:'translateY(110%) scaleX(.75)',opacity:0}],{duration:1050,easing:'linear',fill:'both'});
   for(let i=0;i<4;i++){
    const drop=document.createElement('span');drop.className='social-wet-drip';drop.style.left=[25,42,61,76][i]+'%';drop.style.top=[28,40,32,46][i]+'%';drop.style.height=box.height*(.12+i%2*.07)+'px';overlay.append(drop);
-   drop.animate([{transform:'translateY(0) scaleY(.3)',opacity:0},{transform:'translateY(3px) scaleY(1)',opacity:.8,offset:.15},{transform:'translateY('+box.height*.46+'px) scaleY(.65)',opacity:0}],{duration:570,delay:i*25,fill:'both',easing:'ease-in'});
+   drop.animate([{transform:'translateY(0) scaleY(.3)',opacity:0},{transform:'translateY(3px) scaleY(1)',opacity:.8,offset:.15},{transform:'translateY('+box.height*.46+'px) scaleY(.65)',opacity:0}],{duration:900,delay:i*45,fill:'both',easing:'ease-in'});
   }
-  finish(overlay,[{transform:'translate(-50%,-50%)',opacity:0},{transform:'translate(-50%,-50%)',opacity:1,offset:.08},{transform:'translate(-50%,-50%)',opacity:1,offset:.8},{transform:'translate(-50%,-50%)',opacity:0}],{duration:720});
+  finish(overlay,[{transform:'translate(-50%,-50%)',opacity:0},{transform:'translate(-50%,-50%)',opacity:1,offset:.08},{transform:'translate(-50%,-50%)',opacity:1,offset:.8},{transform:'translate(-50%,-50%)',opacity:0}],{duration:1150});
  }
  function waterJet(event,a,b){
   const direction=b.x+b.width/2>=a.x+a.width/2?1:-1;
@@ -171,14 +172,14 @@
   finish(bucket,[{transform:tilt,opacity:0},{transform:tilt,opacity:1,offset:.12},{transform:tilt,opacity:1,offset:.65},{transform:tilt,opacity:0}],{duration:520});
   const travel=root.querySelector('path').animate([
    {strokeDashoffset:1,opacity:0},
-   {strokeDashoffset:0,opacity:1,offset:.72},
+   {strokeDashoffset:0,opacity:1,offset:.7},
    {strokeDashoffset:-1,opacity:0}
-  ],{duration:560,easing:'ease-out'});
+  ],{duration:670,easing:'linear'});
   setTimeout(()=>{
    if(!root.isConnected)return;
    const recipient=avatarElement(event.to);
    if(recipient)splashWater(recipient,direction);
-  },400);
+  },470);
   travel.finished.catch(()=>{}).finally(()=>{root.remove();flying.delete(root);});
  }
  function splashWater(target,direction){
@@ -195,15 +196,17 @@
   }
   wet(target);
  }
- function play(event){
+ function play(event,prioritize=false){
   if(document.hidden)return;
   const now=performance.now();
   for(const [target,until] of activeTargets)if(until<=now)activeTargets.delete(target);
-  if(activeTargets.size>=maxConcurrentReactions||activeTargets.has(event.to))return;
+  const occupied=activeTargets.size>=maxConcurrentReactions||activeTargets.has(event.to);
+  if(occupied&&!prioritize)return;
   const from=avatarElement(event.from),to=avatarElement(event.to);
   if(!from||!to)return;
   const a=from.getBoundingClientRect(),b=to.getBoundingClientRect();
   if(b.bottom<0||b.top>innerHeight||b.right<0||b.left>innerWidth)return;
+  if(occupied)clearEffects();
   activeTargets.set(event.to,now+reactionWindowMs);
   if(matchMedia('(prefers-reduced-motion: reduce)').matches){
    to.animate([{opacity:1},{opacity:.65},{opacity:1}],{duration:250});return;
@@ -212,11 +215,11 @@
   from.animate([{transform:'scale(1)'},{transform:'rotate(-7deg) scale(.92)'},{transform:'scale(1)'}],{duration:280});
   const startX=a.x+a.width/2,startY=a.y+a.height/2,endX=b.x+b.width/2,endY=b.y+b.height/2;
   const lift=Math.max(18,Math.min(115,Math.min(startY,endY)-35));
-  const duration=Math.min(520,380+Math.hypot(endX-startX,endY-startY)*.18);
+  const duration=Math.min(850,550+Math.hypot(endX-startX,endY-startY)*.24);
   const point=t=>({x:startX+(endX-startX)*t,y:startY+(endY-startY)*t-lift*4*t*(1-t)});
   for(const t of [.35,.7]){
    const p=point(t),trail=effect('social-trail social-trail-'+event.kind,p.x,p.y);
-   finish(trail,[{transform:'translate(-50%,-50%) scale(.3)',opacity:0},{transform:'translate(-50%,-50%) scale(1)',opacity:.55,offset:.2},{transform:'translate(-50%,-30%) scale(.15)',opacity:0}],{duration:280,delay:duration*t,easing:'ease-out'});
+   finish(trail,[{transform:'translate(-50%,-50%) scale(.3)',opacity:0},{transform:'translate(-50%,-50%) scale(1)',opacity:.55,offset:.2},{transform:'translate(-50%,-30%) scale(.15)',opacity:0}],{duration:350,delay:duration*t,easing:'ease-out'});
   }
   const node=projectile(event.kind);
   const size=Math.max(52,Math.min(82,a.width*.65));node.style.width=node.style.height=size+'px';
@@ -232,7 +235,16 @@
  async function submit(data){
   if(pending)return;
   pending=true;
-  try{await bridge.send(data);close();return true;}
+  const submittedDialog=dialog;
+  try{
+   if(data.type==='react'){
+    close();
+    play({from:bridge.getPlayerId(),to:data.targetId,kind:data.kind},true);
+   }
+   await bridge.send(data);
+   if(dialog===submittedDialog)close();
+   return true;
+  }
   catch(error){bridge.notify(error.message);return false;}
   finally{pending=false;}
  }
@@ -293,7 +305,9 @@
     clear();seen=new Set((next.room.reactions||[]).map(e=>e.id));roomCode=next.room.code;
     return;
    }
-   const events=next.room.reactions||[],fresh=events.filter(e=>!seen.has(e.id)&&names[e.kind]&&next.serverTime-e.at<8000);
+   // This tab plays its own throw on click. Snapshots only animate other players.
+   const playerId=bridge.getPlayerId();
+   const events=next.room.reactions||[],fresh=events.filter(e=>e.from!==playerId&&!seen.has(e.id)&&names[e.kind]&&next.serverTime-e.at<8000);
    seen=new Set(events.map(e=>e.id));
    if(!fresh.length)return;
    requestAnimationFrame(()=>{
