@@ -29,7 +29,12 @@
 .social-trail{width:9px;height:9px;border-radius:50%;background:#cebd94}
 .social-trail-brick{background:#d99b79}
 .social-trail-water{background:#8bddf5}
-.social-trail-flowers{background:#f4b8cd}
+.social-trail-rock,.social-trail-brick{width:16px;height:6px;border-radius:80% 20% 20% 80%}
+.social-trail-rock{background:#b6a88b}
+.social-trail-flowers{width:11px;height:7px;border-radius:75% 25% 70% 30%;background:#e58ca8}
+.social-trail-egg{width:10px;height:7px;border-radius:80% 35% 50% 40%;outline:1px solid #d6b888}
+.social-trail-snow{background:#b0dded;clip-path:polygon(50% 0,65% 36%,100% 50%,65% 64%,50% 100%,35% 64%,0 50%,35% 36%)}
+.social-trail-confetti{width:10px;height:6px;border-radius:1px;background:#c37ab1}
 @media(max-width:360px){.social-item-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(prefers-reduced-motion:reduce){.lobby-members .avatar{transition:none}}
 
@@ -257,7 +262,7 @@ body.gi-gameplay .gi-area-players .avatar{width:56px;height:56px;border:0;backgr
 .social-reaction-menu{width:min(650px,calc(100vw - 32px))}
 .social-reaction-menu .social-item-grid{grid-template-columns:repeat(4,minmax(0,1fr))}
 .social-reaction-menu .social-item-grid button:hover .social-item-art{transform:rotate(-9deg) scale(1.12)}
-.social-trail-tomato{background:#eb9576}.social-trail-egg{background:#f4deb3}.social-trail-snow{background:#daf2ff}.social-trail-confetti{background:#cda5d3}
+.social-trail-tomato{background:#eb9576}.social-trail-egg{background:#f4deb3}
 @media(max-width:480px){.social-reaction-menu .social-item-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.social-item-art{width:64px;height:64px}.social-reaction-menu .social-item-grid button{padding:12px 6px 10px}}
 @media(prefers-reduced-motion:reduce){.social-item-art{transition:none}.social-reaction-menu .social-item-grid button:hover .social-item-art{transform:none}}
 

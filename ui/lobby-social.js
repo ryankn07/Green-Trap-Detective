@@ -4,6 +4,15 @@
  let bridge,roomCode=null,seen=new Set(),hold=null,origin=null,suppressClick=false,dialog=null,pending=false;
  const flying=new Set(),activeTargets=new Map(),particleSprites=new Map();
  const maxConcurrentReactions=2;
+ const throwMotion={
+  rock:{lift:.57,bias:-.24,spin:260,sway:0,impact:1.18},
+  brick:{lift:.46,bias:-.18,spin:170,sway:0,impact:1.2},
+  flowers:{lift:1,bias:.16,spin:0,sway:24,impact:1.21},
+  tomato:{lift:.78,bias:-.08,spin:320,sway:0,impact:1.3},
+  egg:{lift:.91,bias:0,spin:205,sway:12,impact:1.3},
+  snow:{lift:1.18,bias:.14,spin:145,sway:14,impact:1.25},
+  confetti:{lift:.97,bias:.08,spin:48,sway:17,impact:1.25}
+ };
  const burstCounts={rock:17,brick:17,flowers:18,water:9,tomato:15,egg:15,snow:22,confetti:30};
  const confettiColors=['#cb5684','#32846c','#d79723','#438fba','#9b63ba','#e2854d'];
  // Covers the longest flight plus the attached impact animation.
@@ -34,13 +43,44 @@
  function projectile(kind){
   const shapes={
    water:'<path d="M15 21q-8-17 9-16t17 16" fill="none" stroke="#759aa6" stroke-width="4"/><path d="m12 18 37 7-10 30-24-5Z" fill="#80c8da" stroke="#4b859a" stroke-width="2"/><ellipse cx="31" cy="22" rx="19" ry="6" transform="rotate(11 31 22)" fill="#c3edf3" stroke="#4b859a" stroke-width="2"/><path d="m45 29 10 10m-6-4 8 13" stroke="#56b8df" stroke-width="5" stroke-linecap="round"/>',
-   tomato:'<path d="M12 20C-3 38 13 59 33 57s34-21 22-37C46 7 24 10 12 20Z" fill="#e96c56" stroke="#b6443b" stroke-width="2"/><path d="m32 18-15-7 9 13-11 6 16-3 11 9-4-13 13-8-16 4 2-12Z" fill="#68934a"/><path d="M13 33q-1 10 6 14" stroke="#ffad8b" stroke-width="4" fill="none" stroke-linecap="round"/>',
-   egg:'<path d="M32 5C19 5 9 27 10 40c1 25 43 25 44 0C55 27 45 5 32 5Z" fill="#fff4d8" stroke="#d3bc92" stroke-width="2"/><path d="M22 18q-8 10-7 20" fill="none" stroke="#fff" stroke-width="5" stroke-linecap="round"/>',
-   snow:'<circle cx="32" cy="33" r="25" fill="#e9f7fa" stroke="#a8d6df" stroke-width="2"/><path d="M13 37q6 19 24 16" stroke="#c1e3eb" stroke-width="6" fill="none" stroke-linecap="round"/><g fill="white"><circle cx="23" cy="22" r="7"/><circle cx="42" cy="27" r="3"/></g>',
-   confetti:'<path d="m12 56 9-35 24 24Z" fill="#d5a2cd" stroke="#9c72a1" stroke-width="2"/><path d="m17 37 16 11m-14-21 22 16" stroke="#f6d786" stroke-width="5"/><path d="m31 18 2-9m12 17 11-3m-15-7 5-8" stroke="#dbae59" stroke-width="3" stroke-linecap="round"/><path d="m14 12 5 2m29 23 6 5m-3-31 5 4" stroke="#88b7a5" stroke-width="4"/>',
-   rock:'<path d="M9 43 7 30 17 14 34 8 49 16 59 34 53 49 35 56 17 52Z" fill="#7a8990" stroke="#465760" stroke-width="3" stroke-linejoin="round"/><path d="m10 29 9-13 15-5 12 8-14 8-7 13Z" fill="#c8d4d5"/><path d="m28 40 4-13 14-8 10 15-13 6-7 12Z" fill="#a3b3b8"/><path d="m18 45 7-5 11 12-17-3Z" fill="#60747e"/>',
-   brick:'<path d="m5 25 34-14 21 10-34 15Z" fill="#e9a078" stroke="#9a4d37" stroke-width="2"/><path d="m5 25 21 11v20L5 44Z" fill="#a84d37" stroke="#8f402f" stroke-width="2"/><path d="m26 36 34-15v20L26 56Z" fill="#cf7350" stroke="#8f402f" stroke-width="2"/><g fill="#9b513d"><ellipse cx="22" cy="24" rx="5" ry="2.5" transform="rotate(-22 22 24)"/><ellipse cx="33" cy="20" rx="5" ry="2.5" transform="rotate(-22 33 20)"/><ellipse cx="44" cy="23" rx="5" ry="2.5" transform="rotate(-22 44 23)"/></g><path d="m33 39 12-5m-11 15 13-5" stroke="#ebad87" stroke-width="2"/>',
-   flowers:'<path d="m23 23 24 34M39 17l8 40M14 36l33 21" stroke="#547747" stroke-width="3"/><path d="m31 39 3-13 9 11m-2 11-14 1-2-7" fill="#8dab5d"/><path d="m26 41 16-10 13 23-8 6Z" fill="#ecd5a3" stroke="#b89665" stroke-width="1.5"/><path d="m39 49 11-5" stroke="#cf7d85" stroke-width="4"/><g fill="#e79cac"><circle cx="18" cy="19" r="7"/><circle cx="27" cy="14" r="7"/><circle cx="29" cy="24" r="7"/><circle cx="21" cy="27" r="7"/></g><circle cx="24" cy="21" r="5" fill="#f5d575"/><g fill="#f1cf70"><circle cx="38" cy="11" r="6"/><circle cx="47" cy="15" r="6"/><circle cx="40" cy="22" r="6"/></g><circle cx="41" cy="16" r="4" fill="#b78343"/><g fill="#df778d"><circle cx="9" cy="31" r="5"/><circle cx="16" cy="29" r="5"/><circle cx="18" cy="36" r="5"/><circle cx="11" cy="39" r="5"/></g><circle cx="13" cy="34" r="3" fill="#f5d575"/>'
+   tomato:`<path d="M9 24q6-12 22-9 15-5 23 8 9 17-5 28-10 9-23 6Q7 52 7 39q-1-8 2-15Z" fill="#e65a43" stroke="#9e352e" stroke-width="2.5"/>
+   <path d="M12 41q16 17 39-2l-1 10q-10 11-26 6-11-3-12-14Z" fill="#b63832" opacity=".75"/>
+   <path d="M15 34q1-8 11-11m-10 16 2 3" fill="none" stroke="#ffc19a" stroke-width="4" stroke-linecap="round"/>
+   <path d="M31 18q3-8 7-13l4 2q-5 4-6 9l14 1-11 6-7-3-10 4 2-7-8-5 13 2Z" fill="#77a65b" stroke="#466c43" stroke-width="1.7" stroke-linejoin="round"/>
+   <circle cx="39" cy="37" r="1.6" fill="#f99879"/><circle cx="46" cy="34" r="1" fill="#f99879"/>`,
+   egg:`<path d="M31 4q12 0 21 18 9 18-1 29-7 7-20 7-15 0-21-9-8-11 0-27Q20 4 31 4Z" fill="#fff2d4" stroke="#ac8864" stroke-width="2.2"/>
+   <path d="M37 8q13 7 17 23 6 20-13 25-12 3-20-1 15-2 20-13 5-12-4-34Z" fill="#e9c899"/>
+   <path d="M15 34q1-11 10-18m-10 24 1 4" fill="none" stroke="#fffdf4" stroke-width="4" stroke-linecap="round"/>
+   <g fill="#c5a481"><circle cx="43" cy="28" r="1.7"/><circle cx="46" cy="36" r="1.1"/><circle cx="35" cy="49" r="1.3"/></g>`,
+   snow:`<path d="M10 22q1-8 9-9 4-9 13-8 10-2 15 6 10 1 12 12 5 8-2 16-1 12-12 15-11 7-22 1-12-1-15-13-6-10 2-20Z" fill="#f5fdff" stroke="#5997b0" stroke-width="2.2"/>
+   <path d="M11 37q10 6 22 2 15 4 24-8-1 14-12 20-11 7-24 0-8-3-10-14Z" fill="#b5dce9"/>
+   <path d="m19 23 5-5 6-1m13 19 5-4" fill="none" stroke="#fff" stroke-width="4" stroke-linecap="round"/>
+   <path d="M37 20v12m-5-9 10 6m0-6-10 6" fill="none" stroke="#83bacc" stroke-width="1.8" stroke-linecap="round"/>`,
+   confetti:`<path d="m11 57 9-35 24 24Z" fill="#d67aa0" stroke="#884d82" stroke-width="2.4" stroke-linejoin="round"/>
+   <path d="m14 46 5-17 19 15-9 4-4-7-8-5" fill="#f9cb70"/>
+   <ellipse cx="32" cy="34" rx="17" ry="6" transform="rotate(45 32 34)" fill="#f2bc61" stroke="#884d82" stroke-width="2.4"/>
+   <path d="M27 26Q21 14 30 11Q34 10 34 6m5 22q10-1 10-9 0-7 7-8m-11 24 13-2" fill="none" stroke="#6e9dc2" stroke-width="2.8" stroke-linecap="round"/>
+   <path d="m16 16 5-3 3 5-5 3zm31-10 4-3 3 4-4 3zm6 17 5-1 1 5-5 1Z" fill="#73b087"/>
+   <path d="M39 17l3-5 4 4-4 5Z" fill="#ee9175"/>`,
+   rock:`<path d="m7 40 4-17L24 9l21 3 14 17-2 16-15 11-25-3Z" fill="#708891" stroke="#344b55" stroke-width="2.5" stroke-linejoin="round"/>
+   <path d="m12 24 13-12 18 2 9 13-19-2-11 12Z" fill="#b9cbd0"/>
+   <path d="m22 37 11-12 19 2 4 8-17 2-4 15-15-3Z" fill="#8ca6ad"/>
+   <path d="m39 38 17-3-2 9-14 9-6-1Z" fill="#516c77"/>
+   <path d="m15 28 11-10m13 16 6-1m-29 8 4 4" fill="none" stroke="#dae8e6" stroke-width="2.5" stroke-linecap="round"/>`,
+   brick:`<path d="m5 23 33-13 21 10-33 17Z" fill="#edaa79" stroke="#904a38" stroke-width="2.4" stroke-linejoin="round"/>
+   <path d="m5 23 21 14v18L6 44Z" fill="#aa503a" stroke="#904a38" stroke-width="2.4" stroke-linejoin="round"/>
+   <path d="m26 37 33-17v20L26 55Z" fill="#d47b53" stroke="#904a38" stroke-width="2.4" stroke-linejoin="round"/>
+   <path d="m16 23 8-4 6 3-8 4zm12-5 8-4 6 3-8 4zm12 4 8-4 6 3-8 4z" fill="#873d31" stroke="#ce7751" stroke-width="1.2"/>
+   <path d="m31 40 19-9m-16 17 7-4M9 32l9 6" fill="none" stroke="#f7c49a" stroke-width="2.4" stroke-linecap="round"/>`,
+   flowers:`<path d="M12 17q3-10 13-5 7-13 16-5 10-2 13 9 8 6 3 13-4 8-13 7L53 53l-9 7-23-17Q9 41 7 31q-5-7 5-14Z" fill="#fff3dc" stroke="#aa795c" stroke-width="2"/>
+   <path d="M11 29 28 31 49 26 55 52 44 59 22 43Z" fill="#ead3a1"/>
+   <path d="M18 18q10 0 16 16M44 14q-3 8-6 25M15 27q11 8 25 15" fill="none" stroke="#568553" stroke-width="3" stroke-linecap="round"/>
+   <path d="M35 41q-14 1-13-10 12-2 13 10m5-6q-1-11 9-12 5 9-9 12" fill="#83ad62"/>
+   <path d="M12 19q-3-7 4-9 5-5 9 1 8 0 8 6 0 5-6 6-2 7-8 4-7-1-7-8Z" fill="#e5789f" stroke="#a84876" stroke-width="1.3"/>
+   <path d="M34 12q-2-6 4-8 4-4 8 1 6 0 6 6 3 5-3 8-2 5-8 2-6 0-7-9Z" fill="#f2c75f" stroke="#b28437" stroke-width="1.3"/>
+   <path d="M9 29q2-6 8-5 5 1 5 6 4 4-1 8-5 4-9 0-6-1-3-9Z" fill="#ba86bf" stroke="#86568e" stroke-width="1.3"/>
+   <circle cx="22" cy="18" r="3.5" fill="#ffe08c"/><circle cx="43" cy="13" r="3.4" fill="#df8c60"/><circle cx="15" cy="32" r="2.7" fill="#f6d17e"/>
+   <path d="M34 47q-7-6-7 0 1 5 10 2-2 7 6 5 5-3-3-7l5-3-3-4Z" fill="#ce657f" stroke="#974b64" stroke-width="1.3"/>`
   };
   const node=document.createElement('span');node.className='social-projectile social-projectile-'+kind;node.setAttribute('aria-hidden','true');
   node.innerHTML='<svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">'+shapes[kind]+'</svg>';
@@ -64,14 +104,36 @@
  }
  function impactArt(kind){
   const art={
-   rock:'<g fill="none" stroke="#b49764" stroke-width="3" stroke-linecap="round"><path d="m96 21 8-9m-1 24 13-2m-25-21 1-10"/></g><path d="m104 47 3-6 3 6 6 3-6 3-3 6-3-6-6-3Z" fill="#edcb79" stroke="#fff8e6" stroke-width="1.5"/>',
-   brick:'<g fill="none" stroke="#c68a63" stroke-width="3" stroke-linecap="round"><path d="m96 24 9-7m-2 20 12 1m-27-23 2-10"/></g><path d="m103 47 9-2 4 7-10 3Z" fill="#dfab87" stroke="#fff4df" stroke-width="1.5"/>',
+   rock:`<path d="M20 79q-9-2-12-9 6-8 17-5l8-8 11 9-7 12Z" fill="#a5b6b8" opacity=".9"/>
+   <path d="m88 24 7-12 3 14 14 3-12 7-1 14-8-11-13 4 7-11-8-11Z" fill="#f6d178" stroke="#a67545" stroke-width="2"/>
+   <path d="m104 53 7-4m-3 15 8 1M27 29l-8-5m11 17-12 2" fill="none" stroke="#ae8a5b" stroke-width="3" stroke-linecap="round"/>
+   <path d="m10 59 5-5 6 3-2 6zm92 12 7-5 6 5-3 6Z" fill="#869ba3"/>`,
+   brick:`<path d="M9 81Q3 72 18 69q6-11 18-8 6-7 13 2 12-4 18 6 14-3 20 7 17-1 23 8-11 10-42 4-24 7-46 1Z" fill="#e8aa83" opacity=".85"/>
+   <path d="m93 21 12-7 4 12-10 8Z" fill="#d17852" stroke="#994735" stroke-width="2"/>
+   <path d="m96 44 13-5 5 6-9 8ZM16 36l9-7 6 8-9 8Z" fill="#eda881" stroke="#b26149" stroke-width="1.7"/>
+   <path d="m91 17 4-8m16 22 7-3M16 48l-9 3" fill="none" stroke="#b56e51" stroke-width="3" stroke-linecap="round"/>`,
    water:'<path d="M15 38q4-10 2-21 10 15 20 8 7-3 8-15 7 12 17 13 11 1 16-13 2 16 12 17 8 1 15-10-2 13 1 23" fill="none" stroke="#a5e3ef" stroke-width="5" stroke-linecap="round"/><path d="M19 35q17 7 28 0m30 2q13 3 25-1" fill="none" stroke="#f1ffff" stroke-width="2" stroke-linecap="round"/><g fill="#78c5de" stroke="#d7f7ff" stroke-width="1.5"><path d="M12 60q-8 11 0 11t0-11"/><path d="M108 73q-8 12 0 12t0-12"/></g>',
-   flowers:'<g fill="#ed9fb5" opacity=".65"><ellipse cx="28" cy="75" rx="10" ry="4"/><ellipse cx="92" cy="75" rx="10" ry="4"/></g><path d="M13 25C0 17 5 7 13 13c8-6 13 4 0 12Z" fill="#dc8ca6" stroke="#fff4ee" stroke-width="1.6"/><path d="M105 32c-15-9-9-21 0-14 9-7 15 5 0 14Z" fill="#edb2b8" stroke="#fff4ee" stroke-width="1.6"/>',
-   tomato:'<g transform="translate(51 40)"><path d="M8 12Q-7-1 4-5l15 9Q30-7 33 3l1 10Q54 6 50 18L37 28q16 18 2 18L24 34Q9 49 8 36l2-10Q-9 22 0 16Z" fill="#d95843" opacity=".92"/><path d="M11 12q6-9 15-2m5 15 7-4" fill="none" stroke="#ffaf82" stroke-width="3" stroke-linecap="round"/><g fill="#ffe0a0"><ellipse cx="17" cy="20" rx="2" ry="3" transform="rotate(-30 17 20)"/><ellipse cx="30" cy="27" rx="2" ry="3"/></g><path d="M13 33v14m17-11v20" stroke="#db6950" stroke-width="4" stroke-linecap="round"/><circle cx="-5" cy="2" r="3" fill="#dc6850"/><circle cx="49" cy="37" r="2.5" fill="#dc6850"/></g>',
-   egg:'<g transform="translate(43 22)"><path d="M5 17q-14-12-3-16 8-6 17 3 15-9 19 2 16-3 14 11 11 9-1 16-1 16-17 9-13 11-18-2-17 4-15-10-11-7 4-13Z" fill="#fff9e9" fill-opacity=".88" stroke="#dfcfa7" stroke-width="1.1"/><ellipse cx="24" cy="23" rx="14" ry="12" fill="#efb637"/><ellipse cx="25" cy="26" rx="10" ry="7" fill="#eaa127" opacity=".6"/><path d="M16 20q5-7 12-4" fill="none" stroke="#fff0a7" stroke-width="3" stroke-linecap="round"/><path d="M12 38v20m26-19v12" stroke="#fff5d9" stroke-width="5" stroke-linecap="round"/><path d="m-6-4 7 4 5-3-1 9-9 2Z" fill="#fff6e6" stroke="#d1bd99" stroke-width="1"/></g>',
-   snow:'<path d="M17 30Q24 9 60 10q29 0 43 19-7 8-17 2-7 7-16 0-11 9-21 0-10 7-18 0-7 7-14-1Z" fill="#f3fcff" stroke="#badde7" stroke-width="1.7"/><path d="M30 22q17-10 35-7" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round"/><g stroke="#94becf" stroke-width="1.7" stroke-linecap="round"><path d="M12 59v15m-6-11 12 7m-12 0 12-7M108 52v15m-6-11 12 7m-12 0 12-7"/></g>',
-   confetti:'<g fill="none" stroke-linecap="round" stroke-width="2.5"><path d="m24 72-9-3m10-8-5-7" stroke="#d3a24d"/><path d="m93 38 7-5m-5 15 11 1" stroke="#83b7a2"/></g>'
+   flowers:`<path d="M10 66Q14 45 29 30M110 65q-1-19-15-29" fill="none" stroke="#d78fa3" stroke-width="2.2" stroke-linecap="round"/>
+   <path d="M25 30C10 21 18 9 25 17c7-8 15 4 0 13ZM96 37c-14-7-8-19 0-12 8-7 14 5 0 12Z" fill="#ec91af" stroke="#a65176" stroke-width="1.6"/>
+   <path d="M12 68q0-13 15-10-1 10-15 10m86 1q12-10 20 1-11 7-20-1" fill="#85ad72"/>
+   <path d="m43 17 3-6 3 6 6 3-6 3-3 6-3-6-6-3zm35 8 2-5 3 5 5 2-5 2-3 5-2-5-5-2Z" fill="#f4c968" stroke="#fff6e1" stroke-width="1.5"/>
+   <path d="M32 84Q60 98 87 80" fill="none" stroke="#e8a8b6" stroke-width="3" stroke-linecap="round"/>`,
+   tomato:`<path d="M44 49Q26 42 34 35q6-4 16 5 3-20 12-14 6 3 3 15 17-12 24-5 5 6-10 16 22 5 17 12-4 5-20 2 6 18-2 20-8 3-14-16-9 19-18 12-3-5 1-15-22 8-23-1 0-7 24-17Z" fill="#db5441" stroke="#ac3f36" stroke-width="2"/>
+   <path d="M46 53q11-14 22-5m-13 12q8-4 16-2" fill="none" stroke="#ffab82" stroke-width="3.5" stroke-linecap="round"/>
+   <g fill="#ffd392"><ellipse cx="53" cy="55" rx="2.5" ry="1.6"/><ellipse cx="70" cy="62" rx="3" ry="1.8" transform="rotate(-22 70 62)"/></g>
+   <path d="M29 24q-8-9-12-3-4 6 12 9m66-7q10-10 13-4 2 6-13 9m5 49q13 1 11 8-3 6-11-3" fill="#ea7961" stroke="#b8473d" stroke-width="1.3"/>`,
+   egg:`<path d="M27 57q-11-10 3-16 7-5 17 0 14-13 28-4 16-3 21 9 14 7 3 17 5 13-11 15-10 11-25 4-11 8-20 0-17 1-19-11-9-6 3-14Z" fill="#fff5dc" stroke="#cfb487" stroke-width="2"/>
+   <ellipse cx="63" cy="59" rx="18" ry="15" fill="#f5bd4d" stroke="#d49330" stroke-width="1.6"/>
+   <path d="M51 58q6-11 16-8m-13 18q9 5 18-2" fill="none" stroke="#ffe79e" stroke-width="3.4" stroke-linecap="round"/>
+   <path d="m15 36 5-10 5 4 5-4-3 13Zm77-12 4-11 5 5 8-1-5 12Zm13 54 6 1 4 8-11-2Z" fill="#fff9e5" stroke="#bd9c74" stroke-width="1.7" stroke-linejoin="round"/>`,
+   snow:`<path d="M19 48q-7-14 6-19 2-11 18-10 7-10 21-5 13-6 23 5 14 0 16 12 12 5 7 16-7 11-21 7-8 7-20 1-12 7-23 0-17 4-27-7Z" fill="#ecfaff" stroke="#7ab2c9" stroke-width="2"/>
+   <path d="M26 43q12 5 22 0 10 7 22 0 11 6 29-2-4 14-19 10-9 5-17 1-9 6-20 0-11 3-17-9Z" fill="#b8dfed"/>
+   <path d="M20 64v20m-9-15 18 10m0-10-18 10m84-20v18m-8-14 16 10m0-10-16 10" fill="none" stroke="#65a8c1" stroke-width="2.5" stroke-linecap="round"/>
+   <path d="m52 65 4 5-4 5-4-5zm27 20 3 4-3 4-3-4Z" fill="#c0e8f6" stroke="#81bfd7" stroke-width="1.5"/>`,
+   confetti:`<path d="M18 68q17-9 13-24-3-10 5-17m64 45q-13-9-5-19 7-8 4-18m-46-6q3-12 13-15" fill="none" stroke="#ad72b7" stroke-width="3.4" stroke-linecap="round"/>
+   <path d="m15 43 8-5 4 7-8 5zm75-17 7-6 5 7-7 6zm15 34 7-4 4 7-8 4Z" fill="#edb85a"/>
+   <path d="m13 55 4 3-3 6-5-3zm65-38 6-3 4 5-6 4Zm11 67 8 3-3 5-8-3Z" fill="#6db29a"/>
+   <path d="m42 21 5-3 3 6-5 3zm68 19 5-3 2 6-5 2Z" fill="#e886a4"/>`
   };
   return '<svg viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">'+art[kind]+'</svg>';
  }
@@ -168,8 +230,8 @@
    {transform:'none'},{transform:'translateX('+kick+'px) rotate('+direction*7+'deg) scale(.91,1.04)',offset:.1},{transform:'translateX('+(-kick*.4)+'px) rotate('+(-direction*3)+'deg) scale(1.035,.98)',offset:.33},{transform:'translateX('+kick*.15+'px) rotate('+direction+'deg)',offset:.6},{transform:'none'}
   ];
   target.animate(reaction,{duration:gentle?720:cold?650:540,easing:'cubic-bezier(.2,.7,.25,1)'});
-  const accent=attachedEffect(target,'social-impact social-impact-'+kind);accent.innerHTML=impactArt(kind);accent.style.width=accent.style.height=rect.width*1.12+'px';
-  const duration=kind==='confetti'?280:['tomato','egg','snow'].includes(kind)?1700:gentle?1250:680;
+  const accent=attachedEffect(target,'social-impact social-impact-'+kind);accent.innerHTML=impactArt(kind);accent.style.width=accent.style.height=rect.width*throwMotion[kind].impact+'px';
+  const duration=kind==='confetti'?560:['tomato','egg','snow'].includes(kind)?1700:gentle?1250:680;
   finish(accent,[{transform:'translate(-50%,-50%) scale(.45)',opacity:0},{transform:'translate(-50%,-50%) scale(1.08)',opacity:1,offset:.08},{transform:'translate(-50%,-50%) scale(1)',opacity:1,offset:.2},{transform:'translate(-50%,-50%) scale(1)',opacity:1,offset:.72},{transform:'translate(-50%,-46%) scale(.98)',opacity:0}],{duration,easing:'ease-out'});
   if(hard){
    const snap=attachedEffect(target,'social-contact social-contact-'+kind);
@@ -300,22 +362,30 @@
   if(event.kind==='water'){waterJet(event,a,b);return;}
   from.animate([{transform:'scale(1)'},{transform:'rotate(-7deg) scale(.92)'},{transform:'scale(1)'}],{duration:280});
   const startX=a.x+a.width/2,startY=a.y+a.height/2,endX=b.x+b.width/2,endY=b.y+b.height/2;
-  const lift=Math.max(18,Math.min(115,Math.min(startY,endY)-35));
+  const motion=throwMotion[event.kind],direction=endX>=startX?1:-1;
+  const lift=motion.lift*Math.max(18,Math.min(115,Math.min(startY,endY)-35));
   const duration=Math.min(850,550+Math.hypot(endX-startX,endY-startY)*.24);
-  const point=t=>({x:startX+(endX-startX)*t,y:startY+(endY-startY)*t-lift*4*t*(1-t)});
-  for(const t of [.2,.38,.56,.74]){
-   const p=point(t),trail=effect('social-trail social-trail-'+event.kind,p.x,p.y);
-   finish(trail,[{transform:'translate(-50%,-50%) scale(.3)',opacity:0},{transform:'translate(-50%,-50%) scale(1)',opacity:.8,offset:.2},{transform:'translate(-50%,-30%) scale(.15)',opacity:0}],{duration:350,delay:duration*t,easing:'ease-out'});
+  const point=t=>{
+   const progress=t+motion.bias*t*(1-t);
+   return {x:startX+(endX-startX)*progress,y:startY+(endY-startY)*progress-lift*4*progress*(1-progress)};
+  };
+  for(const [i,t] of [.2,.38,.56,.74].entries()){
+   const p=point(t),next=point(t+.01);
+   const turn=Math.atan2(next.y-p.y,next.x-p.x)*180/Math.PI;
+   const trail=effect('social-trail social-trail-'+event.kind,p.x,p.y+(i%2===0?-3:4));
+   const mark='translate(-50%,-50%) rotate('+turn+'deg) scale(';
+   finish(trail,[{transform:mark+'.38)',opacity:0},{transform:mark+'1)',opacity:.84,offset:.22},{transform:mark+'.55)',opacity:0}],{duration:320,delay:duration*t,easing:'ease-out'});
   }
   const node=projectile(event.kind);
   const size=Math.max(52,Math.min(82,a.width*.65));node.style.width=node.style.height=size+'px';
   document.body.append(node);flying.add(node);
   const frames=Array.from({length:33},(_,i)=>{
    const t=i/32,p=point(t);
-   return {transform:'translate('+p.x+'px,'+p.y+'px) translate(-50%,-50%) rotate('+(event.kind==='flowers'?t*35:(endX>=startX?1:-1)*t*400)+'deg) scale('+(1+.22*Math.sin(t*Math.PI))+')'};
+   const turn=(direction*(motion.spin*t+motion.sway*Math.sin(t*Math.PI*2))).toFixed(2);
+   return {transform:'translate('+p.x+'px,'+p.y+'px) translate(-50%,-50%) rotate('+turn+'deg) scale('+(1+.22*Math.sin(t*Math.PI))+')'};
   });
   node.animate(frames,{duration,easing:'linear',fill:'forwards'}).finished.then(()=>{
-   const recipient=avatarElement(event.to);if(node.isConnected&&recipient)burst(recipient,event.kind,endX>=startX?1:-1);
+   const recipient=avatarElement(event.to);if(node.isConnected&&recipient)burst(recipient,event.kind,direction);
   }).catch(()=>{}).finally(()=>{node.remove();flying.delete(node);});
  }
  async function submit(data){

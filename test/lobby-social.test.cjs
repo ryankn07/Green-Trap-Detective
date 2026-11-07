@@ -81,7 +81,12 @@ test('two browsers share avatars and keep lobby reactions within the rendering b
   const box=await avatar(guest,hostId).boundingBox();
   await guest.mouse.move(box.x+box.width/2,box.y+box.height/2);await guest.mouse.down();await guest.waitForTimeout(470);await guest.mouse.up();
   await guest.getByRole('button',{name:'Tặng hoa',exact:true}).click();
-  await host.waitForFunction(()=>!!document.querySelector('.social-projectile-flowers'),null,{polling:20});
+  const bouquet=host.locator('.social-projectile-flowers');
+  await bouquet.waitFor();
+  const sway=await bouquet.evaluate(node=>node.getAnimations()[0].effect.getKeyframes().map(frame=>
+   Number(frame.transform.match(/rotate\(([-\d.]+)deg\)/)[1])
+  ));
+  assert.ok(Math.min(...sway)<-10&&Math.max(...sway)>10,'bouquet should sway both ways');
   assert.ok(await guest.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));
 
   const peers=Array.from({length:10},(_,i)=>manager.join(room.code,'Guest '+i).player);
