@@ -10,8 +10,7 @@
   flowers:{lift:1,bias:.16,spin:0,sway:24,impact:1.21},
   tomato:{lift:.78,bias:-.08,spin:320,sway:0,impact:1.3},
   egg:{lift:.91,bias:0,spin:205,sway:12,impact:1.3},
-  snow:{lift:1.18,bias:.14,spin:145,sway:14,impact:1.25},
-  confetti:{lift:.97,bias:.08,spin:48,sway:17,impact:1.25}
+  snow:{lift:1.18,bias:.14,spin:145,sway:14,impact:1.25}
  };
  const burstCounts={rock:17,brick:17,flowers:18,water:9,tomato:15,egg:15,snow:22,confetti:30};
  const confettiColors=['#cb5684','#32846c','#d79723','#438fba','#9b63ba','#e2854d'];
@@ -130,7 +129,8 @@
    <path d="M26 43q12 5 22 0 10 7 22 0 11 6 29-2-4 14-19 10-9 5-17 1-9 6-20 0-11 3-17-9Z" fill="#b8dfed"/>
    <path d="M20 64v20m-9-15 18 10m0-10-18 10m84-20v18m-8-14 16 10m0-10-16 10" fill="none" stroke="#65a8c1" stroke-width="2.5" stroke-linecap="round"/>
    <path d="m52 65 4 5-4 5-4-5zm27 20 3 4-3 4-3-4Z" fill="#c0e8f6" stroke="#81bfd7" stroke-width="1.5"/>`,
-   confetti:`<path d="M18 68q17-9 13-24-3-10 5-17m64 45q-13-9-5-19 7-8 4-18m-46-6q3-12 13-15" fill="none" stroke="#ad72b7" stroke-width="3.4" stroke-linecap="round"/>
+   confetti:`<path d="m60 27 5 19 15-10-7 17 18 7-19 5 9 17-17-9-5 19-5-19-18 8 9-17-19-5 19-6-8-17 17 10Z" fill="#ffe98d" stroke="#e9ac4c" stroke-width="2.5" stroke-linejoin="round"/>
+   <path d="M18 68q17-9 13-24-3-10 5-17m64 45q-13-9-5-19 7-8 4-18m-46-6q3-12 13-15" fill="none" stroke="#ad72b7" stroke-width="3.4" stroke-linecap="round"/>
    <path d="m15 43 8-5 4 7-8 5zm75-17 7-6 5 7-7 6zm15 34 7-4 4 7-8 4Z" fill="#edb85a"/>
    <path d="m13 55 4 3-3 6-5-3zm65-38 6-3 4 5-6 4Zm11 67 8 3-3 5-8-3Z" fill="#6db29a"/>
    <path d="m42 21 5-3 3 6-5 3zm68 19 5-3 2 6-5 2Z" fill="#e886a4"/>`
@@ -190,7 +190,7 @@
   const ctx=canvas.getContext('2d');
   if(!ctx)return;
   document.body.append(canvas);flying.add(canvas);
-  const started=performance.now();
+  const started=performance.now(),isConfetti=kind==='confetti';
   function draw(now){
    if(!canvas.isConnected)return;
    const age=now-started;
@@ -199,8 +199,10 @@
    for(const p of particles){
     const t=(age-p.delay)/p.duration;
     if(t<0||t>=1)continue;
-    const dx=p.vx*t+(p.flutter?Math.sin(t*Math.PI*3+p.index)*14*t:0);
-    const dy=(p.vy+p.gravity*t)*t;
+    // Advance the initial lift quickly, then let the particles fall and drift.
+    const travel=isConfetti?t+.26*(1-t)*Math.min(1,t/.16):t;
+    const dx=p.vx*travel+(p.flutter?Math.sin(t*Math.PI*3+p.index)*14*t:0);
+    const dy=(p.vy+p.gravity*travel)*travel;
     const angle=p.angle+p.spin*t,cos=Math.cos(angle),sin=Math.sin(angle);
     const sx=scale*Math.min(1,.72+t*4)*(1-.35*t);
     const sy=sx*(p.flutter?.76+.24*Math.cos(t*9+p.index):1);
@@ -216,9 +218,29 @@
   }
   requestAnimationFrame(draw);
  }
+ function popConfetti(target){
+  const rect=target.getBoundingClientRect();
+  const flash=attachedEffect(target,'social-impact social-impact-confetti');
+  flash.style.top='78%';flash.style.width=flash.style.height=rect.width*1.45+'px';
+  flash.innerHTML=impactArt('confetti');
+  finish(flash,[
+   {transform:'translate(-50%,-50%) scale(.28)',opacity:.8},
+   {transform:'translate(-50%,-63%) scale(1.04)',opacity:1,offset:.18},
+   {transform:'translate(-50%,-80%) scale(1.2)',opacity:0}
+  ],{duration:420,easing:'ease-out'});
+  const pieces=Array.from({length:burstCounts.confetti},(_,i)=>({
+   index:i,angle:0,spin:(i%2?1:-1)*(95+i*23)*Math.PI/180,
+   vx:Math.sin(i*2.39996)*rect.width*1.5,
+   vy:-rect.height*(3.52+(i%7)*.16),gravity:rect.height*4.15,
+   width:i%4===0?7:4+i%3,height:i%4===0?5:9+i%3*3,
+   duration:1350+i%5*100,delay:i%6*8,flutter:true,
+   color:confettiColors[i%confettiColors.length]
+  }));
+  paintParticles('confetti',rect.x+rect.width/2,rect.y+rect.height*.78,pieces);
+ }
  function burst(target,kind,direction=1){
   const rect=target.getBoundingClientRect(),x=rect.x+rect.width/2,y=rect.y+rect.height/2;
-  const gentle=kind==='flowers'||kind==='confetti',cold=kind==='snow',hard=kind==='rock'||kind==='brick';
+  const gentle=kind==='flowers',cold=kind==='snow',hard=kind==='rock'||kind==='brick';
   // Recoil follows the incoming object; attached residue moves with the portrait.
   const kick=direction*(hard?9:4);
   if(kind==='rock'||kind==='brick')dizzy(target);
@@ -231,7 +253,7 @@
   ];
   target.animate(reaction,{duration:gentle?720:cold?650:540,easing:'cubic-bezier(.2,.7,.25,1)'});
   const accent=attachedEffect(target,'social-impact social-impact-'+kind);accent.innerHTML=impactArt(kind);accent.style.width=accent.style.height=rect.width*throwMotion[kind].impact+'px';
-  const duration=kind==='confetti'?560:['tomato','egg','snow'].includes(kind)?1700:gentle?1250:680;
+  const duration=['tomato','egg','snow'].includes(kind)?1700:gentle?1250:680;
   finish(accent,[{transform:'translate(-50%,-50%) scale(.45)',opacity:0},{transform:'translate(-50%,-50%) scale(1.08)',opacity:1,offset:.08},{transform:'translate(-50%,-50%) scale(1)',opacity:1,offset:.2},{transform:'translate(-50%,-50%) scale(1)',opacity:1,offset:.72},{transform:'translate(-50%,-46%) scale(.98)',opacity:0}],{duration,easing:'ease-out'});
   if(hard){
    const snap=attachedEffect(target,'social-contact social-contact-'+kind);
@@ -243,22 +265,21 @@
    const dust=effect('social-dust social-dust-'+kind,x,y);dust.style.width=rect.width*.8+'px';dust.style.height=rect.height*.45+'px';
    finish(dust,[{transform:'translate(-50%,-50%) scale(.25)',opacity:0},{transform:'translate(-50%,-55%) scale(1)',opacity:.86,offset:.2},{transform:'translate(-50%,-75%) scale(1.25)',opacity:0}],{duration:520,easing:'ease-out'});
   }
-  const confetti=kind==='confetti',flowers=kind==='flowers';
   const particles=Array.from({length:burstCounts[kind]},(_,i)=>{
    const angle=i*2.39996,reach=rect.width*(.28+(i%5)*.13)+10;
-   const width=confetti?(i%4===0?7:4+i%3):Math.max(5,rect.width/110*(flowers?14+i%4*5:cold?7+i%5*4:hard?7+i%5*5:10+i%4*4));
+   const width=Math.max(5,rect.width/110*(gentle?14+i%4*5:cold?7+i%5*4:hard?7+i%5*5:10+i%4*4));
    return {
     index:i,angle:0,spin:(i%2?1:-1)*(95+i*23)*Math.PI/180,
-    vx:confetti?direction*rect.width*(.25+Math.sin(angle)*.85):Math.cos(angle)*reach+(hard?direction*rect.width*.2:0),
-    vy:confetti?-rect.height*(1.55+(i%7)*.2):Math.sin(angle)*reach*.6-(flowers?40:cold?25:hard?45:22),
-    gravity:confetti?rect.height*3.35:flowers?75:cold?110:hard?rect.height*1.8:130,
-    width,height:confetti?(i%4===0?4:9+i%3*3):width,
-    duration:confetti?1350+i%5*100:flowers?1350+i%3*90:cold?1200:hard?650+i%4*70:1000,
-    delay:confetti?i%6*10:i%3*8,flutter:flowers||confetti||cold,
-    sprite:confetti?null:particleSprite(kind,i),color:confetti?confettiColors[i%confettiColors.length]:'#9d896d'
+    vx:Math.cos(angle)*reach+(hard?direction*rect.width*.2:0),
+    vy:Math.sin(angle)*reach*.6-(gentle?40:cold?25:hard?45:22),
+    gravity:gentle?75:cold?110:hard?rect.height*1.8:130,
+    width,height:width,
+    duration:gentle?1350+i%3*90:cold?1200:hard?650+i%4*70:1000,
+    delay:i%3*8,flutter:gentle||cold,
+    sprite:particleSprite(kind,i),color:'#9d896d'
    };
   });
-  paintParticles(kind,confetti?x-direction*rect.width*.32:x,confetti?y+rect.height*.12:y,particles);
+  paintParticles(kind,x,y,particles);
  }
  function wet(target){
   const box=target.getBoundingClientRect(),overlay=attachedEffect(target,'social-wet');
@@ -360,6 +381,7 @@
    to.animate([{opacity:1},{opacity:.65},{opacity:1}],{duration:250});return;
   }
   if(event.kind==='water'){waterJet(event,a,b);return;}
+  if(event.kind==='confetti'){popConfetti(to);return;}
   from.animate([{transform:'scale(1)'},{transform:'rotate(-7deg) scale(.92)'},{transform:'scale(1)'}],{duration:280});
   const startX=a.x+a.width/2,startY=a.y+a.height/2,endX=b.x+b.width/2,endY=b.y+b.height/2;
   const motion=throwMotion[event.kind],direction=endX>=startX?1:-1;
