@@ -63,7 +63,13 @@ test('two browsers share avatars and keep lobby reactions within the rendering b
   await avatar(host,guestId).click();
   const menuEffects=await host.locator('.social-reaction-menu').evaluate(menu=>menu.getAnimations({subtree:true}).length);
   await host.getByRole('button',{name:'Tạt nước',exact:true}).click();
-  await guest.waitForFunction(()=>!!document.querySelector('.social-water-jet'),null,{polling:20});
+  const water=guest.locator('.social-water-jet');
+  await water.waitFor();
+  const jet=await water.evaluate(node=>({
+   filledShapes:[...node.querySelectorAll('path')].filter(path=>getComputedStyle(path).fill!=='none').length,
+   movesAsOne:node.getAnimations().some(animation=>animation.effect.getKeyframes().some(frame=>frame.transform?.includes('rotate')))
+  }));
+  assert.ok(jet.filledShapes>=3&&jet.movesAsOne,JSON.stringify(jet));
   await guest.waitForFunction(()=>{
    const canvas=document.querySelector('canvas.social-burst-water');
    if(!canvas)return false;

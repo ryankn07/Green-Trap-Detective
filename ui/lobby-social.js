@@ -210,41 +210,67 @@
   finish(overlay,[{transform:'translate(-50%,-50%)',opacity:0},{transform:'translate(-50%,-50%)',opacity:1,offset:.08},{transform:'translate(-50%,-50%)',opacity:1,offset:.8},{transform:'translate(-50%,-50%)',opacity:0}],{duration:1150});
  }
  function waterJet(event,a,b){
-  const direction=b.x+b.width/2>=a.x+a.width/2?1:-1;
-  const size=Math.min(48,a.width*.48),bx=a.x+a.width/2+direction*a.width*.57,by=a.y+a.height*.55;
-  // The tilted bucket's rim and the water share the same transformed point.
+  const ex=b.x+b.width/2,ey=b.y+b.height*.43;
+  const direction=ex>=a.x+a.width/2?1:-1;
+  const size=Math.min(54,a.width*.55),bx=a.x+a.width/2+direction*a.width*.54,by=a.y+a.height*.55;
+  // Match the starting point to the rim of the tipped bucket.
   const angle=55*Math.PI/180,dx=17*size/64,dy=-10*size/64;
   const sx=bx+direction*(dx*Math.cos(angle)-dy*Math.sin(angle)),sy=by+dx*Math.sin(angle)+dy*Math.cos(angle);
-  const ex=b.x+b.width/2,ey=b.y+b.height*.43;
-  const cx=(sx+ex)/2,cy=Math.max(12,Math.min(sy,ey)-Math.min(65,Math.hypot(ex-sx,ey-sy)*.18));
-  const left=Math.min(sx,ex)-10,top=Math.min(sy,cy,ey)-10;
-  const width=Math.max(sx,ex)-left+10,height=Math.max(sy,cy,ey)-top+10;
-  const root=effect('social-water-jet',left,top);
-  root.style.width=width+'px';root.style.height=height+'px';
-  const curve='M'+(sx-left)+' '+(sy-top)+'Q'+(cx-left)+' '+(cy-top)+' '+(ex-left)+' '+(ey-top);
-  root.innerHTML='<svg aria-hidden="true" viewBox="0 0 '+width+' '+height+'"><g fill="none" stroke-linecap="round" stroke-dasharray="1"><path d="'+curve+'" stroke="#459fc6" stroke-width="8" pathLength="1"/><path d="'+curve+'" stroke="#d7faff" stroke-width="3" pathLength="1"/></g></svg>';
+  const cx=(sx+ex)/2,cy=Math.max(14,Math.min(sy,ey)-Math.min(63,Math.hypot(ex-sx,ey-sy)*.32));
   const bucket=effect('social-water-bucket',bx,by);bucket.style.width=bucket.style.height=size+'px';
-  bucket.innerHTML='<svg viewBox="0 0 64 64" aria-hidden="true"><path d="M15 23Q12 1 31 4q20 2 17 24" fill="none" stroke="#71939e" stroke-width="3"/><path d="m13 23 37-1-6 31-24 1Z" fill="#86bfcb" stroke="#507e8b" stroke-width="2"/><path d="m21 31 4 16" stroke="#d5eef0" stroke-width="3" stroke-linecap="round"/><ellipse cx="31" cy="22" rx="19" ry="5" fill="#c5eff3" stroke="#507e8b" stroke-width="2"/></svg>';
-  const tilt='translate(-50%,-50%) scaleX('+direction+') rotate(55deg)';
-  finish(bucket,[{transform:tilt,opacity:0},{transform:tilt,opacity:1,offset:.12},{transform:tilt,opacity:1,offset:.65},{transform:tilt,opacity:0}],{duration:520});
-  const travel=root.querySelector('g').animate([
-   {strokeDashoffset:1,opacity:0},
-   {strokeDashoffset:0,opacity:1,offset:.7},
-   {strokeDashoffset:-1,opacity:0}
-  ],{duration:670,easing:'linear'});
-  setTimeout(()=>{
-   if(!root.isConnected)return;
+  bucket.innerHTML=`<svg viewBox="0 0 64 64" aria-hidden="true">
+   <path d="M15 23Q12 5 29 4Q47 2 48 23" fill="none" stroke="#276276" stroke-width="4" stroke-linecap="round"/>
+   <path d="M13 22L50 22L43 52Q31 59 20 52Z" fill="#61afc5" stroke="#245d73" stroke-width="2.5"/>
+   <path d="M44 26L41 50Q35 53 30 53L36 26Z" fill="#387e9b"/>
+   <path d="M20 31L24 46" fill="none" stroke="#c9f4f6" stroke-width="3" stroke-linecap="round"/>
+   <ellipse cx="31.5" cy="22" rx="19" ry="6" fill="#dbf9f8" stroke="#245d73" stroke-width="2.5"/>
+   <path d="M17 23Q31 28 46 22" fill="none" stroke="#55b9d1" stroke-width="3" stroke-linecap="round"/>
+  </svg>`;
+  const pose='translate(-50%,-50%) scaleX('+direction+') rotate(';
+  finish(bucket,[
+   {transform:pose+'-18deg)',opacity:0},
+   {transform:pose+'55deg)',opacity:1,offset:.18},
+   {transform:pose+'63deg)',opacity:1,offset:.64},
+   {transform:pose+'42deg)',opacity:0}
+  ],{duration:570,easing:'ease-out'});
+  const water=effect('social-water-jet',0,0);
+  const width=Math.max(54,Math.min(102,b.width*.9));
+  water.style.width=width+'px';water.style.height=width*72/124+'px';
+  water.innerHTML=`<svg viewBox="0 0 124 72" aria-hidden="true">
+   <path d="M10 44Q23 44 36 33Q48 23 63 26Q66 17 79 12Q89 8 97 14Q107 11 113 21Q120 28 112 37Q118 44 105 50Q95 57 82 51Q72 61 57 54Q44 60 30 55Q17 56 10 44Z" fill="#64cde0" stroke="#187f9e" stroke-width="2" stroke-linejoin="round"/>
+   <path d="M21 48Q39 49 57 42Q68 36 84 40Q96 42 111 32Q107 39 112 41Q107 50 95 50Q88 51 82 49Q70 58 58 52Q42 58 29 53Z" fill="#309ebe" opacity=".75"/>
+   <path d="M31 41Q47 28 62 30Q74 20 82 19Q92 13 102 19Q111 20 113 26Q106 23 101 26Q92 21 84 26Q74 30 63 35Q46 33 31 41Z" fill="#c8f5f8"/>
+   <path d="M79 31Q86 26 94 27M41 45Q49 42 54 43" fill="none" stroke="#f4ffff" stroke-width="2.6" stroke-linecap="round"/>
+   <path d="M51 16Q56 7 62 7Q67 8 64 12Q59 15 51 16ZM5 34Q8 29 14 31Q18 33 15 35Q10 38 5 34ZM91 61Q99 58 103 60Q107 63 103 66Q97 70 91 61Z" fill="#8be0eb" stroke="#338da8" stroke-width="1.6"/>
+  </svg>`;
+  const mirror=ex<sx?-1:1;
+  const frames=Array.from({length:33},(_,i)=>{
+   const t=i/32,p=t*(.66+.34*t),q=1-p;
+   const x=q*q*sx+2*p*q*cx+p*p*ex,y=q*q*sy+2*p*q*cy+p*p*ey;
+   const rise=2*(q*(cy-sy)+p*(ey-cy));
+   const rotation=Math.atan2(rise*mirror,Math.abs(ex-sx))*180/Math.PI;
+   const stretch=.5+.5*Math.sin(t*Math.PI/2),spread=.36+.74*t;
+   return {
+    transform:'translate('+x+'px,'+y+'px) translate(-50%,-50%) rotate('+rotation+'deg) scale('+mirror*stretch+','+spread+')',
+    opacity:Math.min(1,t*10)
+   };
+  });
+  water.animate(frames,{duration:470,easing:'linear',fill:'forwards'}).finished.then(()=>{
+   if(!water.isConnected)return;
    const recipient=avatarElement(event.to);
    if(recipient)splashWater(recipient,direction);
-  },470);
-  travel.finished.catch(()=>{}).finally(()=>{root.remove();flying.delete(root);});
+  }).catch(()=>{}).finally(()=>{water.remove();flying.delete(water);});
  }
  function splashWater(target,direction){
   const box=target.getBoundingClientRect(),x=box.x+box.width/2,y=box.y+box.height*.43;
   target.animate([{transform:'none'},{transform:'translateX('+direction*3+'px) scale(.98)',offset:.2},{transform:'none'}],{duration:360,easing:'ease-out'});
-  const splash=attachedEffect(target,'social-impact social-impact-water');splash.style.width=splash.style.height=box.width*.88+'px';splash.style.top='43%';
-  splash.innerHTML='<svg viewBox="0 0 100 100" aria-hidden="true"><path d="M46 49Q24 46 13 25M48 48Q43 25 52 13M52 51Q75 30 88 39M49 54Q72 66 78 81M45 52Q25 60 18 73" fill="none" stroke="#459fc6" stroke-opacity=".95" stroke-width="5" stroke-linecap="round"/><path d="M39 48q9-8 20 0" fill="none" stroke="#efffff" stroke-width="2" stroke-linecap="round"/></svg>';
-  finish(splash,[{transform:'translate(-50%,-50%) scale(.3)',opacity:0},{transform:'translate(-50%,-50%) scale(.85)',opacity:1,offset:.2},{transform:'translate(-50%,-45%) scale(1.2)',opacity:0}],{duration:300,easing:'ease-out'});
+  const splash=attachedEffect(target,'social-impact social-impact-water');splash.style.width=splash.style.height=box.width*1.25+'px';splash.style.top='43%';
+  splash.innerHTML=`<svg viewBox="0 0 100 100" aria-hidden="true">
+   <path d="M11 58Q21 49 36 49Q24 40 20 31Q18 25 25 28Q40 33 45 44Q41 31 46 19Q50 11 54 20Q59 31 55 45Q65 34 78 28Q86 25 81 33Q76 43 65 49Q81 44 91 50Q98 55 89 58Q68 63 63 71Q56 78 47 73Q40 67 29 72Q18 75 13 66Q10 62 20 59Z" fill="#79d8e8" stroke="#288ca7" stroke-width="2.1" stroke-linejoin="round"/>
+   <path d="M27 53Q40 46 46 52Q55 47 64 52Q73 49 80 53Q64 55 61 62Q54 66 48 62Q38 57 27 60Z" fill="#d8fbfc"/>
+   <path d="M10 28Q6 19 10 18Q15 18 17 25Q17 29 10 28ZM61 14Q62 7 67 8Q71 10 68 15Q64 18 61 14ZM84 69Q92 65 95 70Q97 75 91 76Q85 75 84 69Z" fill="#a1eaf0" stroke="#399bb4" stroke-width="1.6"/>
+  </svg>`;
+  finish(splash,[{transform:'translate(-50%,-50%) scale(.42)',opacity:.65},{transform:'translate(-50%,-50%) scale(1)',opacity:1,offset:.2},{transform:'translate(-50%,-46%) scale(1.1)',opacity:.9,offset:.5},{transform:'translate(-50%,-38%) scale(1.24)',opacity:0}],{duration:410,easing:'ease-out'});
   const drops=Array.from({length:burstCounts.water},(_,i)=>{
    const angle=i*2.4,reach=box.width*(.28+i%3*.12),width=5+i%3;
    return {
