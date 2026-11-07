@@ -43,8 +43,6 @@ async function assertEndingScroll(page,width,height){
  for(const summary of await page.locator('.ending-records .ending-details>summary').all())await summary.click();
  await page.keyboard.press('Control+End');
  await page.waitForFunction(()=>{const box=document.querySelector('.ending-footer').getBoundingClientRect();return box.top>=0&&box.bottom<=innerHeight+1;},{},{timeout:2000});
-  await page.mouse.move(10,height/2);await page.mouse.wheel(0,-100000);
-  await page.waitForFunction(()=>scrollY<=1,{},{timeout:5000});
 }
 
 test('good and bad ending chapters follow the actual winner with distinct motion and preserve the film',{

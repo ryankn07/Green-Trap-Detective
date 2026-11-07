@@ -17,7 +17,7 @@ try{
     PGLITE_MODULE_PATH:dependency('PGLITE_MODULE_PATH','@electric-sql/pglite'),
     BROWSER_CHANNEL:process.env.BROWSER_CHANNEL||'chrome'
   };
-  const child=spawn(process.execPath,['--test','--test-concurrency=2','--test-reporter=tap',...process.argv.slice(2)],{cwd:root,env,stdio:['inherit','pipe','inherit']});
+  const child=spawn(process.execPath,['--test','--test-concurrency=1','--test-reporter=tap',...process.argv.slice(2)],{cwd:root,env,stdio:['inherit','pipe','inherit']});
   let output='';
   child.stdout.on('data',chunk=>{output+=chunk;process.stdout.write(chunk);});
   child.on('error',error=>{console.error(error.message);process.exitCode=1;});

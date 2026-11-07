@@ -80,7 +80,11 @@ function startActionBurn(previous,value){
  actionBurnHold={previous,header,fire,burnCanvas,context:burnCanvas.getContext('2d'),particles:[],lastPaint:performance.now(),from:Math.max(0,progress.value),started:performance.now(),duration,reduced};
  snapshot=value;clearPhaseTransition();document.querySelectorAll('dialog[open]:not(#tutorial-dialog):not(#rules-dialog)').forEach(dialog=>dialog.close());
  header.classList.add('gi-clock-burning');header.append(burnCanvas,fire);app.inert=true;
- actionBurnHold.timer=setTimeout(finishActionBurn,duration+80);finishClientSession(value);paintActionBurn();return true;
+ actionBurnHold.timer=setTimeout(()=>{
+  if(!actionBurnHold)return;
+  paintActionBurn();
+  if(actionBurnHold)actionBurnHold.timer=setTimeout(finishActionBurn,200);
+ },duration+80);finishClientSession(value);paintActionBurn();return true;
 }
 function paintActionBurn(){
  const hold=actionBurnHold,progress=document.getElementById('phase-progress');if(!hold||!progress){finishActionBurn();return;}
@@ -89,7 +93,8 @@ function paintActionBurn(){
  const bar=progress.getBoundingClientRect(),header=hold.header.getBoundingClientRect();
  hold.fire.style.left=(bar.left-header.left+bar.width*progress.value/progress.max)+'px';hold.fire.style.top=(bar.top-header.top+bar.height/2)+'px';
  hold.fire.classList.toggle('is-spent',burnT>=1);drawActionBurn(hold,bar,header,progress,burnT);
- if(t>=1)finishActionBurn();else scheduleClock();
+  if(burnT>=1&&hold.emptiedAt===undefined)hold.emptiedAt=performance.now();
+  if(t>=1&&hold.emptiedAt!==undefined&&performance.now()-hold.emptiedAt>=120)finishActionBurn();else scheduleClock();
 }
 function drawActionBurn(hold,bar,header,progress,burnT){
  const ctx=hold.context;if(!ctx)return;
