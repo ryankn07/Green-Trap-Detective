@@ -1,0 +1,25 @@
+{
+  "format": "WebP lossless",
+  "assets": {
+    "green-trap-detective": {
+      "sourceBytes": 752149,
+      "webpBytes": 381996,
+      "sourceSha256": "a6c969ee0b19ec741e36404ee1750d3c58f2030ffc311b46175b1ef91c9d80f7",
+      "webpSha256": "8844d7e51b6ee1f29dfc1b026a89c5f31e0a5d6a4fdbb65fea9cb1adb8f169f8",
+      "dimensions": [
+        799,
+        1030
+      ]
+    },
+    "green-coin": {
+      "sourceBytes": 976488,
+      "webpBytes": 549780,
+      "sourceSha256": "7105572bcb1113fb836e8f724abb1c309f775ac5f2f0c35014a4be107883d62b",
+      "webpSha256": "e18dd66a9e14fd84d7b62593c75e50ae3ea11a730675b71c95a5314946c75f95",
+      "dimensions": [
+        1294,
+        1216
+      ]
+    }
+  }
+}

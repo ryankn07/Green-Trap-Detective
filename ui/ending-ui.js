@@ -58,10 +58,24 @@
     }
     const video=container.querySelector('#ending-video'),play=container.querySelector('#ending-play'),status=container.querySelector('#ending-media-status');
     if(video&&play){
-      play.addEventListener('click',()=>{video.play().catch(()=>{status.hidden=false;status.textContent='Chưa phát được video. Hãy thử nút phát trên video.';});});
-      video.addEventListener('play',()=>{play.hidden=true;status.hidden=true;});
+      const label=play.querySelector('span:last-child'),originalLabel=label.textContent;
+      let failed=false;
+      function mediaFailed(){
+        failed=true;status.hidden=false;status.textContent='Không tải được video. Bấm Thử lại video để tải lại.';
+        play.hidden=false;label.textContent='Thử lại video';
+      }
+      play.addEventListener('click',()=>{
+        if(failed){failed=false;status.hidden=true;label.textContent=originalLabel;video.load();}
+        video.play().catch(error=>{
+          if(error.name==='AbortError'||failed)return;
+          mediaFailed();
+        });
+      });
+      video.addEventListener('play',()=>{if(!failed){play.hidden=true;status.hidden=true;}});
       video.addEventListener('ended',()=>{play.hidden=false;});
-      video.addEventListener('error',()=>{status.hidden=false;status.textContent='Không tải được video. Hãy tải lại trang để thử lại.';play.hidden=true;});
+      // A failed child <source> emits a non-bubbling error before video.error
+      // is populated. Capture it too, so both network and decode errors recover.
+      video.addEventListener('error',mediaFailed,true);
     }
     const reduced=root.matchMedia('(prefers-reduced-motion: reduce)');
     if(!reduced.matches&&root.IntersectionObserver){

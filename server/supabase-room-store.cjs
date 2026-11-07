@@ -14,7 +14,15 @@ class SupabaseRoomStore {
       method: 'POST', headers: { apikey: this.key, Authorization: 'Bearer ' + this.key, 'Content-Type': 'application/json' },
       body: JSON.stringify(body), signal: AbortSignal.timeout(Math.min(8000, remaining))
     });
-    if (!response.ok) { const error = Error('Trial storage unavailable'); error.status = response.status; throw error; }
+    if (!response.ok) {
+      const error = Error('Trial storage unavailable'); error.status = response.status;
+      // Only a missing optional RPC may fall back during a staged deployment.
+      // Network, permission, rate-limit and other database failures remain errors.
+      if (name === 'read_limited' && [400, 404].includes(response.status)) {
+        try { const detail = await response.json(); error.missingRpc = ['PGRST202', '42883'].includes(detail?.code); } catch {}
+      }
+      throw error;
+    }
     return response.json();
   }
   async limit(source, operation) {
@@ -22,6 +30,22 @@ class SupabaseRoomStore {
     if (!result.allowed) throw new HttpError('RATE_LIMITED', 'Quá nhiều yêu cầu. Hãy thử lại sau.', 429);
   }
   read(code, scope, requestId) { return this.call('read', { room_code: code, scope_hash: scope || null, request_id: requestId || null }); }
+  async readLimited({ code, scope, requestId, source, sourceOperation, sessionOperation = null }) {
+    let result;
+    try {
+      result = await this.call('read_limited', { room_code: code, scope_hash: scope || null,
+        request_id: requestId || null, source_hash: source, source_operation: sourceOperation,
+        session_operation: sessionOperation });
+    } catch (error) {
+      if (!error.missingRpc) throw error;
+      await this.limit(source, sourceOperation);
+      if (sessionOperation) await this.limit(scope, sessionOperation);
+      return this.read(code, scope, requestId);
+    }
+    if (result?.allowed === false) throw new HttpError('RATE_LIMITED', 'Quá nhiều yêu cầu. Hãy thử lại sau.', 429);
+    if (result?.allowed !== true) throw Error('Invalid limited room response');
+    return result;
+  }
   async commit(value) {
     const result = await this.call('commit', { room_code: value.code, expected_version: value.expectedVersion, new_payload: value.payload, scope_hash: value.scope, request_id: value.requestId, request_hash: value.requestHash, public_response: value.response, source_hash: value.source, operation: value.operation });
     if (result.error === 'ADMISSION_LIMIT') throw new HttpError('ADMISSION_LIMIT', 'Đã đạt giới hạn tạo hoặc tham gia phòng. Vui lòng thử lại sau.', 429);

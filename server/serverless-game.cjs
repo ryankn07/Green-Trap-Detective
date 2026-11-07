@@ -78,13 +78,22 @@ function createServerlessHandler({ store } = {}) {
       if (authenticated && !token) throw new HttpError('UNAUTHORIZED', 'Thiếu hoặc sai phiên chơi.', 401);
       const scope = hash(authenticated ? token : source + ':' + path);
       const requestHash = hash(JSON.stringify({ path, body }));
-      await store.limit(source, path === '/api/create' ? 'create' : path === '/api/join' ? 'join' : 'api');
-      if (authenticated) await store.limit(scope, writing ? 'action' : 'state');
       let code = path === '/api/create' ? null : String(body.roomCode || url.searchParams.get('room') || req.headers['x-room-code'] || '').toUpperCase();
       if (code !== null && !/^[A-Z2-9]{6}$/.test(code)) throw new HttpError('ROOM_NOT_FOUND', 'Không tìm thấy phòng.', 404);
       const started = performance.now();
+      const sourceOperation = path === '/api/create' ? 'create' : path === '/api/join' ? 'join' : 'api';
+      const sessionOperation = authenticated ? (writing ? 'action' : 'state') : null;
+      let initial;
+      if (store.readLimited) {
+        initial = await store.readLimited({ code, scope, requestId: body.requestId, source, sourceOperation, sessionOperation });
+      } else {
+        // Preserve the adapter seam for older stores and isolated test databases.
+        await store.limit(source, sourceOperation);
+        if (sessionOperation) await store.limit(scope, sessionOperation);
+        initial = await store.read(code, scope, body.requestId);
+      }
       for (let attempt = 0; attempt < 10 && performance.now() - started < 10000; attempt++) {
-        const loaded = await store.read(code, scope, body.requestId);
+        const loaded = attempt === 0 ? initial : await store.read(code, scope, body.requestId);
         const now = loaded.now;
         if (!Number.isFinite(now)) throw unavailable();
         const { manager, presence, presenceChanged } = hydrate(loaded.record, now);

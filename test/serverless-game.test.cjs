@@ -41,6 +41,15 @@ async function fixture(t) {
   return { store, request };
 }
 
+test('unchanged polling uses the combined read adapter once without redundant quota calls',async t=>{
+ const {store,request}=await fixture(t),host=(await request('/api/create',{name:'Combined poll'})).value;
+ const originalRead=store.read.bind(store);let combined=0,legacyLimits=0;
+ store.limit=async()=>{legacyLimits++;};
+ store.readLimited=async input=>{combined++;assert.equal(input.sourceOperation,'api');assert.equal(input.sessionOperation,'state');return originalRead(input.code,input.scope,input.requestId);};
+ const response=await request('/api/state?room='+host.roomCode,null,host);
+ assert.equal(response.status,200);assert.equal(response.value.room.code,host.roomCode);assert.equal(combined,1);assert.equal(legacyLimits,0);
+});
+
 test('discussion skip persists across cold Functions, retries once per voter and advances on unanimous consent',async t=>{
  const {store,request}=await fixture(t),host=(await request('/api/create',{name:'Skip host'})).value;
  const guests=[];for(const name of ['Skip A','Skip B'])guests.push((await request('/api/join',{roomCode:host.roomCode,name})).value);

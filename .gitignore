@@ -10,11 +10,6 @@ node_modules/
 *.log
 *.test-backup
 
-.env
-.env.*
-!.env.example
 *.local
-playwright-report/
-test-results/
 .DS_Store
 Thumbs.db

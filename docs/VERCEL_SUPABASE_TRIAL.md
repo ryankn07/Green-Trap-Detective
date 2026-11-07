@@ -1,5 +1,34 @@
 # Vercel + Supabase trial
 
+## Polling efficiency migration — 6 November 2026
+
+Apply `supabase/migrations/20261106_poll_read_efficiency.sql` after the existing
+`20261102_serverless_trial.sql` and `20261103_release_finished_rooms.sql`
+migrations. It adds the service-role-only `game_trial_read_limited` RPC, combines
+both quota checks with the initial room/receipt read, and runs global expiry
+cleanup at most once per minute. Ordinary unchanged polls use one network RPC
+instead of three; presence refresh, phase changes and CAS conflicts can still
+require additional calls. This is not a measured production latency claim.
+
+Expiry checks remain immediate even when expired records have not yet been
+physically removed. The replacement commit function removes expired receipts
+and the addressed expired room before reuse; the existing completed-room
+delivery window, quotas, role privacy and commit-before-acknowledgment behavior
+are retained. Cleanup rechecks room expiry before deletion, protecting a renewed
+room. The maintenance table has RLS and no client-role access.
+
+Deploy the migration before the new Function when possible. Until it is applied,
+the client storage adapter falls back to the existing limit/read RPCs only for
+explicit missing-function responses (`PGRST202` or `42883`); it never bypasses a
+quota, permissions or network error. This compatibility path adds a failed
+feature-probe request to each invocation on an old database, so migration is
+required to obtain the RPC reduction. Old Functions continue using the existing
+RPCs after migration. Re-applying the migration preserves its cleanup checkpoint.
+
+The migration has been tested locally with PGlite, including ordered/repeated
+application, quotas, isolated receipts, expiry and role privileges. It has not
+been executed against production as part of the local code review fixes.
+
 ## Production cutover — 2026-11-02
 
 This section supersedes the earlier Preview-only status below. The owner explicitly requested moving the whole backend off Render and approved enabling the three existing Supabase/enable environment variables for Production. Production now serves https://greentrap.vercel.app/ from Vercel Functions in Singapore; Supabase `green_trap_trial` stores rooms, receipts and rate buckets. The schema's historical name does not mean the public site is still a Preview. Server-only secrets remain hidden; deployment protection on Preview remains unchanged.

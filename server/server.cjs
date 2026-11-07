@@ -25,7 +25,6 @@ function hasPlayerStream(code,id){return (pendingPlayerStreams.get(id)||0)>0||Ar
 function disconnectIfAbsent(code,id){if(hasPlayerStream(code,id))return;const current=manager.rooms.get(code);const member=current?.players.find(p=>p.id===id&&!p.removed);if(member)manager.disconnected(current,member);}
 const publicDir=path.resolve(__dirname,'../public');
 const uiDir=path.resolve(__dirname,'../ui');
-const uiStylePath=path.resolve(__dirname,'../ui/style.css');
 function json(res,status,payload) {if(res.destroyed||res.writableEnded)return;if(res.headersSent){res.destroy();return;}res.writeHead(status,{'Content-Type':'application/json; charset=utf-8','Cache-Control':'no-store','X-Content-Type-Options':'nosniff'});res.end(JSON.stringify(payload));}
 const blockedStreams=new WeakMap();
 function streamSend(res,type,data){writeStreamFrame(res,'event: '+type+'\ndata: '+JSON.stringify(data)+'\n\n');}
@@ -70,7 +69,8 @@ if(remote){
 const transaction=fn=>remote?coordinator.run(fn):Promise.resolve().then(fn);
 const MIME={'.html':'text/html; charset=utf-8','.js':'text/javascript; charset=utf-8','.css':'text/css; charset=utf-8','.svg':'image/svg+xml','.ico':'image/x-icon'};
 const HEADERS={'X-Content-Type-Options':'nosniff','Referrer-Policy':'no-referrer','X-Frame-Options':'DENY','Content-Security-Policy':"default-src 'self'; connect-src 'self'; img-src 'self' data:; style-src 'self'; script-src 'self'; object-src 'none'; base-uri 'none'; frame-ancestors 'none'"};
-const allowedPaths=new Set(['/','/index.html','/app.js','/style.css','/motion.css','/motion.js','/card-webp-manifest.js','/ending.html','/ending.css','/ending-ui.js','/tutorial.css','/tutorial-ui.js','/rules.css','/rules-ui.js','/action-fx.css','/action-fx.js']);
+const allowedPaths=new Set(['/','/index.html','/app.js','/style.css','/motion.css','/motion.js','/card-webp-manifest.js','/brand-ui.js','/ending.html','/ending.css','/ending-ui.js','/tutorial.css','/tutorial-ui.js','/rules.css','/rules-ui.js','/action-fx.css','/action-fx.js']);
+const brandPaths=new Set(['/brand/green-trap-detective.png','/brand/green-coin.png','/brand/green-trap-detective.webp','/brand/green-coin.webp','/brand/favicon-32.png']);
 const staticAssetCache=new Map();
 function acceptsGzip(req){
   const header=req.headers['accept-encoding'];
@@ -152,10 +152,10 @@ const server=http.createServer(async(req,res)=>{
     if(await serveEndingMedia(req,res,url.pathname))return;
     if(await serveTutorialMedia(req,res,url.pathname))return;
 
-    if(req.method==='GET' && (url.pathname==='/brand/green-trap-detective.png'||url.pathname==='/brand/green-coin.png')){
-      const filename=url.pathname==='/brand/green-coin.png'?'green-coin.png':'green-trap-detective.png';
+    if(req.method==='GET' && brandPaths.has(url.pathname)){
+      const filename=url.pathname.slice('/brand/'.length);
       const bytes=await fs.promises.readFile(path.join(uiDir,'brand',filename));
-      res.writeHead(200,{'Content-Type':'image/png','Cache-Control':'public, max-age=86400'});
+      res.writeHead(200,{'Content-Type':filename.endsWith('.webp')?'image/webp':'image/png','Cache-Control':'public, max-age=86400'});
       return res.end(bytes);
     }
     if(req.method==='GET' && url.pathname.startsWith('/fonts/')){
@@ -192,9 +192,6 @@ const server=http.createServer(async(req,res)=>{
     if(req.method==='GET' && url.pathname==='/card-ui.js'){
       return serveStatic(req,res,path.join(uiDir,'card-ui.js'));
     }
-    if(req.method==='GET' && url.pathname==='/card-webp-manifest.js'){
-      return serveStatic(req,res,path.join(uiDir,'card-webp-manifest.js'));
-    }
 
     if(req.method==='POST' && url.pathname==='/api/create') {
       rate(res,'create:'+address,30);
@@ -229,7 +226,7 @@ const server=http.createServer(async(req,res)=>{
     if(req.method==='POST' && url.pathname==='/api/action') {
       const body=await readBody(req);
       const effect=await transaction(()=>{const {room,player}=auth(req,url);rate(res,'action:'+player.id,60);
-      switch(body.type){case 'start':manager.start(room,player);break;case 'submit':validateSubmission(room,body);manager.submit(room,player,body.payload||{});break;case 'skip_discussion':validateContext(room,body);manager.skipDiscussion(room,player);break;case 'next':manager.next(room,player);break;case 'kick':{const target=manager.kick(room,player,body.targetId);return {code:room.code,id:target.id,kicked:true};}case 'leave':manager.leaveLobby(room,player);return {code:room.code,id:player.id};default:throw new HttpError('INVALID_ACTION','Lệnh không được hỗ trợ.',400);}
+      switch(body.type){case 'start':manager.start(room,player);break;case 'submit':validateSubmission(room,body);manager.submit(room,player,body.payload||{});break;case 'skip_discussion':validateContext(room,body);manager.skipDiscussion(room,player);break;case 'next':validateContext(room,body);manager.next(room,player);break;case 'kick':{const target=manager.kick(room,player,body.targetId);return {code:room.code,id:target.id,kicked:true};}case 'leave':manager.leaveLobby(room,player);return {code:room.code,id:player.id};default:throw new HttpError('INVALID_ACTION','Lệnh không được hỗ trợ.',400);}
       return null;});
       if(effect)for(const [stream,who] of streams.get(effect.code)||[])if(who.id===effect.id)effect.kicked?stream.end('event: kicked\ndata: {}\n\n'):stream.end();
       return json(res,200,{ok:true});
@@ -249,10 +246,10 @@ server.headersTimeout=10000;
 server.keepAliveTimeout=5000;
 server.maxConnections=1500;
 server.on('close',()=>{for(const timer of pendingBroadcasts.values())clearTimeout(timer);pendingBroadcasts.clear();});
-const clock=setInterval(()=>{if(remoteReady&&!coordinator?.unavailable)void transaction(()=>manager.tick()).catch(error=>console.error('Room clock failed:',error.name));},500);clock.unref();
+const clock=setInterval(()=>{if(remoteReady&&!coordinator?.unavailable&&manager.hasDueWork())void transaction(()=>manager.tick()).catch(error=>console.error('Room clock failed:',error.name));},500);clock.unref();
 const heartbeat=setInterval(()=>{limiter.prune();for(const group of streams.values())for(const res of group.keys())if(!res.destroyed&&!res.writableEnded)if(!res.writableNeedDrain)res.write(': heartbeat\n\n');},15000);heartbeat.unref();
 if(require.main===module)(async()=>{
-  if(remote){const rooms=validateSnapshot(await remote.load());manager.rooms=new Map(rooms.map(room=>[room.code,{...room,players:room.players.map(p=>({...p,online:false})),connections:new Map()}]));manager.saved=new WeakMap();for(const room of manager.rooms.values())manager.remember(room);remoteReady=true;await transaction(()=>{for(const room of manager.rooms.values())if(room.state?.phase==='GAME_OVER')manager.changed(room);});}
+  if(remote){const rooms=validateSnapshot(await remote.load());manager.rooms=new Map(rooms.map(room=>[room.code,{...room,players:room.players.map(p=>({...p,online:false}))}]));manager.saved=new WeakMap();for(const room of manager.rooms.values())manager.remember(room);remoteReady=true;await transaction(()=>{for(const room of manager.rooms.values())if(room.state?.phase==='GAME_OVER')manager.changed(room);});}
   server.listen(port,host,()=>console.log('GREEN IMPACT multiplayer listening on port '+port));
 })().catch(error=>{console.error('Remote snapshot startup failed:',error.name);process.exitCode=1;clearInterval(clock);clearInterval(heartbeat);});
 module.exports={server,manager};

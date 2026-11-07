@@ -60,3 +60,27 @@ test('catalog ending links follow all 25 original project alignments and remain 
  const state=createGame({gameId:'private',players:[{id:'a',name:'A',role:'PROTECTOR'},{id:'b',name:'B',role:'PROTECTOR'},{id:'c',name:'C',role:'SABOTEUR'}],projects,deckIds:projects.slice(0,10).map(p=>p.id)});
  assert.equal(Object.hasOwn(projectForPlayer(state,'a').project,'endingVideoUrl'),false);
 });
+
+test('unavailable ending films show an error and retry the same video successfully',{skip:!process.env.PLAYWRIGHT_MODULE_PATH},async()=>{
+ const {chromium}=require(process.env.PLAYWRIGHT_MODULE_PATH);let browser;
+ try{
+  browser=await chromium.launch({channel:process.env.BROWSER_CHANNEL||'chrome',headless:true});
+  for(const name of ['good','bad']){
+   const page=await browser.newPage({viewport:{width:1280,height:800},reducedMotion:'reduce'});
+   let failing=true;
+   await page.route('**/endings/'+name+'.mp4',route=>failing?route.fulfill({status:404,body:'Not found'}):route.continue());
+   await page.goto(base+'/ending.html?ending='+name);
+   await page.locator('#ending-media-status:not([hidden])').waitFor();
+   assert.match(await page.locator('#ending-media-status').textContent(),/Không tải được video/);
+   assert.equal(await page.locator('#ending-play').isVisible(),true);
+   assert.match(await page.locator('#ending-play').textContent(),/Thử lại video/);
+   assert.equal(await page.locator('#ending-video').evaluate(video=>video.paused),true,'a failed preload does not autoplay');
+   failing=false;await page.locator('#ending-play').click();
+   await page.waitForFunction(()=>document.getElementById('ending-video').currentTime>.1);
+   assert.equal(await page.locator('#ending-play').isVisible(),false);
+   assert.equal(await page.locator('#ending-media-status').isVisible(),false);
+   assert.ok((await page.locator('#ending-video').evaluate(video=>video.currentSrc)).endsWith('/endings/'+name+'.mp4'));
+   await page.close();
+  }
+ }finally{await browser?.close();}
+});

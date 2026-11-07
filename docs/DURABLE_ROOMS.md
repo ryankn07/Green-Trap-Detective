@@ -18,6 +18,7 @@ Local `.env` files are not loaded automatically by `npm start`. For an explicitl
 - Startup atomically claims a writer token. An older process cannot commit or return a verified read after a replacement claims ownership. This supports deployment handoff; it does not support multiple active replicas.
 - A failed or ambiguous database operation makes that process return HTTP 503 and close its streams. Restart it after resolving the database problem. No success is reported for an uncertain commit.
 - Rate limits and SSE subscriptions remain process-local. Supabase storage does not remove the free backend's cold-start delay or guarantee hosting capacity.
+- The 500-ms scheduler checks for due deadlines or abandoned rooms in memory. An empty server, or a room whose deadline is still in the future, does not clone the snapshot or call Supabase just for a timer tick. Actual API reads, SSE projections and writes still verify writer ownership or commit with compare-and-swap before responding.
 
 ## Verification
 

@@ -70,6 +70,26 @@ test('raw snapshots hide private data and invalid bank actions cannot change sta
  assert.equal((await state()).game.myPlayer.coins,2);
 });
 
+test('a stale host next command cannot skip a later round reveal',async()=>{
+ const previousTime=manager.currentTime;let now=Date.now();manager.currentTime=()=>now;
+ try{
+  const {room,player}=manager.create('Next context host');
+  manager.join(room.code,'One');manager.join(room.code,'Two');
+  for(const member of room.players)manager.connected(room,member);
+  manager.start(room,player);
+  now=room.deadline;manager.tick();now=room.deadline;manager.tick();
+  const command={type:'next',context:{gameId:room.state.gameId,round:1,phase:'REVEAL'}};
+  const headers={Authorization:'Bearer '+player.secret,'x-room-code':room.code};
+  assert.equal((await post('/api/action',command,headers)).status,200);
+  now=room.deadline;manager.tick();now=room.deadline;manager.tick();
+  assert.equal(room.state.round,2);assert.equal(room.state.phase,'REVEAL');
+  const revision=room.revision;
+  const stale=await post('/api/action',command,headers);
+  assert.equal(stale.status,409);assert.equal((await stale.json()).error,'STALE_ACTION');
+  assert.equal(room.revision,revision);assert.equal(room.state.phase,'REVEAL');
+ }finally{manager.currentTime=previousTime;}
+});
+
 test('session spam receives 429 and Retry-After despite spoofed forwarding IPs',async()=>{
  const {room,player}=manager.create('Spam check');const revision=room.revision;
  let limited;
