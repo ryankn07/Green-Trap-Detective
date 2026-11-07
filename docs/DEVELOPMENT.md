@@ -28,10 +28,26 @@ Run these before opening a pull request:
 | --- | --- |
 | npm run check | Check JavaScript syntax and required project data/assets |
 | npm test | Run the Node.js test suite |
+| npm run test:all | Require all browser, PostgreSQL and Node tests to pass without skips |
 | npm run bundle:check | Verify the compatibility bundle matches its source files |
 | npm run build:web | Build the static frontend into .web-dist/ |
 
-The browser regression suite is optional and requires an existing Playwright installation. Set PLAYWRIGHT_MODULE_PATH to that installation's module path. BROWSER_CHANNEL can select the installed browser; it defaults to msedge. Tests that are skipped because Playwright is unavailable must be reported as skipped, not passed.
+Install the pinned development-only tools with `npm ci`, then install the test
+browser with `npx playwright install --with-deps chrome`. `npm run test:all`
+resolves Playwright and PGlite and rejects missing tools, failed tests and skipped
+tests. CI runs this full command on Node 20 and 22. The game itself still has no
+third-party runtime dependencies.
+
+`npm test` remains a lightweight Node test command; browser and PostgreSQL tests
+may skip unless their module paths are set. `PLAYWRIGHT_MODULE_PATH` and
+`PGLITE_MODULE_PATH` can point at existing installations; `BROWSER_CHANNEL` selects
+an installed browser (the full runner defaults to Chrome). Report skips as skips.
+
+Brand derivatives preserve the original PNG pixels. Generate or verify them with
+`python scripts/generate-brand-webp.py` or `python scripts/generate-brand-webp.py --check`
+using Pillow 13.0.0. CI checks decoded RGBA equality, dimensions, hashes, size
+reduction and the separate 32px favicon. Do not modify canonical PNGs to optimize
+delivery.
 
 ## Static response compression
 

@@ -279,8 +279,7 @@ test('mobile gameplay follows server time, validates costs and completes ten rou
     assert.notEqual(await fallback.evaluate(i=>getComputedStyle(i).clipPath),'none','original fallback keeps its own frame');
     await page.locator('.gi-card-button').click();
     const fallbackFull=page.locator('.gi-card-dialog .gi-card-image-viewport img');
-    await fallbackFull.waitFor();
-    assert.ok((await fallbackFull.evaluate(i=>i.currentSrc)).includes('/cards/'));
+    await page.waitForFunction(()=>{const i=document.querySelector('.gi-card-dialog .gi-card-image-viewport img');return i?.complete&&i.naturalWidth>0&&i.currentSrc.includes('/cards/');});
     assert.notEqual(await fallbackFull.evaluate(i=>getComputedStyle(i).clipPath),'none');
     await page.locator('.gi-card-dialog button').click();
     await page.unroute(hdImageRoute);

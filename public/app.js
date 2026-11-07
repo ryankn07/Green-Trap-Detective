@@ -37,7 +37,7 @@ function showPhaseTransition(previous,current){
  if(newProject){
   screen.dataset.transition='project';screen.dataset.project=next.project.id;
   const intro=screen.querySelector('.gi-phase-intro');intro.classList.add('gi-project-intro');
-  intro.innerHTML='<span class="gi-phase-round"></span><div class="gi-project-brand"><div class="gi-project-seal" aria-hidden="true"><span class="gi-project-card gi-project-card--left"></span><span class="gi-project-card gi-project-card--right"></span><span class="gi-project-card gi-project-card--front"><img src="/brand/green-trap-detective.png" alt="" decoding="async"></span></div><h2><span>Green Trap</span> <span>Detective</span></h2></div><p class="gi-project-label">Dự án mới</p><p class="gi-project-name"></p>';
+  intro.innerHTML='<span class="gi-phase-round"></span><div class="gi-project-brand"><div class="gi-project-seal" aria-hidden="true"><span class="gi-project-card gi-project-card--left"></span><span class="gi-project-card gi-project-card--right"></span><span class="gi-project-card gi-project-card--front"><picture class="gi-brand-picture"><source type="image/webp" srcset="/brand/green-trap-detective.webp"><img src="/brand/green-trap-detective.png" alt="" decoding="async"></picture></span></div><h2><span>Green Trap</span> <span>Detective</span></h2></div><p class="gi-project-label">Dự án mới</p><p class="gi-project-name"></p>';
   intro.querySelector('.gi-project-name').textContent=next.project.title||'Cùng khám phá dự án tiếp theo.';
  }else if(next.phase==='GAME_OVER'&&['PROTECTOR','SABOTEUR'].includes(next.outcome?.winner)){
   const good=next.outcome.winner==='PROTECTOR';screen.dataset.transition='ending';screen.dataset.ending=good?'good':'bad';
@@ -80,16 +80,21 @@ function startActionBurn(previous,value){
  actionBurnHold={previous,header,fire,burnCanvas,context:burnCanvas.getContext('2d'),particles:[],lastPaint:performance.now(),from:Math.max(0,progress.value),started:performance.now(),duration,reduced};
  snapshot=value;clearPhaseTransition();document.querySelectorAll('dialog[open]:not(#tutorial-dialog):not(#rules-dialog)').forEach(dialog=>dialog.close());
  header.classList.add('gi-clock-burning');header.append(burnCanvas,fire);app.inert=true;
- actionBurnHold.timer=setTimeout(finishActionBurn,duration+80);finishClientSession(value);paintActionBurn();return true;
+ actionBurnHold.timer=setTimeout(()=>{
+  if(!actionBurnHold)return;
+  paintActionBurn();
+  if(actionBurnHold)actionBurnHold.timer=setTimeout(finishActionBurn,200);
+ },duration+80);finishClientSession(value);paintActionBurn();return true;
 }
 function paintActionBurn(){
  const hold=actionBurnHold,progress=document.getElementById('phase-progress');if(!hold||!progress){finishActionBurn();return;}
  const elapsed=performance.now()-hold.started,t=Math.min(1,elapsed/hold.duration),burnT=Math.min(1,elapsed/(hold.duration-180)),remaining=hold.from*(1-burnT);
- progress.value=Math.max(0,remaining);const label=document.getElementById('clock');if(label)label.textContent=Math.ceil(remaining)+'s';
+  progress.value=Math.max(0,remaining);const label=document.getElementById('clock'),text=Math.ceil(remaining)+'s';if(label&&label.textContent!==text)label.textContent=text;
  const bar=progress.getBoundingClientRect(),header=hold.header.getBoundingClientRect();
  hold.fire.style.left=(bar.left-header.left+bar.width*progress.value/progress.max)+'px';hold.fire.style.top=(bar.top-header.top+bar.height/2)+'px';
  hold.fire.classList.toggle('is-spent',burnT>=1);drawActionBurn(hold,bar,header,progress,burnT);
- if(t>=1)finishActionBurn();else scheduleClock();
+  if(burnT>=1&&hold.emptiedAt===undefined)hold.emptiedAt=performance.now();
+  if(t>=1&&hold.emptiedAt!==undefined&&performance.now()-hold.emptiedAt>=120)finishActionBurn();else scheduleClock();
 }
 function drawActionBurn(hold,bar,header,progress,burnT){
  const ctx=hold.context;if(!ctx)return;
@@ -171,8 +176,21 @@ function acceptSnapshot(value,skipFeedback=true,burnFeedback=true){
   const label=app.querySelector('.gi-phase-header .phase');if(label)label.textContent='Công bố · Trục xuất';
   playEliminationEffects();finishClientSession(value);return;
  }
- const kickFocus=document.activeElement?.closest('.kick-confirmation')?document.activeElement.id:null;
- captureStatementDraft();snapshot=value;render();
+  const kickFocus=document.activeElement?.closest('.kick-confirmation')?document.activeElement.id:null;
+  const historyOpen=app.querySelector('.gi-history')?.open;
+  const focusedNode=app.contains(document.activeElement)?document.activeElement:null;
+  const focusedControl=focusedNode?.id;
+  // Own submission changes the form, but not its project. Retain the decoded
+  // image so a confirmed coin flight never races a newly mounted image decode.
+  const retainedProject=sameRound&&previous.game.phase===value.game.phase&&JSON.stringify(previous.game.project)===JSON.stringify(value.game.project)?app.querySelector('.gi-area-project'):null;
+  captureStatementDraft();snapshot=value;render(previous);
+  const renderedProject=app.querySelector('.gi-area-project');
+  if(retainedProject&&renderedProject&&retainedProject!==renderedProject)renderedProject.replaceWith(retainedProject);
+  if(previous?.game?.gameId===value.game?.gameId){
+   const history=app.querySelector('.gi-history');if(history&&historyOpen!==undefined)history.open=historyOpen;
+   if(focusedNode?.isConnected&&document.activeElement!==focusedNode)focusedNode.focus({preventScroll:true});
+   else if(focusedControl&&document.activeElement.id!==focusedControl)document.getElementById(focusedControl)?.focus({preventScroll:true});
+  }
  if(choiceOpen){openStatementChoice();if(choiceFocus)document.getElementById(choiceFocus)?.focus();}
  if(drawerFocused)(document.getElementById(choiceFocus)||document.getElementById('close-players'))?.focus();
  for(const saved of scrolls){const el=app.querySelector(saved.selector);if(el){el.scrollLeft=saved.left;el.scrollTop=saved.top;if(saved.focused)el.focus({preventScroll:true});}}
@@ -402,7 +420,57 @@ function playerList(s){
  }).join('');}
 
 function timer(s){if(!s.deadline)return '';const remain=remainingSeconds();return `<span class="countdown" id="clock">${remain}s</span>`;}
-function render(){if(!snapshot||!session)return;const s=snapshot;const me=s.game?.myPlayer;const host=s.room.hostId===(me?.id||session.playerId);const q=(new URLSearchParams(location.search)).get('room');
+function statementMarkup(statement,members){
+ const name=members.get(statement.playerId)?.name||'Người chơi';
+ const stance={SUPPORT:'Ủng hộ',OPPOSE:'Phản đối',UNSURE:'Chưa chắc chắn'};
+ return '<div class="gi-statement" data-player-id="'+escapeHTML(statement.playerId)+'"><span class="gi-chat-avatar" aria-hidden="true">'+escapeHTML(name.charAt(0).toUpperCase())+'</span><div class="gi-chat-bubble"><b>'+escapeHTML(name)+'</b><span class="pill">'+escapeHTML(stance[statement.stance]||'Ý kiến')+'</span><p>'+escapeHTML(statement.text)+'</p></div></div>';
+}
+function updateGameInPlace(previous,current){
+ const before=previous?.game,next=current.game;
+ if(!before||!next||next.phase==='GAME_OVER'||previous.room.code!==current.room.code||!app.querySelector('.gi-game-grid'))return false;
+ // These fields determine the board, form and available targets. A change to any
+ // of them still uses the complete renderer; peer readiness/presence does not.
+ const structure=s=>({
+  room:[s.room.code,s.room.hostId,s.room.maxPlayers,s.room.players.map(({online,...member})=>member)],
+  game:{...s.game,currentStatements:undefined,discussionSkip:undefined,
+   players:s.game.players.map(({hasStatement,hasLockedAction,...player})=>player)},
+  ownReadiness:s.game.players.find(player=>player.id===s.game.myPlayer.id)
+ });
+ if(JSON.stringify(structure(previous))!==JSON.stringify(structure(current)))return false;
+ const members=new Map(current.room.players.map(player=>[player.id,player]));
+ const peers=new Map(next.players.map(player=>[player.id,player]));
+ for(const row of app.querySelectorAll('.gi-area-players .person[data-player-id]')){
+  const member=members.get(row.dataset.playerId),peer=peers.get(row.dataset.playerId);if(!member)continue;
+  const presence=row.querySelector(':scope>.pill'),label=member.online?'● Online':'○ Offline';
+  if(presence&&presence.textContent!==label)presence.textContent=label;
+  if(peer?.isAlive&&!member.removed){
+   const info=row.querySelector('.person-info>small');
+   const text=peer.hasLockedAction?'Đã chốt hành động':peer.hasStatement?'Đã gửi ý kiến':'Đang chơi';
+   if(info&&info.textContent!==text)info.textContent=text;
+  }
+ }
+ if(next.phase==='DEBATE'||next.phase==='BLIND_ACTION'){
+  const list=app.querySelector('.gi-area-discussion>.card:first-child>.hist');
+  const oldStatements=new Map(before.currentStatements.map(statement=>[statement.playerId,statement]));
+  const rows=new Map([...list.children].map(row=>[row.dataset.playerId,row]));
+  for(const [index,statement] of next.currentStatements.entries()){
+   let row=rows.get(statement.playerId);
+   if(!row||JSON.stringify(oldStatements.get(statement.playerId))!==JSON.stringify(statement)){
+    const template=document.createElement('template');template.innerHTML=statementMarkup(statement,members);
+    const fresh=template.content.firstElementChild;if(row)row.replaceWith(fresh);row=fresh;
+   }
+   if(list.children[index]!==row)list.insertBefore(row,list.children[index]||null);
+   rows.delete(statement.playerId);
+  }
+  for(const row of rows.values())row.remove();
+ }
+ if(JSON.stringify(before.discussionSkip)!==JSON.stringify(next.discussionSkip)){
+  const skip=app.querySelector('#skip-discussion');if(skip)skip.outerHTML=discussionSkipButton(next);
+ }
+ return true;
+}
+function render(previous){if(!snapshot||!session)return;const s=snapshot;const me=s.game?.myPlayer;const host=s.room.hostId===(me?.id||session.playerId);
+ if(updateGameInPlace(previous,s))return;
  document.body.classList.toggle('gi-gameplay',Boolean(s.game)&&s.game.phase!=='GAME_OVER');
  document.body.classList.toggle('gi-ending',s.game?.phase==='GAME_OVER');
  if(!s.game){clearStatementDraft();app.innerHTML=`<section class="grid lobby"><div class="column"><div class="card lobby-invite"><span class="eyebrow">Phòng chờ</span><h1>Phòng ${escapeHTML(s.room.code)}</h1><p>Mời bạn bè vào phòng trước khi bắt đầu ván.</p><div class="code mono">${escapeHTML(s.room.code)}</div><div class="actions"><button id="copy" class="primary">Sao chép link mời</button>${host?`<button id="start">Bắt đầu ván</button>`:'<span class="note">Đợi chủ phòng bắt đầu…</span>'}</div></div><div class="card lobby-members"><h2>Người chơi (${s.room.players.length}${s.room.maxPlayers?' / '+s.room.maxPlayers:''})</h2><div class="people" tabindex="0" role="region" aria-label="Danh sách thành viên">${playerList(s)}</div><div class="lobby-table-art" aria-hidden="true"><svg class="lobby-orbit" viewBox="0 0 800 300" fill="none"><ellipse cx="400" cy="156" rx="340" ry="104"/><ellipse cx="400" cy="156" rx="286" ry="138" stroke-dasharray="3 10"/><path d="M56 186c20-32 31-65 36-102m-15 58c-33-4-39-27-38-45 27 4 40 19 38 45Zm9-29c26-3 41-23 40-46-25 5-41 21-40 46ZM718 177c-1-34 12-63 33-88m-27 54c-24-5-31-24-29-43 23 4 32 20 29 43Zm9-24c27 1 43-15 48-35-26-1-44 12-48 35Z"/></svg><div class="lobby-card gi-card-preview"><span class="gi-card-image-viewport"><picture><source srcset="/cards-hd/PROJ_11.png"><img src="/cards/PROJ_11.png" alt="" loading="lazy" decoding="async"></picture></span></div><div class="lobby-card gi-card-preview"><span class="gi-card-image-viewport"><picture><source srcset="/cards-hd/PROJ_01.png"><img src="/cards/PROJ_01.png" alt="" loading="lazy" decoding="async"></picture></span></div><div class="lobby-card gi-card-preview"><span class="gi-card-image-viewport"><picture><source srcset="/cards-hd/PROJ_25.png"><img src="/cards/PROJ_25.png" alt="" loading="lazy" decoding="async"></picture></span></div></div></div></div><div class="column"><div class="card lobby-rules"><h2>Cách chơi</h2><p>Mỗi người nhận một vai trò bí mật và 2 xu khi bắt đầu. Thảo luận tối đa 10 dự án, rồi chọn đầu tư 1 xu hoặc giữ lại. Bạn cũng có thể kiểm chứng vai trò (3 xu) hoặc góp xu trục xuất người chơi (cần tổng cộng 5 xu).</p><button type="button" id="rules-open" class="rules-open" data-open-rules aria-haspopup="dialog" aria-controls="rules-dialog"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 6c-3-2-6-2-9-1v15c3-1 6-1 9 1 3-2 6-2 9-1V5c-3-1-6-1-9 1Zm0 0v15"/></svg><span>Xem toàn bộ luật chơi</span></button><button id="leave" >Rời phòng</button></div></div></section>`;return;}
@@ -423,13 +491,13 @@ function render(){if(!snapshot||!session)return;const s=snapshot;const me=s.game
  }
  const project = g.phase==='GAME_OVER'?latest?{id:latest.projectId,title:latest.projectTitle,description:'Các dự án đã hoàn thành. Xem lịch sử bên dưới.'}:g.project:g.project;
  const statements=(g.phase==='REVEAL'||g.phase==='GAME_OVER')?(latest?.statements||[]):g.currentStatements;
- const stanceLabel={SUPPORT:'Ủng hộ',OPPOSE:'Phản đối',UNSURE:'Chưa chắc chắn'};
- const discussion=statements.map(st=>{const name=s.room.players.find(p=>p.id===st.playerId)?.name||'Người chơi';return '<div class="gi-statement" data-player-id="'+escapeHTML(st.playerId)+'"><span class="gi-chat-avatar" aria-hidden="true">'+escapeHTML(name.charAt(0).toUpperCase())+'</span><div class="gi-chat-bubble"><b>'+escapeHTML(name)+'</b><span class="pill">'+escapeHTML(stanceLabel[st.stance]||'Ý kiến')+'</span><p>'+escapeHTML(st.text)+'</p></div></div>';}).join('');
+  const members=new Map(s.room.players.map(player=>[player.id,player]));
+  const discussion=statements.map(statement=>statementMarkup(statement,members)).join('');
  app.innerHTML=`
- <div class="gi-mobile-topbar"><div class="gi-top-wallet"><img src="/brand/green-coin.png" alt="" width="24" height="24"><b>${me.coins}</b><span>xu</span></div><button id="mobile-show-role" type="button" aria-label="Nhấn giữ để xem vai trò" aria-describedby="mobile-role-value" aria-pressed="false"><svg viewBox="0 0 64 64" aria-hidden="true"><path d="M5 32c7-11 17-17 27-17s20 6 27 17c-7 11-17 17-27 17S12 43 5 32Z"/><circle cx="32" cy="32" r="10"/></svg></button><span id="mobile-role-value" role="status" data-role="${escapeHTML(me.role)}" hidden></span><span class="gi-round-chip">Lượt ${g.round} / ${g.roundLimit}</span><button type="button" class="tutorial-mobile-open" data-tutorial-open aria-label="Xem video hướng dẫn giai đoạn hiện tại" aria-haspopup="dialog" aria-controls="tutorial-dialog"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m9 5 11 7-11 7Z"/><path d="M4 5v14"/></svg></button></div>
+ <div class="gi-mobile-topbar"><div class="gi-top-wallet"><picture class="gi-brand-picture"><source type="image/webp" srcset="/brand/green-coin.webp"><img src="/brand/green-coin.png" alt="" width="24" height="24"></picture><b>${me.coins}</b><span>xu</span></div><button id="mobile-show-role" type="button" aria-label="Nhấn giữ để xem vai trò" aria-describedby="mobile-role-value" aria-pressed="false"><svg viewBox="0 0 64 64" aria-hidden="true"><path d="M5 32c7-11 17-17 27-17s20 6 27 17c-7 11-17 17-27 17S12 43 5 32Z"/><circle cx="32" cy="32" r="10"/></svg></button><span id="mobile-role-value" role="status" data-role="${escapeHTML(me.role)}" hidden></span><span class="gi-round-chip">Lượt ${g.round} / ${g.roundLimit}</span><button type="button" class="tutorial-mobile-open" data-tutorial-open aria-label="Xem video hướng dẫn giai đoạn hiện tại" aria-haspopup="dialog" aria-controls="tutorial-dialog"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m9 5 11 7-11 7Z"/><path d="M4 5v14"/></svg></button></div>
  <div class="gi-game-grid" data-game-layout="four-areas">
   <header class="card gi-phase-header">
-   <div class="gi-mobile-wallet"><img class="gi-coin-icon" src="/brand/green-coin.png" alt="" width="28" height="28"> ${me.coins} xu</div>
+   <div class="gi-mobile-wallet"><picture class="gi-brand-picture"><source type="image/webp" srcset="/brand/green-coin.webp"><img class="gi-coin-icon" src="/brand/green-coin.png" alt="" width="28" height="28"></picture> ${me.coins} xu</div>
    <div class="flex"><span class="phase">${escapeHTML(phaseText[g.phase].toUpperCase())} · LƯỢT ${g.round}/${g.roundLimit}</span>${timer(s)}</div>
    ${g.phase!=='GAME_OVER'?'<progress id="phase-progress" max="'+phaseSeconds[g.phase]+'" value="'+remainingMilliseconds()/1000+'" aria-label="Thời gian còn lại"></progress>':''}
    <div class="flex muted"><span>Bảo vệ: ${g.approvedProtectorCount}</span><span>Phá hoại: ${g.approvedSaboteurCount}</span></div>
@@ -444,11 +512,11 @@ function render(){if(!snapshot||!session)return;const s=snapshot;const me=s.game
   </section>
   <div class="gi-center-column">
   <section class="gi-area-actions" aria-label="Hồ sơ và hành động cá nhân">
-   <div class="card gi-profile-panel${me.inspections?.length?' gi-has-inspections':''}"><div class="flex"><h2>Hồ sơ cá nhân</h2><span class="coins"><img class="gi-coin-icon" src="/brand/green-coin.png" alt="" width="28" height="28"> ${me.coins}</span></div><p><b>${escapeHTML(me.name)}</b> · ${me.isAlive?'Còn trong ván':'Đã bị loại'}</p>
+   <div class="card gi-profile-panel${me.inspections?.length?' gi-has-inspections':''}"><div class="flex"><h2>Hồ sơ cá nhân</h2><span class="coins"><picture class="gi-brand-picture"><source type="image/webp" srcset="/brand/green-coin.webp"><img class="gi-coin-icon" src="/brand/green-coin.png" alt="" width="28" height="28"></picture> ${me.coins}</span></div><p><b>${escapeHTML(me.name)}</b> · ${me.isAlive?'Còn trong ván':'Đã bị loại'}</p>
     <div id="role" class="note" data-role="${escapeHTML(me.role)}">Vai trò của bạn: <b id="role-value">••••••</b><button id="show-role" type="button" aria-label="Nhấn giữ để xem thẻ vai trò"><svg viewBox="0 0 64 64" aria-hidden="true"><path d="M5 32c7-11 17-17 27-17s20 6 27 17c-7 11-17 17-27 17S12 43 5 32Z"/><circle cx="32" cy="32" r="10"/></svg><span>Nhấn giữ để xem</span></button></div>
     ${me.inspections?.length?'<div class="rule"><h3>Kết quả kiểm chứng</h3>'+me.inspections.map(x=>'<p class="tiny gi-inspection-result" data-inspection-round="'+x.round+'" data-inspection-target="'+escapeHTML(x.targetId)+'" data-inspection-role="'+escapeHTML(x.revealedRole)+'"><span class="gi-inspection-eye" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg></span><span>Lượt '+x.round+': <b>'+escapeHTML(s.room.players.find(p=>p.id===x.targetId)?.name)+'</b> — <strong>'+escapeHTML(labelRole(x.revealedRole))+'</strong></span></p>').join('')+'</div>':''}
    </div>
-   <div class="card gi-action-panel"><div class="gi-desktop-wallet"><img src="/brand/green-coin.png" alt="" width="112" height="112"><strong>${me.coins} xu</strong></div><h2 data-phase="${g.phase}"${g.phase==='DEBATE'?' class="gi-discussion-title"':''}>${escapeHTML(phaseText[g.phase])}</h2>${content}</div>
+   <div class="card gi-action-panel"><div class="gi-desktop-wallet"><picture class="gi-brand-picture"><source type="image/webp" srcset="/brand/green-coin.webp"><img src="/brand/green-coin.png" alt="" width="112" height="112"></picture><strong>${me.coins} xu</strong></div><h2 data-phase="${g.phase}"${g.phase==='DEBATE'?' class="gi-discussion-title"':''}>${escapeHTML(phaseText[g.phase])}</h2>${content}</div>
   </section>
   <section class="gi-area-discussion" aria-label="Ý kiến công khai">
    <div class="card"><h2 class="gi-discussion-heading"><span>Ý kiến trong phòng</span>${g.phase==='DEBATE'?discussionSkipButton(g):''}</h2><div class="hist">${discussion}</div></div>

@@ -4,6 +4,8 @@ Current owner override (2026-11-01): support groups larger than 10; do not assum
 
 Current owner/team decision (2026-11-03): endings show the supplied video directly in the game page, using the full content width. **Do not add QR codes, scan instructions, camera/scanner flows or the former card/role scan sidebar.** The team approved removing QR entirely in favor of showing the video. This supersedes the scanning proposal in `GREEN IMPACT PLAN.md` rule 11 and any earlier documentation or screenshots. Preserve this decision during later Codex work unless the owner explicitly changes it. See `docs/ENDINGS.md`.
 
+Owner instruction (2026-11-06): before another agent changes the code, assets, tests or documentation delivered in the 6 November review-fix batch, notify the user of the intended change and reason. The change record is `docs/CODE_REVIEW_FIXES_20261106.md`. This is a prior notice requirement, not a transfer of authorship or an automatic approval gate; continue to follow the user's current instructions.
+
 ## Project purpose
 
 Ending refinement (2026-11-03): keep the “Dấu vết của ván chơi / Những lá thẻ cùng tương lai” gallery removed. `TRUTH` verdict text stays green in reveals and journals, including within Bad Ending; the ending's faction color must not override it.

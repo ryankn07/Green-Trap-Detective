@@ -8,6 +8,25 @@ const once=require('node:events').once;
 async function listen(server){server.listen(0,'127.0.0.1');await once(server,'listening');return server.address().port;}
 async function freePort(){const s=http.createServer();const p=await listen(s);await new Promise(r=>s.close(r));return p;}
 
+test('an empty remote server does no idle verification but real reads still check writer ownership',async t=>{
+ let checks=0,fenced=false;
+ const rest=http.createServer(async(req,res)=>{
+  for await(const part of req){}res.setHeader('content-type','application/json');
+  if(req.url.endsWith('/game_snapshot_claim'))return res.end(JSON.stringify({revision:0,snapshot:{version:1,rooms:[]}}));
+  if(req.url.endsWith('/game_snapshot_verify')){checks++;return res.end(fenced?'null':'{"revision":0}');}
+  res.statusCode=400;res.end('{}');
+ });
+ const restPort=await listen(rest),port=await freePort();
+ t.after(()=>{rest.closeAllConnections();rest.close();});
+ const child=spawn(process.execPath,['--require',path.join(__dirname,'fixtures/redirect-fetch.cjs'),path.join(__dirname,'../server/server.cjs')],{env:{...process.env,PORT:String(port),GAME_SUPABASE_URL:'https://example.test',GAME_SUPABASE_SERVICE_KEY:'test-key',TEST_REST_ORIGIN:`http://127.0.0.1:${restPort}`},stdio:['ignore','pipe','pipe']});
+ t.after(()=>child.kill());
+ await new Promise((resolve,reject)=>{const timer=setTimeout(()=>reject(Error('startup timeout')),5000);child.stdout.on('data',x=>{if(String(x).includes('listening')){clearTimeout(timer);resolve();}});child.once('exit',()=>{clearTimeout(timer);reject(Error('server exited'));});});
+ const initial=checks;await new Promise(resolve=>setTimeout(resolve,1100));assert.equal(checks,initial,'two idle clock ticks cause no database call');
+ const origin=`http://127.0.0.1:${port}`;
+ assert.equal((await fetch(origin+'/health')).status,200);assert.equal(checks,initial+1);
+ fenced=true;assert.equal((await fetch(origin+'/health')).status,503);
+});
+
 test('remote durable commit sends the final SSE frame before retiring a completed room',async t=>{
  const {RoomManager}=require('../server/rooms.cjs'),{serializeRoom}=require('../server/room-store.cjs');
  const {createGame}=require('../engine/dist/index.js'),projects=require('../engine/dist/data/projects.json');
@@ -34,7 +53,7 @@ test('remote durable commit sends the final SSE frame before retiring a complete
 });
 test('HTTP room survives restart; a failed CAS stops stale reads and writes',async t=>{
  let revision=0,snapshot={version:1,rooms:[]},fail=false,gate=null,started=null,writer=null;
- const rest=http.createServer(async(req,res)=>{let data='';for await(const part of req)data+=part;const body=JSON.parse(data);res.setHeader('content-type','application/json');if(req.url.endsWith('/game_snapshot_claim')){writer=body.writer_token;return res.end(JSON.stringify({revision,snapshot}));}if(req.url.endsWith('/game_snapshot_verify')){if(writer!==body.writer_token||revision!==body.expected_revision)return res.end('null');return res.end(JSON.stringify({revision}));}if(gate){started();await gate;}if(fail||body.writer_token!==writer||body.expected_revision!==revision){res.statusCode=409;return res.end('{}');}snapshot=body.new_snapshot;revision++;res.end(JSON.stringify({revision}));});
+ const rest=http.createServer(async(req,res)=>{let data='';for await(const part of req)data+=part;const body=JSON.parse(data);res.setHeader('content-type','application/json');if(req.url.endsWith('/game_snapshot_claim')){writer=body.writer_token;return res.end(JSON.stringify({revision,snapshot}));}if(gate){started();await gate;}if(req.url.endsWith('/game_snapshot_verify')){if(writer!==body.writer_token||revision!==body.expected_revision)return res.end('null');return res.end(JSON.stringify({revision}));}if(fail||body.writer_token!==writer||body.expected_revision!==revision){res.statusCode=409;return res.end('{}');}snapshot=body.new_snapshot;revision++;res.end(JSON.stringify({revision}));});
  const restPort=await listen(rest);t.after(()=>rest.close());
  let child; t.after(()=>child?.kill());
  async function start(){const port=await freePort();child=spawn(process.execPath,['--require',path.join(__dirname,'fixtures/redirect-fetch.cjs'),path.join(__dirname,'../server/server.cjs')],{env:{...process.env,PORT:String(port),GAME_SUPABASE_URL:'https://example.test',GAME_SUPABASE_SERVICE_KEY:'test-key',TEST_REST_ORIGIN:`http://127.0.0.1:${restPort}`},stdio:['ignore','pipe','pipe','ipc']});await Promise.race([new Promise((resolve,reject)=>{child.stdout.on('data',chunk=>{if(String(chunk).includes('listening'))resolve();});child.stderr.on('data',x=>process.stderr.write(x));child.once('exit',()=>reject(Error('server exited')));}),new Promise((_,reject)=>setTimeout(()=>reject(Error('startup timeout')),5000))]);return `http://127.0.0.1:${port}`;}

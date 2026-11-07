@@ -31,3 +31,9 @@ Based on the current repository file sizes, the three hero images fall from 5,55
 The 32 native HD PNGs remain the canonical source artwork and were not modified. A lossless WebP derivative was generated for every project card, role card, card back, and Green Coin. All 32 derivatives are smaller than their PNG source: the full HD set decreases from 46,494,252 bytes to 29,804,754 bytes, saving 16,689,498 bytes (35.9%) if the complete set is transferred. This total is an asset-library comparison, not a claim that every page view downloads all 32 images.
 
 Each WebP was reopened and decoded to RGBA, then compared byte-for-byte with its source PNG at the same dimensions. Transparent-pixel RGB values and available ICC/EXIF/XMP metadata are preserved. The browser manifest only advertises derivatives smaller than their source. The active page uses WebP where available and retains the original HD PNG or thumbnail as its fallback. Vercel's static build and the Node server both include the WebP assets; gameplay rules and card pixels are unchanged.
+
+## Card enhancement overhead — 6 November 2026
+
+Card enhancement only reacts to newly inserted, uninitialized card/role/project elements. Clock ticks, countdown flames, statement counters and other text changes no longer trigger a scan of every card. Already initialized pictures are skipped, including their PNG/WebP fallback bindings; brand pictures have their own fallback handler. The obsolete wallet conversion for `/cards-hd/GREENCOIN.png` has been removed because the current wallet uses the original brand coin.
+
+The focused browser regression types into the discussion, follows a real unanimous Skip through the timer flame, checks bounded image work and verifies the project and held private-role card after the phase update. This changes neither artwork nor layout.

@@ -28,6 +28,7 @@ Use this page to find the right project document. The root [README](../README.md
 
 These documents preserve the scope, decisions, and test evidence from specific implementation tasks:
 
+- [Full code review fixes, 6 November](CODE_REVIEW_FIXES_20261106.md)
 - [In-game removal and admission](history/records/GAME_KICK_AND_ADMISSION.md)
 - [Lobby recovery and load test](history/records/LOBBY_KICK_AND_SOAK.md)
 - [Brand and card finish](BRAND_AND_CARD_FINISH.md)

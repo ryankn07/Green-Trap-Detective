@@ -23,6 +23,7 @@ jobs:
     timeout-minutes: 15
     strategy:
       fail-fast: false
+      max-parallel: 1
       matrix:
         node-version: [20, 22]
     steps:
@@ -37,14 +38,27 @@ jobs:
       - name: Install locked dependencies
         run: npm ci
 
+      - name: Install browser for required UI checks
+        run: npx playwright install --with-deps chrome
+
+      - name: Set up Python for brand pixel verification
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Verify brand derivatives preserve original pixels
+        run: |
+          python -m pip install --disable-pip-version-check Pillow==13.0.0
+          python scripts/generate-brand-webp.py --check
+
       - name: Check source syntax and required assets
         run: npm run check
 
       - name: Verify runtime recovery bundle
         run: npm run bundle:check
 
-      - name: Run automated tests
-        run: npm test
+      - name: Run required browser, SQL and server tests without skips
+        run: npm run test:all
 
       - name: Build static frontend
         run: npm run build:web

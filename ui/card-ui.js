@@ -63,11 +63,6 @@
       }
     });
   }
-  function bindCardPictures(root) {
-    if (!root || !root.querySelectorAll) return;
-    if (root.matches?.("picture[data-card-image]")) bindCardPicture(root);
-    root.querySelectorAll("picture[data-card-image]").forEach(bindCardPicture);
-  }
   function addWebpSource(picture, id, before = null) {
     const src = window.GREEN_TRAP_WEBP_CARDS?.[id];
     if (!src || picture.dataset.cardWebpFailed || picture.querySelector('source[type="image/webp"]')) return;
@@ -79,7 +74,8 @@
   }
   function enhanceExistingCardPictures(root) {
     if (!root || !root.querySelectorAll) return;
-    root.querySelectorAll("picture").forEach(picture => {
+    root.querySelectorAll("picture:not(.gi-brand-picture)").forEach(picture => {
+      if (picture.dataset.cardFallbackBound) return;
       const image = picture.querySelector("img");
       const hdSource = Array.from(picture.querySelectorAll("source")).find(source =>
         /^\/cards-hd\//.test(source.getAttribute("srcset") || "")
@@ -87,7 +83,7 @@
       const hdPath = hdSource?.getAttribute("srcset") || "";
       const id = hdPath.match(/^\/cards-hd\/([A-Z0-9_]+)\.png$/)?.[1];
       if (id) {
-        hdSource.type = "image/png";
+        if (hdSource.type !== "image/png") hdSource.type = "image/png";
         addWebpSource(picture, id, hdSource);
       }
       if (image && !picture.dataset.fallback) picture.dataset.fallback = image.getAttribute("src") || "";
@@ -95,18 +91,6 @@
       bindCardPicture(picture);
     });
   }
-  function enhanceWalletIcon() {
-    const image = app.querySelector('.gi-top-wallet img[src="/cards-hd/GREENCOIN.png"]');
-    const webp = window.GREEN_TRAP_WEBP_CARDS?.GREENCOIN;
-    if (!image || !webp || image.dataset.cardWebp) return;
-    image.dataset.cardWebp = "1";
-    const fallback = image.getAttribute("src");
-    image.addEventListener("error", () => {
-      if (image.currentSrc.includes("/cards-hd-webp/")) image.src = fallback;
-    }, { once: true });
-    image.src = webp;
-  }
-  bindCardPictures(document);
   app.addEventListener("click", e => {
     const link = e.target.closest("a[data-card-preview]");
     if (!link) return;
@@ -202,8 +186,6 @@
 
   function enhance() {
     enhanceExistingCardPictures(app);
-    bindCardPictures(app);
-    enhanceWalletIcon();
     enhancePrivateRole();
     const project = app.querySelector("section.project");
     if (!project || project.dataset.canvaCard) return;
@@ -254,10 +236,17 @@
     project.setAttribute("aria-label", "Thẻ dự án " + title);
   }
   let scheduled = false;
-  new MutationObserver(() => {
+  const pendingCard = 'picture:not(.gi-brand-picture):not([data-card-fallback-bound]), #role:not([data-canva-role]), #mobile-role-value:not([data-canva-role]), section.project:not([data-canva-card])';
+  new MutationObserver(records => {
     if (scheduled) return;
+    // Clock/statement text changes need no image work. Only new card-bearing
+    // elements from the renderer can introduce a picture or role to enhance.
+    const addedCard = records.some(record => Array.from(record.addedNodes).some(node =>
+      node.nodeType === 1 && node.isConnected && (node.matches(pendingCard) || node.querySelector(pendingCard))
+    ));
+    if (!addedCard) return;
     scheduled = true;
     queueMicrotask(() => { scheduled = false; enhance(); });
-  }).observe(app, { childList: true, subtree: true, characterData: true });
+  }).observe(app, { childList: true, subtree: true });
   enhance();
 })();

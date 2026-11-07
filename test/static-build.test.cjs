@@ -6,7 +6,8 @@ test('Vercel build includes the shared client and HD cards but no private server
  for(const file of ['index.html','app.js','style.css','card-ui.js','card-webp-manifest.js','ending.html','ending-ui.js','ending.css','endings/good.mp4','endings/bad.mp4','endings/good-poster.jpg','endings/bad-poster.jpg','brand/green-trap-detective.png','cards/GREENCOIN.png','cards-hd/PROJ_01.png','cards-hd/PROJ_25.png','cards-hd-webp/PROJ_01.webp','cards-hd-webp/PROJ_25.webp','cards-hd-webp/manifest.json'])assert.ok(fs.statSync(path.join(output,file)).isFile(),file);
  for(const name of ['server','data','test','.env','.git','cards-manifest.json','qr-code.js'])assert.equal(fs.existsSync(path.join(output,name)),false,name);
  assert.equal(fs.readFileSync(path.join(output,'app.js'),'utf8'),fs.readFileSync(path.join(root,'public/app.js'),'utf8'));
- for(const file of ['motion.js','motion.css','tutorial-ui.js','tutorial.css','rules-ui.js','rules.css','action-fx.js','action-fx.css'])assert.equal(fs.readFileSync(path.join(output,file),'utf8'),fs.readFileSync(path.join(root,'ui',file),'utf8'));
+ for(const file of ['green-trap-detective.webp','green-coin.webp','favicon-32.png'])assert.deepEqual(fs.readFileSync(path.join(output,'brand',file)),fs.readFileSync(path.join(root,'ui/brand',file)));
+ for(const file of ['brand-ui.js','motion.js','motion.css','tutorial-ui.js','tutorial.css','rules-ui.js','rules.css','action-fx.js','action-fx.css'])assert.equal(fs.readFileSync(path.join(output,file),'utf8'),fs.readFileSync(path.join(root,'ui',file),'utf8'));
  for(const file of ['tutorials/how-to-play-fast.mp4','tutorials/how-to-play-fast-poster.jpg'])assert.deepEqual(fs.readFileSync(path.join(output,file)),fs.readFileSync(path.join(root,'ui',file)),file+' is copied intact');
  const webpManifest=JSON.parse(fs.readFileSync(path.join(output,'cards-hd-webp/manifest.json'),'utf8'));
  assert.equal(webpManifest.assetCount,32);
@@ -20,7 +21,7 @@ test('Vercel build includes the shared client and HD cards but no private server
  const home=fs.readFileSync(path.join(output,'index.html'),'utf8');
  for(const id of ['PROJ_01','PROJ_11','PROJ_25']){
   assert.ok(home.includes('href="/cards-hd/'+id+'.png"'),id+' homepage link opens the native HD artwork');
-  assert.ok(home.includes('data-fallback-src="/cards/'+id+'.png"'),id+' homepage retains the original thumbnail fallback');
+  assert.ok(home.includes('data-fallback="/cards/'+id+'.png"'),id+' homepage retains the original thumbnail fallback');
  }
  assert.match(home,/<source type="image\/webp" srcset="\/cards-hd-webp\/PROJ_01\.webp"><source type="image\/png" srcset="\/cards-hd\/PROJ_01\.png"><img src="\/cards-hd\/PROJ_01\.png"[^>]*fetchpriority="high"/,'front hero card keeps native HD priority');
  for(const id of ['PROJ_11','PROJ_25']){

@@ -53,13 +53,19 @@
   badge.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true">'+icons[kind]+'</svg>';
   transient(badge,'seal-'+kind,[{opacity:0,transform:'translate(-50%,-50%) scale(.45) rotate(-18deg)'},{opacity:.95,transform:'translate(-50%,-50%) scale(1.1) rotate(0deg)',offset:.3},{opacity:.9,transform:'translate(-50%,-50%) scale(1)',offset:.7},{opacity:0,transform:'translate(-50%,-58%) scale(1.15)'}],1000);
  }
+ function coinPicture(){
+  const picture=document.createElement('picture');picture.className='gi-brand-picture';
+  const source=document.createElement('source');source.type='image/webp';source.srcset='/brand/green-coin.webp';
+  const image=document.createElement('img');image.src='/brand/green-coin.png';image.alt='';
+  picture.append(source,image);return picture;
+ }
  function coins(origin,destination,count,kind){
   if(!origin||document.hidden)return;
   if(kind==='invest'){investment(origin,destination);return;}
   if(!destination||reduced.matches)return;
   for(let i=0;i<Math.min(count,5);i++){
    const token=document.createElement('span');token.className='gi-action-fx-coin';token.dataset.kind=kind;
-   const image=document.createElement('img');image.src='/brand/green-coin.png';image.alt='';token.append(image);
+   token.append(coinPicture());
    const x=origin.x-22+(i%2?7:-7),y=origin.y-22,tx=destination.x-22+(i-count/2)*7,ty=destination.y-22;
    const midX=(x+tx)/2,midY=Math.min(y,ty)-55-i*8;
    transient(token,'coin-'+kind,[{opacity:0,transform:`translate3d(${x}px,${y}px,0) rotateY(0deg) scale(.6)`},{opacity:1,transform:`translate3d(${x-7}px,${y-18}px,0) rotateY(80deg) scale(1)`,offset:.15},{opacity:1,transform:`translate3d(${midX}px,${midY}px,0) rotateY(220deg) scale(1.05)`,offset:.52},{opacity:1,transform:`translate3d(${tx}px,${ty}px,0) rotateY(360deg) scale(.7)`,offset:.88},{opacity:0,transform:`translate3d(${tx}px,${ty+9}px,0) rotateY(380deg) scale(.25)`}],760,i*60);
@@ -95,7 +101,7 @@
    transient(halo,'investment-target',[{opacity:0},{opacity:.5,offset:.14},{opacity:.6,offset:.62},{opacity:1,boxShadow:'0 0 0 4px #d4dd8655,0 0 54px #b2dc8588',offset:.75},{opacity:0}],duration,0,'linear',true);
   }
   const token=document.createElement('span');token.className='gi-action-fx-coin gi-investment-coin';token.dataset.kind='invest';token.style.width=token.style.height=size+'px';
-  const image=document.createElement('img');image.src='/brand/green-coin.png';image.alt='';token.append(image);
+  token.append(coinPicture());
   const pose=(p,scale,turn,lift=0,tilt=0)=>`translate3d(${p.x-size/2}px,${p.y-size/2+lift}px,0) perspective(850px) rotateY(${turn}deg) rotateZ(${tilt}deg) scale(${scale})`;
   const middle={x:(stage.x+destination.x)/2,y:Math.min(stage.y,destination.y)-60};
   transient(token,'coin-invest',[
