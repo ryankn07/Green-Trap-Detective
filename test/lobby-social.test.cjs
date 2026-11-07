@@ -64,6 +64,13 @@ test('two browsers share avatars and keep lobby reactions within the rendering b
   const menuEffects=await host.locator('.social-reaction-menu').evaluate(menu=>menu.getAnimations({subtree:true}).length);
   await host.getByRole('button',{name:'Tạt nước',exact:true}).click();
   await guest.waitForFunction(()=>!!document.querySelector('.social-water-jet'),null,{polling:20});
+  await guest.waitForFunction(()=>{
+   const canvas=document.querySelector('canvas.social-burst-water');
+   if(!canvas)return false;
+   const pixels=canvas.getContext('2d').getImageData(0,0,canvas.width,canvas.height).data;
+   for(let i=0;i<pixels.length;i+=4)if(pixels[i+3]>160&&pixels[i+2]>pixels[i]+40)return true;
+   return false;
+  },null,{timeout:3000});
   await guest.waitForFunction(()=>!document.querySelector('.social-water-jet'),null,{timeout:3000});
   const box=await avatar(guest,hostId).boundingBox();
   await guest.mouse.move(box.x+box.width/2,box.y+box.height/2);await guest.mouse.down();await guest.waitForTimeout(470);await guest.mouse.up();
@@ -77,20 +84,33 @@ test('two browsers share avatars and keep lobby reactions within the rendering b
   await host.waitForTimeout(2700);
   await host.evaluate(()=>{
    window.reactionSample=new Promise(resolve=>{
-    let flights=0,particles=0;
+    let flights=0,layers=0,particleNodes=0;
     const end=performance.now()+1600;
     function sample(){
      flights=Math.max(flights,document.querySelectorAll('.social-projectile-confetti').length);
-     particles=Math.max(particles,document.querySelectorAll('.social-particle-confetti').length);
+     layers=Math.max(layers,document.querySelectorAll('canvas.social-burst-confetti').length);
+     particleNodes=Math.max(particleNodes,document.querySelectorAll('.social-particle-confetti').length);
      if(performance.now()<end)requestAnimationFrame(sample);
-     else resolve({flights,particles});
+     else{
+      const opaquePixels=[...document.querySelectorAll('canvas.social-burst-confetti')].map(canvas=>{
+       const pixels=canvas.getContext('2d').getImageData(0,0,canvas.width,canvas.height).data;
+       let opaque=0;
+       for(let i=3;i<pixels.length;i+=4)if(pixels[i]>160)opaque++;
+       return opaque;
+      });
+      resolve({flights,layers,particleNodes,opaquePixels});
+     }
     }
     requestAnimationFrame(sample);
    });
   });
   peers.forEach((sender,i)=>manager.react(room,sender,i%2===0?hostId:guestId,'confetti','burst-'+i));
   const burst=await host.evaluate(()=>window.reactionSample);
-  assert.deepEqual(burst,{flights:2,particles:16});
+  assert.equal(burst.flights,2);
+  assert.equal(burst.layers,2);
+  assert.equal(burst.particleNodes,0);
+  assert.equal(burst.opaquePixels.length,2);
+  assert.ok(burst.opaquePixels.every(pixels=>pixels>250),JSON.stringify(burst));
   for(const page of [host,guest])await page.evaluate(()=>{
    window.rockFlights=[];
    document.addEventListener('click',event=>{

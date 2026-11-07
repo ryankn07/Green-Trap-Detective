@@ -2,8 +2,10 @@
  'use strict';
  const names={rock:'Ném đá',brick:'Ném gạch',flowers:'Tặng hoa',water:'Tạt nước',tomato:'Ném cà chua',egg:'Ném trứng',snow:'Ném tuyết',confetti:'Tung pháo giấy'};
  let bridge,roomCode=null,seen=new Set(),hold=null,origin=null,suppressClick=false,dialog=null,pending=false;
- const flying=new Set(),activeTargets=new Map();
+ const flying=new Set(),activeTargets=new Map(),particleSprites=new Map();
  const maxConcurrentReactions=2;
+ const burstCounts={rock:17,brick:17,flowers:18,water:9,tomato:15,egg:15,snow:22,confetti:30};
+ const confettiColors=['#cb5684','#32846c','#d79723','#438fba','#9b63ba','#e2854d'];
  // Covers the longest flight plus the attached impact animation.
  const reactionWindowMs=2700;
  const avatars=Array.from({length:30},(_,i)=>'a'+String(i+1).padStart(2,'0'));
@@ -49,9 +51,9 @@
   target.querySelectorAll('.social-dizzy').forEach(node=>{node.remove();flying.delete(node);});
   const ring=attachedEffect(target,'social-dizzy');ring.style.top='4%';
   ring.style.width=rx*2+'px';ring.style.height=ry*2+'px';
-  for(let i=0;i<2;i++){
+  for(let i=0;i<3;i++){
    const star=document.createElement('span');star.className='social-dizzy-star';ring.append(star);
-   const frames=Array.from({length:17},(_,n)=>{const angle=n/16*Math.PI*4+i*Math.PI;return {transform:'translate('+Math.cos(angle)*rx+'px,'+Math.sin(angle)*ry+'px) translate(-50%,-50%) rotate('+n*12+'deg)',opacity:.65+.35*(Math.sin(angle)+1)/2};});
+   const frames=Array.from({length:49},(_,n)=>{const angle=n/48*Math.PI*4+i*Math.PI*2/3;return {transform:'translate('+Math.cos(angle)*rx+'px,'+Math.sin(angle)*ry+'px) translate(-50%,-50%) rotate('+n*12+'deg)',opacity:.65+.35*(Math.sin(angle)+1)/2};});
    star.animate(frames,{duration:1700,easing:'linear'});
   }
   finish(ring,[{transform:'translate(-50%,-50%) scale(.4)',opacity:0},{transform:'translate(-50%,-50%) scale(1)',opacity:1,offset:.12},{transform:'translate(-50%,-60%) scale(1)',opacity:1,offset:.8},{transform:'translate(-50%,-90%) scale(.9)',opacity:0}],{duration:1850});
@@ -74,17 +76,83 @@
   return '<svg viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">'+art[kind]+'</svg>';
  }
  function materialPiece(kind,i){
-  const flowerColors=['#e7a1b6','#efd48c','#dca2c7','#efb997'];
+  const flowerColors=['#df729b','#efbb55','#bc77b1','#e8956c'];
   const petal=flowerColors[i%flowerColors.length];
   const forms={
+   water:'<path d="M16 2Q30 16 25 24Q20 34 10 28Q0 22 16 2Z" fill="#50b4d6" stroke="#2784a9" stroke-width="2"/><path d="M11 20q1-5 4-8" fill="none" stroke="#dcfbff" stroke-width="3" stroke-linecap="round"/>',
    rock:'<path d="m5 12 9-7 13 6 1 14-15 6L3 23Z" fill="'+['#829096','#a7b2b4','#6e7e85'][i%3]+'" stroke="#53666f" stroke-width="1.4"/><path d="m5 12 9-7 13 6-11 7Z" fill="#c5d0d0"/><path d="m16 18 12-7v14l-15 6Z" fill="#6f828b" opacity=".55"/>',
    brick:'<path d="m3 11 17-6 10 7-18 7Z" fill="#e5a27a" stroke="#a26448" stroke-width="1.2"/><path d="m3 11 9 8v11l-9-7Z" fill="#a6563b"/><path d="m12 19 18-7v11l-18 7Z" fill="#c77d58" stroke="#a26448" stroke-width="1.2"/><path d="m17 21 8-3" stroke="#efbd94" stroke-width="1.4"/>',
    flowers:i%3===0?'<path d="M4 23Q11 3 28 8 24 27 4 23Z" fill="'+petal+'" stroke="#fff1e3" stroke-width="1"/>':'<g fill="'+petal+'" stroke="#fff6e8" stroke-width=".8"><ellipse cx="16" cy="9" rx="5" ry="7"/><ellipse cx="23" cy="14" rx="7" ry="5"/><ellipse cx="20" cy="23" rx="5" ry="7"/><ellipse cx="11" cy="23" rx="5" ry="7"/><ellipse cx="8" cy="14" rx="7" ry="5"/></g><circle cx="16" cy="16" r="5" fill="#efcf6a"/><circle cx="15" cy="15" r="1.4" fill="#fff4bd"/>',
-   snow:i%3===0?'<g fill="none" stroke="#c4e5f1" stroke-width="2" stroke-linecap="round"><path d="M16 2v28M4 9l24 14M4 23 28 9m-16-2 4 4m-4-4-4 4m4 14 4-4m-4 4-4-4"/></g>':'<path d="M5 12q-2-8 7-7 5-7 10 0 9-1 8 9 5 8-3 12-5 8-12 2-11 4-12-5-6-4 2-11Z" fill="#f2fbff" stroke="#bddce9" stroke-width="1.2"/><path d="m7 13 5-4" stroke="#fff" stroke-width="3" stroke-linecap="round"/>',
+   snow:i%3===0?'<g fill="none" stroke="#70adc5" stroke-width="2" stroke-linecap="round"><path d="M16 2v28M4 9l24 14M4 23 28 9m-16-2 4 4m-4-4-4 4m4 14 4-4m-4 4-4-4"/></g>':'<path d="M5 12q-2-8 7-7 5-7 10 0 9-1 8 9 5 8-3 12-5 8-12 2-11 4-12-5-6-4 2-11Z" fill="#f2fbff" stroke="#bddce9" stroke-width="1.2"/><path d="m7 13 5-4" stroke="#fff" stroke-width="3" stroke-linecap="round"/>',
    egg:i%3===0?'<path d="M4 16q5-13 17-9 12 3 8 15-7 10-14 3-11 2-11-9Z" fill="#f0c65d" stroke="#f9df94" stroke-width="1.2"/>':'<path d="m3 6 8 5 5-5 5 6 9-5q0 18-14 22Q3 25 3 6Z" fill="#fff8e3" stroke="#d3bd98" stroke-width="1.2"/><path d="M7 15q1 7 8 9" fill="none" stroke="#e7d8b8" stroke-width="2"/>',
    tomato:'<path d="M5 12q4-10 12-5 11-4 12 7 4 11-7 13-7 6-12-1-11-2-5-14Z" fill="#e48369" stroke="#bf6650" stroke-width="1.2"/><g fill="#f9d7a4"><ellipse cx="13" cy="14" rx="2" ry="3" transform="rotate(-35 13 14)"/><ellipse cx="22" cy="21" rx="2" ry="3" transform="rotate(30 22 21)"/></g>'
   };
-  return '<svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">'+forms[kind]+'</svg>';
+  return '<svg width="32" height="32" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">'+forms[kind]+'</svg>';
+ }
+ function particleSprite(kind,i){
+  const variant=kind==='flowers'?i%12:['rock','egg','snow'].includes(kind)?i%3:0;
+  const key=kind+':'+variant;
+  if(!particleSprites.has(key)){
+   const sprite={bitmap:null},image=new Image();
+   image.onload=()=>{
+    const bitmap=document.createElement('canvas');bitmap.width=bitmap.height=48;
+    bitmap.getContext('2d').drawImage(image,0,0,48,48);
+    sprite.bitmap=bitmap;
+   };
+   image.src='data:image/svg+xml,'+encodeURIComponent(materialPiece(kind,variant));
+   particleSprites.set(key,sprite);
+  }
+  return particleSprites.get(key);
+ }
+ function paintParticles(kind,x,y,particles){
+  // Bound the bitmap to the visible trajectory, including its arc and rotation.
+  let minX=0,maxX=0,minY=0,maxY=0,end=0;
+  for(const p of particles){
+   const radius=Math.hypot(p.width,p.height)/2+(p.flutter?14:2);
+   const tip=p.vy+p.gravity,vertex=Math.max(0,Math.min(1,-p.vy/(2*p.gravity)));
+   minX=Math.min(minX,p.vx-radius,-radius);
+   maxX=Math.max(maxX,p.vx+radius,radius);
+   minY=Math.min(minY,p.vy*vertex+p.gravity*vertex*vertex-radius);
+   maxY=Math.max(maxY,tip+radius,radius);
+   end=Math.max(end,p.delay+p.duration);
+  }
+  const left=Math.max(0,Math.floor(x+minX)),top=Math.max(0,Math.floor(y+minY));
+  const width=Math.min(innerWidth,Math.ceil(x+maxX))-left;
+  const height=Math.min(innerHeight,Math.ceil(y+maxY))-top;
+  if(width<=0||height<=0)return;
+  const scale=Math.min(devicePixelRatio||1,1.5),canvas=document.createElement('canvas');
+  canvas.className='social-burst social-burst-'+kind;
+  canvas.setAttribute('aria-hidden','true');
+  canvas.width=Math.ceil(width*scale);canvas.height=Math.ceil(height*scale);
+  Object.assign(canvas.style,{left:left+'px',top:top+'px',width:width+'px',height:height+'px'});
+  const ctx=canvas.getContext('2d');
+  if(!ctx)return;
+  document.body.append(canvas);flying.add(canvas);
+  const started=performance.now();
+  function draw(now){
+   if(!canvas.isConnected)return;
+   const age=now-started;
+   if(age>=end){canvas.remove();flying.delete(canvas);return;}
+   ctx.resetTransform();ctx.clearRect(0,0,canvas.width,canvas.height);
+   for(const p of particles){
+    const t=(age-p.delay)/p.duration;
+    if(t<0||t>=1)continue;
+    const dx=p.vx*t+(p.flutter?Math.sin(t*Math.PI*3+p.index)*14*t:0);
+    const dy=(p.vy+p.gravity*t)*t;
+    const angle=p.angle+p.spin*t,cos=Math.cos(angle),sin=Math.sin(angle);
+    const sx=scale*Math.min(1,.72+t*4)*(1-.35*t);
+    const sy=sx*(p.flutter?.76+.24*Math.cos(t*9+p.index):1);
+    ctx.setTransform(cos*sx,sin*sx,-sin*sy,cos*sy,(x-left+dx)*scale,(y-top+dy)*scale);
+    ctx.globalAlpha=Math.min(1,(1-t)/.27);
+    if(p.sprite?.bitmap)ctx.drawImage(p.sprite.bitmap,-p.width/2,-p.height/2,p.width,p.height);
+    else{
+     ctx.fillStyle=p.color;
+     ctx.fillRect(-p.width/2,-p.height/2,p.width,p.height);
+    }
+   }
+   requestAnimationFrame(draw);
+  }
+  requestAnimationFrame(draw);
  }
  function burst(target,kind,direction=1){
   const rect=target.getBoundingClientRect(),x=rect.x+rect.width/2,y=rect.y+rect.height/2;
@@ -101,7 +169,7 @@
   ];
   target.animate(reaction,{duration:gentle?720:cold?650:540,easing:'cubic-bezier(.2,.7,.25,1)'});
   const accent=attachedEffect(target,'social-impact social-impact-'+kind);accent.innerHTML=impactArt(kind);accent.style.width=accent.style.height=rect.width*1.12+'px';
-  const duration=kind==='confetti'?280:['tomato','egg','snow'].includes(kind)?1700:gentle?1250:kind==='water'?1100:680;
+  const duration=kind==='confetti'?280:['tomato','egg','snow'].includes(kind)?1700:gentle?1250:680;
   finish(accent,[{transform:'translate(-50%,-50%) scale(.45)',opacity:0},{transform:'translate(-50%,-50%) scale(1.08)',opacity:1,offset:.08},{transform:'translate(-50%,-50%) scale(1)',opacity:1,offset:.2},{transform:'translate(-50%,-50%) scale(1)',opacity:1,offset:.72},{transform:'translate(-50%,-46%) scale(.98)',opacity:0}],{duration,easing:'ease-out'});
   if(hard){
    const snap=attachedEffect(target,'social-contact social-contact-'+kind);
@@ -111,35 +179,24 @@
   }
   if(kind==='rock'||kind==='brick'||kind==='snow'){
    const dust=effect('social-dust social-dust-'+kind,x,y);dust.style.width=rect.width*.8+'px';dust.style.height=rect.height*.45+'px';
-   finish(dust,[{transform:'translate(-50%,-50%) scale(.25)',opacity:0},{transform:'translate(-50%,-55%) scale(1)',opacity:.7,offset:.2},{transform:'translate(-50%,-75%) scale(1.25)',opacity:0}],{duration:520,easing:'ease-out'});
+   finish(dust,[{transform:'translate(-50%,-50%) scale(.25)',opacity:0},{transform:'translate(-50%,-55%) scale(1)',opacity:.86,offset:.2},{transform:'translate(-50%,-75%) scale(1.25)',opacity:0}],{duration:520,easing:'ease-out'});
   }
-  const count=kind==='confetti'?8:6;
-  for(let i=0;i<count;i++){
-   const confetti=kind==='confetti',flowers=kind==='flowers',water=kind==='water';
-   const startX=confetti?x-direction*rect.width*.32:x;
-   const startY=confetti?y+rect.height*.12:y-rect.height*(water?.28:0);
-   const dot=effect('social-particle social-particle-'+kind+(water||confetti?'':' social-material'),startX,startY);
-   if(!water&&!confetti)dot.innerHTML=materialPiece(kind,i);
-   const angle=i*2.39996+(water?Math.PI:0),reach=rect.width*(.28+(i%5)*.13)+10;
-   const vx=confetti?direction*rect.width*(.25+Math.sin(i*2.4)*.85):Math.cos(angle)*reach+(hard?direction*rect.width*.2:0);
-   const vy=confetti?-rect.height*(1.55+(i%7)*.2):Math.sin(angle)*reach*.6-(flowers?40:kind==='snow'?25:water?35:hard?45:22);
-   const gravity=flowers?75:confetti?rect.height*3.35:kind==='snow'?110:water?rect.height*1.2:hard?rect.height*1.8:130;
-   const rotation=(i%2?1:-1)*(95+i*23);
-   const size=rect.width/128*(flowers?14+i%4*5:kind==='snow'?7+i%5*4:hard?7+i%5*5:10+i%4*4);
-   if(!water&&!confetti)dot.style.width=dot.style.height=size+'px';
-   if(confetti){
-    dot.style.background=['#de88a8','#67a98f','#e0b34e','#76afce','#b18ac6','#e59d70'][i%6];
-    dot.style.width=(i%4===0?7:4+i%3)+'px';dot.style.height=(i%4===0?4:9+i%3*3)+'px';
-    dot.style.borderRadius=i%5===0?'50%':'1px';
-   }
-   const frames=Array.from({length:9},(_,n)=>{
-    const t=n/8,flutter=flowers||confetti||cold;
-    const dx=vx*t+(flutter?Math.sin(t*Math.PI*3+i)*14*t:0),dy=vy*t+gravity*t*t;
-    const scale=t<.08?.65+t*4:1-t*.35;
-    return {transform:'translate(calc(-50% + '+dx+'px),calc(-50% + '+dy+'px)) rotate('+rotation*t+'deg) scale('+scale+','+scale*(flutter?.65+.35*Math.cos(t*9+i):1)+')',opacity:t>.65?(1-t)/.35:1};
-   });
-   finish(dot,frames,{duration:flowers?1350+i%3*90:confetti?1350+i%5*100:kind==='snow'?1200:water?850:hard?650+i%4*70:1000,delay:confetti?i%6*10:i%3*8,easing:'linear',fill:'backwards'});
-  }
+  const confetti=kind==='confetti',flowers=kind==='flowers';
+  const particles=Array.from({length:burstCounts[kind]},(_,i)=>{
+   const angle=i*2.39996,reach=rect.width*(.28+(i%5)*.13)+10;
+   const width=confetti?(i%4===0?7:4+i%3):Math.max(5,rect.width/110*(flowers?14+i%4*5:cold?7+i%5*4:hard?7+i%5*5:10+i%4*4));
+   return {
+    index:i,angle:0,spin:(i%2?1:-1)*(95+i*23)*Math.PI/180,
+    vx:confetti?direction*rect.width*(.25+Math.sin(angle)*.85):Math.cos(angle)*reach+(hard?direction*rect.width*.2:0),
+    vy:confetti?-rect.height*(1.55+(i%7)*.2):Math.sin(angle)*reach*.6-(flowers?40:cold?25:hard?45:22),
+    gravity:confetti?rect.height*3.35:flowers?75:cold?110:hard?rect.height*1.8:130,
+    width,height:confetti?(i%4===0?4:9+i%3*3):width,
+    duration:confetti?1350+i%5*100:flowers?1350+i%3*90:cold?1200:hard?650+i%4*70:1000,
+    delay:confetti?i%6*10:i%3*8,flutter:flowers||confetti||cold,
+    sprite:confetti?null:particleSprite(kind,i),color:confetti?confettiColors[i%confettiColors.length]:'#9d896d'
+   };
+  });
+  paintParticles(kind,confetti?x-direction*rect.width*.32:x,confetti?y+rect.height*.12:y,particles);
  }
  function wet(target){
   const box=target.getBoundingClientRect(),overlay=attachedEffect(target,'social-wet');
@@ -165,12 +222,12 @@
   const root=effect('social-water-jet',left,top);
   root.style.width=width+'px';root.style.height=height+'px';
   const curve='M'+(sx-left)+' '+(sy-top)+'Q'+(cx-left)+' '+(cy-top)+' '+(ex-left)+' '+(ey-top);
-  root.innerHTML='<svg aria-hidden="true" viewBox="0 0 '+width+' '+height+'"><path d="'+curve+'" fill="none" stroke="#83cde1" stroke-width="6" stroke-linecap="round" pathLength="1" stroke-dasharray="1"/></svg>';
+  root.innerHTML='<svg aria-hidden="true" viewBox="0 0 '+width+' '+height+'"><g fill="none" stroke-linecap="round" stroke-dasharray="1"><path d="'+curve+'" stroke="#459fc6" stroke-width="8" pathLength="1"/><path d="'+curve+'" stroke="#d7faff" stroke-width="3" pathLength="1"/></g></svg>';
   const bucket=effect('social-water-bucket',bx,by);bucket.style.width=bucket.style.height=size+'px';
   bucket.innerHTML='<svg viewBox="0 0 64 64" aria-hidden="true"><path d="M15 23Q12 1 31 4q20 2 17 24" fill="none" stroke="#71939e" stroke-width="3"/><path d="m13 23 37-1-6 31-24 1Z" fill="#86bfcb" stroke="#507e8b" stroke-width="2"/><path d="m21 31 4 16" stroke="#d5eef0" stroke-width="3" stroke-linecap="round"/><ellipse cx="31" cy="22" rx="19" ry="5" fill="#c5eff3" stroke="#507e8b" stroke-width="2"/></svg>';
   const tilt='translate(-50%,-50%) scaleX('+direction+') rotate(55deg)';
   finish(bucket,[{transform:tilt,opacity:0},{transform:tilt,opacity:1,offset:.12},{transform:tilt,opacity:1,offset:.65},{transform:tilt,opacity:0}],{duration:520});
-  const travel=root.querySelector('path').animate([
+  const travel=root.querySelector('g').animate([
    {strokeDashoffset:1,opacity:0},
    {strokeDashoffset:0,opacity:1,offset:.7},
    {strokeDashoffset:-1,opacity:0}
@@ -185,15 +242,18 @@
  function splashWater(target,direction){
   const box=target.getBoundingClientRect(),x=box.x+box.width/2,y=box.y+box.height*.43;
   target.animate([{transform:'none'},{transform:'translateX('+direction*3+'px) scale(.98)',offset:.2},{transform:'none'}],{duration:360,easing:'ease-out'});
-  const splash=attachedEffect(target,'social-impact social-impact-water');splash.style.width=splash.style.height=box.width*.64+'px';splash.style.top='43%';
-  splash.innerHTML='<svg viewBox="0 0 100 100" aria-hidden="true"><path d="M46 49Q24 46 13 25M48 48Q43 25 52 13M52 51Q75 30 88 39M49 54Q72 66 78 81M45 52Q25 60 18 73" fill="none" stroke="#83cde1" stroke-opacity=".7" stroke-width="4" stroke-linecap="round"/><path d="M39 48q9-8 20 0" fill="none" stroke="#efffff" stroke-width="2" stroke-linecap="round"/></svg>';
+  const splash=attachedEffect(target,'social-impact social-impact-water');splash.style.width=splash.style.height=box.width*.88+'px';splash.style.top='43%';
+  splash.innerHTML='<svg viewBox="0 0 100 100" aria-hidden="true"><path d="M46 49Q24 46 13 25M48 48Q43 25 52 13M52 51Q75 30 88 39M49 54Q72 66 78 81M45 52Q25 60 18 73" fill="none" stroke="#459fc6" stroke-opacity=".95" stroke-width="5" stroke-linecap="round"/><path d="M39 48q9-8 20 0" fill="none" stroke="#efffff" stroke-width="2" stroke-linecap="round"/></svg>';
   finish(splash,[{transform:'translate(-50%,-50%) scale(.3)',opacity:0},{transform:'translate(-50%,-50%) scale(.85)',opacity:1,offset:.2},{transform:'translate(-50%,-45%) scale(1.2)',opacity:0}],{duration:300,easing:'ease-out'});
-  for(let i=0;i<4;i++){
-   const angle=i*2.4,reach=box.width*(.28+i%3*.12),drop=effect('social-particle social-particle-water',x,y),size=3+i%3;
-   drop.style.width=size+'px';drop.style.height=size*1.6+'px';
-   const frames=Array.from({length:8},(_,j)=>{const t=j/7;return {transform:'translate('+Math.cos(angle)*reach*t+'px,'+(Math.sin(angle)*reach*.6*t+box.height*.65*t*t)+'px) rotate('+angle*180/Math.PI+'deg) scale('+(1-t*.5)+')',opacity:1-t};});
-   finish(drop,frames,{duration:450+i%3*65,easing:'linear'});
-  }
+  const drops=Array.from({length:burstCounts.water},(_,i)=>{
+   const angle=i*2.4,reach=box.width*(.28+i%3*.12),width=5+i%3;
+   return {
+    index:i,angle,spin:0,vx:Math.cos(angle)*reach,vy:Math.sin(angle)*reach*.6,gravity:box.height*.65,
+    width,height:width*1.6,duration:450+i%3*65,delay:0,flutter:false,
+    sprite:particleSprite('water',i),color:'#459fc6'
+   };
+  });
+  paintParticles('water',x,y,drops);
   wet(target);
  }
  function play(event,prioritize=false){
@@ -217,15 +277,15 @@
   const lift=Math.max(18,Math.min(115,Math.min(startY,endY)-35));
   const duration=Math.min(850,550+Math.hypot(endX-startX,endY-startY)*.24);
   const point=t=>({x:startX+(endX-startX)*t,y:startY+(endY-startY)*t-lift*4*t*(1-t)});
-  for(const t of [.35,.7]){
+  for(const t of [.2,.38,.56,.74]){
    const p=point(t),trail=effect('social-trail social-trail-'+event.kind,p.x,p.y);
-   finish(trail,[{transform:'translate(-50%,-50%) scale(.3)',opacity:0},{transform:'translate(-50%,-50%) scale(1)',opacity:.55,offset:.2},{transform:'translate(-50%,-30%) scale(.15)',opacity:0}],{duration:350,delay:duration*t,easing:'ease-out'});
+   finish(trail,[{transform:'translate(-50%,-50%) scale(.3)',opacity:0},{transform:'translate(-50%,-50%) scale(1)',opacity:.8,offset:.2},{transform:'translate(-50%,-30%) scale(.15)',opacity:0}],{duration:350,delay:duration*t,easing:'ease-out'});
   }
   const node=projectile(event.kind);
   const size=Math.max(52,Math.min(82,a.width*.65));node.style.width=node.style.height=size+'px';
   document.body.append(node);flying.add(node);
-  const frames=Array.from({length:13},(_,i)=>{
-   const t=i/12,p=point(t);
+  const frames=Array.from({length:33},(_,i)=>{
+   const t=i/32,p=point(t);
    return {transform:'translate('+p.x+'px,'+p.y+'px) translate(-50%,-50%) rotate('+(event.kind==='flowers'?t*35:(endX>=startX?1:-1)*t*400)+'deg) scale('+(1+.22*Math.sin(t*Math.PI))+')'};
   });
   node.animate(frames,{duration,easing:'linear',fill:'forwards'}).finished.then(()=>{

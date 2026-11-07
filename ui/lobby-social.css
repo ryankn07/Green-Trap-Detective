@@ -22,12 +22,7 @@
 .social-credit{display:block;text-align:center;margin-top:16px;font-size:10px;color:#65705d}
 .social-credit a{color:inherit}
 .social-projectile{position:fixed;left:0;top:0;width:54px;height:54px;z-index:1500;pointer-events:none;will-change:transform;filter:drop-shadow(0 5px 3px #263a3440)}
-.social-impact,.social-particle,.social-trail,.social-bouquet{position:fixed;z-index:1500;pointer-events:none;box-sizing:border-box}
-.social-particle{width:12px;height:10px;background:#a19a8a;border-radius:3px;box-shadow:inset -2px -2px #0002}
-.social-particle-brick{width:15px;height:10px;background:#cf8059;border:1px solid #aa664b;border-radius:2px}
-.social-particle-water{width:11px;height:20px;background:linear-gradient(135deg,#d7f7ff,#68c8e9);border:1px solid #6ac7e6;border-radius:70% 30% 65% 35%;box-shadow:none}
-.social-particle-flowers{width:15px;height:21px;background:#f5a6b8;border-radius:80% 20% 70% 30%;box-shadow:none}
-.social-particle-flowers:nth-of-type(2n){background:#f6d578}
+.social-impact,.social-burst,.social-trail,.social-bouquet{position:fixed;z-index:1500;pointer-events:none;box-sizing:border-box}
 .social-heart{width:20px;height:20px;clip-path:polygon(50% 20%,65% 5%,85% 5%,100% 25%,100% 45%,50% 100%,0 45%,0 25%,15% 5%,35% 5%);border-radius:0}
 .social-bouquet{width:76px;height:76px;filter:drop-shadow(0 5px 4px #6c435333)}
 .social-bouquet img{width:100%;height:100%}
@@ -262,11 +257,6 @@ body.gi-gameplay .gi-area-players .avatar{width:56px;height:56px;border:0;backgr
 .social-reaction-menu{width:min(650px,calc(100vw - 32px))}
 .social-reaction-menu .social-item-grid{grid-template-columns:repeat(4,minmax(0,1fr))}
 .social-reaction-menu .social-item-grid button:hover .social-item-art{transform:rotate(-9deg) scale(1.12)}
-.social-particle-tomato{width:16px;height:12px;background:#e77861;border-radius:60% 30% 70% 40%;box-shadow:none}
-.social-particle-egg{width:19px;height:13px;background:#fff8db;border:1px solid #eedda7;border-radius:60% 40% 70% 30%;box-shadow:none}
-.social-particle-snow{width:13px;height:13px;background:#f0fcff;border:1px solid #b3deeb;border-radius:50%;box-shadow:0 0 5px #fff}
-.social-particle-confetti{width:9px;height:18px;background:#d999bb;border-radius:1px;box-shadow:none}
-.social-particle-confetti:nth-of-type(3n){background:#86b6a0}.social-particle-confetti:nth-of-type(3n+1){background:#e5c56b}
 .social-trail-tomato{background:#eb9576}.social-trail-egg{background:#f4deb3}.social-trail-snow{background:#daf2ff}.social-trail-confetti{background:#cda5d3}
 @media(max-width:480px){.social-reaction-menu .social-item-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.social-item-art{width:64px;height:64px}.social-reaction-menu .social-item-grid button{padding:12px 6px 10px}}
 @media(prefers-reduced-motion:reduce){.social-item-art{transition:none}.social-reaction-menu .social-item-grid button:hover .social-item-art{transform:none}}
@@ -279,14 +269,9 @@ body.gi-gameplay .gi-area-players .avatar{width:56px;height:56px;border:0;backgr
 .social-dizzy-star{position:absolute;left:50%;top:50%;width:16px;height:16px;background:linear-gradient(135deg,#f6e9b1,#ddad56);clip-path:polygon(50% 0,62% 33%,98% 35%,70% 57%,79% 94%,50% 73%,21% 94%,30% 57%,2% 35%,38% 33%)}
 .social-wet{position:fixed;z-index:1500;pointer-events:none;background:none;border:0;box-shadow:none}
 .social-wet-drip{position:absolute;top:27%;width:5px;height:17px;border-radius:60% 60% 75% 75%;background:linear-gradient(#d5f6ff33,#85caddcc);box-shadow:inset 1px 0 #edffffbb}
-.social-particle-water{width:7px;height:12px;background:linear-gradient(135deg,#d9f6ff,#8fcbdc);border:1px solid #d7f5fa}
-.social-particle-flowers{width:9px;height:13px;background:#eab5c5}
 .social-heart{width:12px;height:12px}
-.social-particle-confetti{width:5px;height:11px;border-radius:1px}
-.social-particle-snow{background:#edfaff;box-shadow:none}
 
 /* Each incoming object breaks into its own material on contact. */
-.social-particle.social-material{background:none;border:0;box-shadow:none;border-radius:0}
 .social-material svg{display:block;width:100%;height:100%;overflow:visible}
 .social-dust{position:fixed;z-index:1499;pointer-events:none;border-radius:50%;background:radial-gradient(ellipse at 28% 55%,#a0a6a355,transparent 60%),radial-gradient(ellipse at 65% 40%,#b6b9b066,transparent 60%);filter:blur(2px)}
 .social-dust-brick{background:radial-gradient(ellipse at 30% 55%,#d6ad8d66,transparent 60%),radial-gradient(ellipse at 65% 40%,#caa18b44,transparent 60%)}
