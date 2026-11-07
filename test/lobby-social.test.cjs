@@ -31,7 +31,7 @@ test('lobby avatars and reactions persist, deduplicate and enforce membership',(
  assert.throws(()=>manager.react(room,player,guest.id,'unknown','new-unknown'),{code:'INVALID_TARGET'});
 });
 
-test('two browsers share avatars and lobby throws',{skip:!process.env.PLAYWRIGHT_MODULE_PATH},async()=>{
+test('two browsers share avatars and keep lobby reactions within the rendering budget',{skip:!process.env.PLAYWRIGHT_MODULE_PATH},async t=>{
  const {chromium}=require(process.env.PLAYWRIGHT_MODULE_PATH);
  const {server,manager}=require('../server/server.cjs');
  await new Promise(r=>server.listen(0,'127.0.0.1',r));
@@ -40,16 +40,29 @@ test('two browsers share avatars and lobby throws',{skip:!process.env.PLAYWRIGHT
  try{
   const host=await browser.newPage({viewport:{width:1440,height:900}});
   const guest=await browser.newPage({viewport:{width:390,height:844},hasTouch:true,isMobile:true});
-  const errors=[];for(const page of [host,guest])page.on('pageerror',e=>errors.push(e.message));
+  const errors=[],avatarResponses=new Map();
+  host.on('response',response=>{
+   const path=new URL(response.url()).pathname;
+   if(path.startsWith('/social/avatars/'))avatarResponses.set(path,Number(response.headers()['content-length']));
+  });
+  for(const page of [host,guest])page.on('pageerror',e=>errors.push(e.message));
   await host.goto(base);await host.locator('#create-name').fill('Social QA');await host.locator('#form-create button').click();await host.locator('#leave').waitFor();
   const room=[...manager.rooms.values()].find(r=>r.players[0].name==='Social QA');
   await guest.goto(base);await guest.locator('#join-code').fill(room.code);await guest.locator('#join-name').fill('Social guest');await guest.locator('#form-join button').click();await guest.locator('#leave').waitFor();
   const hostId=room.players[0].id,guestId=room.players[1].id;
   const avatar=(page,id)=>page.locator('.lobby-members [data-player-id="'+id+'"] .avatar');
   await avatar(host,hostId).click();
-  await host.getByRole('button',{name:'Avatar a30',exact:true}).click();
-  await guest.waitForFunction(id=>document.querySelector('[data-player-id="'+id+'"] .avatar img')?.getAttribute('src').endsWith('a30.png'),hostId);
-  await avatar(host,guestId).click();await host.getByRole('button',{name:'Tạt nước',exact:true}).click();
+  await host.waitForFunction(()=>document.querySelector('.social-menu img')?.naturalWidth>0);
+  const firstAvatar=await host.locator('.social-menu img').first().evaluate(img=>({src:img.currentSrc,width:img.naturalWidth}));
+  const pickerBytes=[...avatarResponses.values()].reduce((sum,bytes)=>sum+bytes,0);
+  const originalGuestAvatar=await avatar(guest,guestId).elementHandle();
+  const choice=await host.getByRole('button',{name:'Avatar a30',exact:true}).getAttribute('aria-pressed')==='true'?'a29':'a30';
+  await host.getByRole('button',{name:'Avatar '+choice,exact:true}).click();
+  await guest.waitForFunction(({id,choice})=>document.querySelector('[data-player-id="'+id+'"] .avatar img')?.getAttribute('src').endsWith(choice+'.png'),{id:hostId,choice});
+  const avatarRetained=await avatar(guest,guestId).evaluate((node,original)=>node===original,originalGuestAvatar);
+  await avatar(host,guestId).click();
+  const menuEffects=await host.locator('.social-reaction-menu').evaluate(menu=>menu.getAnimations({subtree:true}).length);
+  await host.getByRole('button',{name:'Tạt nước',exact:true}).click();
   await guest.waitForFunction(()=>!!document.querySelector('.social-water-jet'),null,{polling:20});
   await guest.waitForFunction(()=>!document.querySelector('.social-water-jet'),null,{timeout:3000});
   const box=await avatar(guest,hostId).boundingBox();
@@ -57,6 +70,31 @@ test('two browsers share avatars and lobby throws',{skip:!process.env.PLAYWRIGHT
   await guest.getByRole('button',{name:'Tặng hoa',exact:true}).click();
   await host.waitForFunction(()=>!!document.querySelector('.social-projectile-flowers'),null,{polling:20});
   assert.ok(await guest.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));
+
+  const peers=Array.from({length:10},(_,i)=>manager.join(room.code,'Guest '+i).player);
+  await host.waitForFunction(()=>document.querySelectorAll('.lobby-members .person').length===12);
+  await host.locator('.lobby-members .people').evaluate(list=>list.scrollIntoView({block:'start'}));
+  await host.waitForTimeout(1200);
+  await host.evaluate(()=>{
+   window.reactionSample=new Promise(resolve=>{
+    let flights=0,particles=0;
+    const end=performance.now()+1600;
+    function sample(){
+     flights=Math.max(flights,document.querySelectorAll('.social-projectile-confetti').length);
+     particles=Math.max(particles,document.querySelectorAll('.social-particle-confetti').length);
+     if(performance.now()<end)requestAnimationFrame(sample);
+     else resolve({flights,particles});
+    }
+    requestAnimationFrame(sample);
+   });
+  });
+  peers.forEach((sender,i)=>manager.react(room,sender,i%2===0?hostId:guestId,'confetti','burst-'+i));
+  const burst=await host.evaluate(()=>window.reactionSample);
+  assert.deepEqual(burst,{flights:2,particles:16});
   assert.deepEqual(errors,[]);
+  const budgets={optimizedAvatar:firstAvatar.src.endsWith('.webp')&&firstAvatar.width<=192,avatarRetained,
+   pickerUnder500KB:pickerBytes>0&&pickerBytes<500000,menuEffectsUnderFour:menuEffects<4};
+  t.diagnostic(JSON.stringify({pickerBytes,menuEffects,burst}));
+  assert.ok(Object.values(budgets).every(Boolean),JSON.stringify({budgets,firstAvatar,pickerBytes,menuEffects}));
  }finally{await browser.close();await new Promise(r=>server.close(r));}
 });

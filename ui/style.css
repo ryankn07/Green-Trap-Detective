@@ -1338,7 +1338,8 @@ body:has(.lobby) .lobby-rules .rules-open{border-radius:10px;border:1px solid va
 body:has(.lobby) .lobby-rules .rules-open:hover{background:var(--lobby-accent-soft);border-color:var(--lobby-accent)}
 body:has(.lobby) .lobby-rules #leave{border:0;border-top:1px solid var(--lobby-border);border-radius:0;padding:16px 0 0;background:none;color:var(--lobby-muted);text-align:left;width:100%;min-height:44px}
 body:has(.lobby) :is(.rules-dialog,.social-menu){background:var(--lobby-paper);color:var(--lobby-ink);border-radius:var(--lobby-radius);border-color:var(--lobby-border);box-shadow:0 24px 80px #24344c40}
-body:has(.lobby) .rules-dialog::backdrop,body:has(.lobby) .social-menu::backdrop{background:#203e2b77;backdrop-filter:blur(8px)}
+body:has(.lobby) :is(.rules-dialog,.social-menu)::backdrop{background:#203e2b77}
+body:has(.lobby) .rules-dialog::backdrop{backdrop-filter:blur(8px)}
 body:has(.lobby) .rules-heading{background:var(--lobby-soft);border-color:var(--lobby-border)}
 body:has(.lobby) .social-reaction-menu{background:#fffcf4eb}
 body:has(.lobby) .social-menu button{background:var(--lobby-soft);border-color:var(--lobby-border);color:var(--lobby-ink)}

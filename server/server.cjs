@@ -67,7 +67,7 @@ if(remote){
   });
 }
 const transaction=fn=>remote?coordinator.run(fn):Promise.resolve().then(fn);
-const MIME={'.html':'text/html; charset=utf-8','.js':'text/javascript; charset=utf-8','.css':'text/css; charset=utf-8','.png':'image/png','.svg':'image/svg+xml','.ico':'image/x-icon'};
+const MIME={'.html':'text/html; charset=utf-8','.js':'text/javascript; charset=utf-8','.css':'text/css; charset=utf-8','.png':'image/png','.webp':'image/webp','.svg':'image/svg+xml','.ico':'image/x-icon'};
 const HEADERS={'X-Content-Type-Options':'nosniff','Referrer-Policy':'no-referrer','X-Frame-Options':'DENY','Content-Security-Policy':"default-src 'self'; connect-src 'self'; img-src 'self' data:; style-src 'self'; script-src 'self'; object-src 'none'; base-uri 'none'; frame-ancestors 'none'"};
 const allowedPaths=new Set(['/','/index.html','/app.js','/style.css','/motion.css','/motion.js','/card-webp-manifest.js','/brand-ui.js','/ending.html','/ending.css','/ending-ui.js','/tutorial.css','/tutorial-ui.js','/rules.css','/rules-ui.js','/action-fx.css','/action-fx.js','/lobby-social.js','/lobby-social.css']);
 const brandPaths=new Set(['/brand/green-trap-detective.png','/brand/green-coin.png','/brand/green-trap-detective.webp','/brand/green-coin.webp','/brand/favicon-32.png']);
@@ -193,7 +193,7 @@ const server=http.createServer(async(req,res)=>{
       return serveStatic(req,res,path.join(uiDir,'card-ui.js'));
     }
 
-    if(req.method==='GET' && /^\/social\/(?:avatars\/a(?:0[1-9]|[12][0-9]|30)\.png|items\/(?:rock|brick|flowers|water)\.svg)$/.test(url.pathname)){
+    if(req.method==='GET' && /^\/social\/(?:avatars\/a(?:0[1-9]|[12][0-9]|30)\.(?:png|webp)|items\/(?:rock|brick|flowers|water)\.svg)$/.test(url.pathname)){
       return serveStatic(req,res,path.join(uiDir,url.pathname.slice(1)));
     }
     if(req.method==='POST' && url.pathname==='/api/create') {

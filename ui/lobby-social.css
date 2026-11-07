@@ -1,8 +1,9 @@
 .lobby-members .avatar{cursor:pointer;touch-action:pan-y;user-select:none;overflow:visible;border:2px solid #d6e1c2;transition:box-shadow .2s,transform .2s}
-.avatar>img{display:block;width:100%;height:100%;object-fit:contain;border-radius:0}
+.avatar>picture{display:block;width:100%;height:100%}
+.avatar>picture>img{display:block;width:100%;height:100%;object-fit:contain;border-radius:0}
 .lobby-members .avatar:hover,.lobby-members .avatar:focus-visible{outline:2px solid #537c48;outline-offset:3px;transform:scale(1.06)}
 .social-menu{box-sizing:border-box;width:min(600px,calc(100vw - 32px));max-height:calc(100dvh - 40px);overflow:auto;border:1px solid #bdcba9;border-radius:24px;padding:24px;background:#fffdf3;color:#22432c;box-shadow:0 20px 70px #172d3450}
-.social-menu::backdrop{background:#17352a55;backdrop-filter:blur(3px)}
+.social-menu::backdrop{background:#17352a55}
 .social-menu h2{font-size:24px;margin:0 0 18px;text-align:center;overflow-wrap:anywhere}
 .social-avatar-grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px}
 .social-menu button{min-width:0;border-radius:16px;border:1px solid #cbd9b8;background:#eff3e3;color:#23472e;padding:10px;cursor:pointer}
@@ -43,10 +44,11 @@
 .social-menu{width:min(720px,calc(100vw - 32px))}
 .social-avatar-grid{grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
 .social-avatar-grid button{padding:4px;aspect-ratio:1}
-.social-avatar-grid button img{width:100%;height:100%;object-fit:contain}
+.social-avatar-grid button picture,.social-avatar-grid button img{display:block;width:100%;height:100%}
+.social-avatar-grid button img{object-fit:contain}
 body.gi-gameplay .gi-area-players .person{grid-template-columns:56px minmax(0,1fr);align-items:center}
 body.gi-gameplay .gi-area-players .avatar{width:56px;height:56px;border:0;background:transparent}
-@media(max-width:480px){
+@media(max-width:759px){
   body.gi-gameplay .gi-area-players .person{grid-template-columns:36px minmax(0,1fr)}
   body.gi-gameplay .gi-area-players .avatar{width:36px;height:36px}
 }
@@ -233,9 +235,9 @@ body.gi-gameplay .gi-area-players .avatar{width:56px;height:56px;border:0;backgr
  .social-avatar-grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
 }
 
-/* Frosted reaction palette; the avatar picker retains its paper surface. */
-.social-reaction-menu{width:min(570px,calc(100vw - 32px));background:linear-gradient(135deg,#fffef1d9,#edf3e1b3);backdrop-filter:blur(24px) saturate(1.35);-webkit-backdrop-filter:blur(24px) saturate(1.35);border:1px solid #ffffffd9;box-shadow:inset 0 1px 0 #fff,0 22px 65px #19382d38;border-radius:28px;padding:28px}
-.social-reaction-menu::backdrop{background:#18352d2e;backdrop-filter:blur(7px)}
+/* Paper tint for the reaction palette. */
+.social-reaction-menu{width:min(570px,calc(100vw - 32px));background:linear-gradient(135deg,#fffef1,#edf3e1);border:1px solid #ffffffd9;box-shadow:inset 0 1px 0 #fff,0 22px 65px #19382d38;border-radius:28px;padding:28px}
+.social-reaction-menu::backdrop{background:#18352d55}
 .social-reaction-menu .social-item-grid{gap:12px}
 .social-reaction-menu .social-item-grid button{position:relative;background:#ffffff66;border:1px solid #ffffffb3;padding:18px 8px 14px;box-shadow:inset 0 1px #fff9,0 5px 12px #334b2810;transition:transform .2s,background .2s,box-shadow .2s}
 .social-reaction-menu .social-item-grid button:hover,.social-reaction-menu .social-item-grid button:focus-visible{transform:translateY(-5px);background:#ffffffb3;box-shadow:0 9px 18px #334b2820}
@@ -243,8 +245,6 @@ body.gi-gameplay .gi-area-players .avatar{width:56px;height:56px;border:0;backgr
 .social-reaction-menu .social-item-grid img{height:64px;max-height:64px;margin-bottom:14px;filter:drop-shadow(0 4px 3px #36503725);transition:transform .2s}
 .social-reaction-menu .social-item-grid button:hover img{transform:rotate(-9deg) scale(1.12)}
 .social-reaction-menu .social-close{background:#ffffff66;border-color:#ffffffb3}
-.social-menu-spark{position:absolute;left:50%;top:35%;width:8px;height:8px;border-radius:50%;background:#d2aa59;pointer-events:none}
-.social-menu-spark:nth-of-type(2n){background:#91af72;width:6px;height:6px}
 .social-projectile svg,.social-bouquet svg{display:block;width:100%;height:100%}
 .social-projectile-water{border-radius:55% 35% 45% 50%;background:linear-gradient(145deg,#e1fcffb3 8%,#8bdcecdd 35%,#40a8d4bb 80%);box-shadow:inset 3px 4px 0 #f2ffffaa;clip-path:polygon(0 45%,18% 22%,38% 29%,62% 5%,90% 20%,100% 47%,93% 81%,70% 95%,37% 75%,12% 87%);filter:drop-shadow(0 3px 3px #57b9d66b)}
 .social-trail-water{background:#7bd3edb3;border:1px solid #d7faffcc;box-shadow:0 0 4px #aceaff88}
@@ -286,7 +286,7 @@ body.gi-gameplay .gi-area-players .avatar{width:56px;height:56px;border:0;backgr
 .social-particle-snow{background:#edfaff;box-shadow:none}
 
 /* Each incoming object breaks into its own material on contact. */
-.social-particle.social-material{background:none;border:0;box-shadow:none;border-radius:0;filter:drop-shadow(0 2px 1px #25392d22)}
+.social-particle.social-material{background:none;border:0;box-shadow:none;border-radius:0}
 .social-material svg{display:block;width:100%;height:100%;overflow:visible}
 .social-dust{position:fixed;z-index:1499;pointer-events:none;border-radius:50%;background:radial-gradient(ellipse at 28% 55%,#a0a6a355,transparent 60%),radial-gradient(ellipse at 65% 40%,#b6b9b066,transparent 60%);filter:blur(2px)}
 .social-dust-brick{background:radial-gradient(ellipse at 30% 55%,#d6ad8d66,transparent 60%),radial-gradient(ellipse at 65% 40%,#caa18b44,transparent 60%)}
@@ -301,4 +301,3 @@ body.gi-gameplay .gi-area-players .avatar{width:56px;height:56px;border:0;backgr
 .social-contact{z-index:1502;pointer-events:none;filter:drop-shadow(0 2px 1px #6d522b20)}
 .social-contact svg{display:block;width:100%;height:100%;overflow:visible}
 .social-impact-egg,.social-impact-tomato{filter:drop-shadow(0 2px 1px #613b2525)}
-.social-particle.social-material{filter:drop-shadow(0 2px 1px #25392d30)}

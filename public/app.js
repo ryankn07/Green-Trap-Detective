@@ -401,6 +401,9 @@ function kickConfirmation(player){
  return '<div class="kick-confirmation" role="group" aria-label="Bạn chắc chắn muốn kick '+escapeHTML(player.name)+'?" aria-busy="'+busy+'"><p>Kick <strong>“'+escapeHTML(player.name)+'”</strong>?</p><div class="kick-confirm-actions"><button type="button" class="kick-cancel" aria-label="Không kick, quay lại" id="kick-cancel-'+escapeHTML(player.id)+'" data-kick-cancel="'+escapeHTML(player.id)+'" '+(busy?'disabled':'')+'><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 4-5 5 5 5M4 9h9a7 7 0 0 1 7 7v3"/></svg></button><button type="button" class="kick-confirm-yes" aria-label="'+(busy?'Đang kick ':'Kick ')+escapeHTML(player.name)+'" id="kick-confirm-'+escapeHTML(player.id)+'" data-kick-confirm="'+escapeHTML(player.id)+'" '+(busy?'disabled':'')+'><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg></button></div></div>';
 }
 function kickScribble(animated){return '<svg class="kick-scribble" viewBox="0 0 200 100" preserveAspectRatio="none" aria-hidden="true"><path pathLength="1" d="m8 20 163-10L13 34 184 22 8 49 190 36 9 65 185 52 13 81 189 67 29 92 184 82"/></svg>'+(animated?'<span class="kick-pencil" aria-hidden="true">✎</span>':'');}
+function playerAvatar(player){
+ return player.avatarId?window.GreenTrapSocial.avatarPicture(player.avatarId):'<span class="avatar-artwork">'+escapeHTML(player.name.charAt(0).toUpperCase())+'</span>';
+}
 function playerList(s){
  const players=s.room.players.slice();
  for(const effect of kickEffects.values())if(effect.roomCode===s.room.code&&effect.transient&&!players.some(player=>player.id===effect.player.id))players.splice(Math.min(effect.index,players.length),0,effect.player);
@@ -417,7 +420,7 @@ function playerList(s){
  const canKick=session?.playerId===s.room.hostId&&p.id!==s.room.hostId&&!p.removed&&s.game?.phase!=='GAME_OVER';
  const effect=kickEffects.get(s.room.code+':'+p.id),confirming=canKick&&kickConfirmationId===p.id,elimination=eliminationFor(s,p);
  if(elimination)info='Đã bị trục xuất';
- return `<div class="person ${g&&!g.isAlive?'dead':''}${p.id===s.game?.myPlayer.id?' gi-person-self':''} ${p.removed?'is-kicked':''} ${effect?'kick-animating':''} ${effect?.transient?'kick-tombstone':''} ${elimination?'gi-elimination-fx':''}" data-player-id="${escapeHTML(p.id)}" data-kick-confirming="${confirming}"><div class="avatar" ${!s.game?'role="button" tabindex="0" aria-label="'+escapeHTML(p.id===session.playerId?'Đổi avatar của bạn':'Tương tác với '+p.name)+'"':''}>${p.avatarId?'<img src="/social/avatars/'+(/^a(?:0[1-9]|[12][0-9]|30)$/.test(p.avatarId)?p.avatarId:'a01')+'.png" alt="" width="44" height="44">':escapeHTML(p.name.charAt(0).toUpperCase())}${elimination?eliminationParticles():''}</div><div class="person-info"><b><span class="player-name${g&&!g.isAlive&&!p.removed?' is-eliminated':''}">${escapeHTML(p.name)}${elimination?eliminationStrike():''}</span> ${p.id===s.room.hostId?'★':''} ${p.id===s.game?.myPlayer.id?'(Bạn)':''}</b><small>${elimination?`<span class="gi-elim-before" aria-hidden="true">${escapeHTML(elimination.beforeStatus)}</span><span class="gi-elim-after">${escapeHTML(info)}</span>`:escapeHTML(info)}</small></div><span class="pill">${p.online?'● Online':'○ Offline'}</span>${canKick?`<button type="button" class="kick-player" id="kick-open-${escapeHTML(p.id)}" data-kick-player="${escapeHTML(p.id)}" aria-label="Kick ${escapeHTML(p.name)} khỏi phòng" ${confirming?'aria-hidden="true" tabindex="-1" disabled':''}>Kick</button>`:''}${confirming?kickConfirmation(p):''}${p.removed?kickScribble(Boolean(effect)):''}${elimination?'<span class="gi-elim-hit" aria-hidden="true"></span>':''}</div>`;
+ return `<div class="person ${g&&!g.isAlive?'dead':''}${p.id===s.game?.myPlayer.id?' gi-person-self':''} ${p.removed?'is-kicked':''} ${effect?'kick-animating':''} ${effect?.transient?'kick-tombstone':''} ${elimination?'gi-elimination-fx':''}" data-player-id="${escapeHTML(p.id)}" data-kick-confirming="${confirming}"><div class="avatar" ${!s.game?'role="button" tabindex="0" aria-label="'+escapeHTML(p.id===session.playerId?'Đổi avatar của bạn':'Tương tác với '+p.name)+'"':''}>${playerAvatar(p)}${elimination?eliminationParticles():''}</div><div class="person-info"><b><span class="player-name${g&&!g.isAlive&&!p.removed?' is-eliminated':''}">${escapeHTML(p.name)}${elimination?eliminationStrike():''}</span> ${p.id===s.room.hostId?'★':''} ${p.id===s.game?.myPlayer.id?'(Bạn)':''}</b><small>${elimination?`<span class="gi-elim-before" aria-hidden="true">${escapeHTML(elimination.beforeStatus)}</span><span class="gi-elim-after">${escapeHTML(info)}</span>`:escapeHTML(info)}</small></div><span class="pill">${p.online?'● Online':'○ Offline'}</span>${canKick?`<button type="button" class="kick-player" id="kick-open-${escapeHTML(p.id)}" data-kick-player="${escapeHTML(p.id)}" aria-label="Kick ${escapeHTML(p.name)} khỏi phòng" ${confirming?'aria-hidden="true" tabindex="-1" disabled':''}>Kick</button>`:''}${confirming?kickConfirmation(p):''}${p.removed?kickScribble(Boolean(effect)):''}${elimination?'<span class="gi-elim-hit" aria-hidden="true"></span>':''}</div>`;
  }).join('');}
 
 function lobbyExpeditionArt(){return `<div class="lobby-expedition" aria-hidden="true"><svg viewBox="0 0 640 340" fill="none" focusable="false">
@@ -486,8 +489,30 @@ function updateGameInPlace(previous,current){
  }
  return true;
 }
+function updateLobbyInPlace(previous,current){
+ const old=previous?.room,room=current.room,list=app.querySelector('.lobby-members .people');
+ if(!list||previous?.game||current.game||old?.code!==room.code||old.hostId!==room.hostId||
+  old.maxPlayers!==room.maxPlayers||old.players.length!==room.players.length)return false;
+ if(room.players.some((player,i)=>{
+  const before=old.players[i];
+  return player.id!==before.id||player.name!==before.name||player.removed!==before.removed;
+ }))return false;
+ const changes=new Map(room.players.flatMap((player,i)=>{
+  const before=old.players[i];
+  return player.avatarId!==before.avatarId||player.online!==before.online?[[player.id,{player,before}]]:[];
+ }));
+ if(!changes.size)return true;
+ for(const row of list.children){
+  const change=changes.get(row.dataset.playerId);
+  if(!change||row.classList.contains('kick-tombstone'))continue;
+  const {player,before}=change;
+  if(player.online!==before.online)row.querySelector(':scope>.pill').textContent=player.online?'● Online':'○ Offline';
+  if(player.avatarId!==before.avatarId)row.querySelector('.avatar-artwork').outerHTML=playerAvatar(player);
+ }
+ return true;
+}
 function render(previous){if(!snapshot||!session)return;const s=snapshot;const me=s.game?.myPlayer;const host=s.room.hostId===(me?.id||session.playerId);
- if(updateGameInPlace(previous,s))return;
+ if(updateLobbyInPlace(previous,s)||updateGameInPlace(previous,s))return;
  document.body.classList.toggle('gi-gameplay',Boolean(s.game)&&s.game.phase!=='GAME_OVER');
  document.body.classList.toggle('gi-ending',s.game?.phase==='GAME_OVER');
  if(!s.game){clearStatementDraft();app.innerHTML=`<section class="grid lobby"><div class="column"><div class="card lobby-invite"><span class="eyebrow">Phòng chờ<svg class="lobby-title-stroke" viewBox="0 0 188 16" aria-hidden="true"><path d="M2 9C45 3 99 2 185 7M16 14C61 8 114 9 164 11"/></svg></span><h1>Phòng ${escapeHTML(s.room.code)}</h1><p>Mời bạn bè vào phòng trước khi bắt đầu ván.</p><div class="code mono">${escapeHTML(s.room.code)}</div><div class="actions"><button id="copy" class="primary">Sao chép link mời</button>${host?`<button id="start">Bắt đầu ván</button>`:'<span class="note">Đợi chủ phòng bắt đầu…</span>'}</div></div><div class="card lobby-members"><h2>Người chơi (${s.room.players.length}${s.room.maxPlayers?' / '+s.room.maxPlayers:''})</h2><div class="people" tabindex="0" role="region" aria-label="Danh sách thành viên">${playerList(s)}</div>${lobbyExpeditionArt()}</div></div><div class="column"><div class="card lobby-rules"><h2>Cách chơi</h2><p>Mỗi người nhận một vai trò bí mật và 2 xu khi bắt đầu. Thảo luận tối đa 10 dự án, rồi chọn đầu tư 1 xu hoặc giữ lại. Bạn cũng có thể kiểm chứng vai trò (3 xu) hoặc góp xu trục xuất người chơi (cần tổng cộng 5 xu).</p><button type="button" id="rules-open" class="rules-open" data-open-rules aria-haspopup="dialog" aria-controls="rules-dialog"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 6c-3-2-6-2-9-1v15c3-1 6-1 9 1 3-2 6-2 9-1V5c-3-1-6-1-9 1Zm0 0v15"/></svg><span>Xem toàn bộ luật chơi</span></button><button id="leave" >Rời phòng</button></div></div></section>`;return;}
