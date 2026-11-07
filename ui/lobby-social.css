@@ -1,0 +1,304 @@
+.lobby-members .avatar{cursor:pointer;touch-action:pan-y;user-select:none;overflow:visible;border:2px solid #d6e1c2;transition:box-shadow .2s,transform .2s}
+.avatar>img{display:block;width:100%;height:100%;object-fit:contain;border-radius:0}
+.lobby-members .avatar:hover,.lobby-members .avatar:focus-visible{outline:2px solid #537c48;outline-offset:3px;transform:scale(1.06)}
+.social-menu{box-sizing:border-box;width:min(600px,calc(100vw - 32px));max-height:calc(100dvh - 40px);overflow:auto;border:1px solid #bdcba9;border-radius:24px;padding:24px;background:#fffdf3;color:#22432c;box-shadow:0 20px 70px #172d3450}
+.social-menu::backdrop{background:#17352a55;backdrop-filter:blur(3px)}
+.social-menu h2{font-size:24px;margin:0 0 18px;text-align:center;overflow-wrap:anywhere}
+.social-avatar-grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px}
+.social-menu button{min-width:0;border-radius:16px;border:1px solid #cbd9b8;background:#eff3e3;color:#23472e;padding:10px;cursor:pointer}
+.social-avatar-grid button{padding:8px 4px 6px;overflow:hidden;background:#f5ebdb;transition:transform .16s,background .16s}
+.social-avatar-grid button:nth-child(3n+2){background:#e6efe0}
+.social-avatar-grid button:nth-child(3n){background:#e5edf3}
+.social-avatar-grid button:hover{transform:translateY(-3px)}
+.social-avatar-grid button img{height:68px;object-fit:contain;filter:drop-shadow(0 3px 3px #394b2720)}
+.social-menu button img{display:block;width:100%;height:auto}
+.social-avatar-grid button[aria-pressed=true]{outline:3px solid #698b48;outline-offset:1px}
+.social-item-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+.social-item-grid img{max-height:52px;object-fit:contain;margin-bottom:8px}
+.social-item-grid span{font-size:12px;font-weight:700}
+.social-menu button:hover{background:#e1ebce}
+.social-menu .social-close{display:block;margin:20px auto 0;min-width:100px}
+.social-credit{display:block;text-align:center;margin-top:16px;font-size:10px;color:#65705d}
+.social-credit a{color:inherit}
+.social-projectile{position:fixed;left:0;top:0;width:54px;height:54px;z-index:1500;pointer-events:none;will-change:transform;filter:drop-shadow(0 5px 3px #263a3440)}
+.social-impact,.social-particle,.social-trail,.social-bouquet{position:fixed;z-index:1500;pointer-events:none;box-sizing:border-box}
+.social-particle{width:12px;height:10px;background:#a19a8a;border-radius:3px;box-shadow:inset -2px -2px #0002}
+.social-particle-brick{width:15px;height:10px;background:#cf8059;border:1px solid #aa664b;border-radius:2px}
+.social-particle-water{width:11px;height:20px;background:linear-gradient(135deg,#d7f7ff,#68c8e9);border:1px solid #6ac7e6;border-radius:70% 30% 65% 35%;box-shadow:none}
+.social-particle-flowers{width:15px;height:21px;background:#f5a6b8;border-radius:80% 20% 70% 30%;box-shadow:none}
+.social-particle-flowers:nth-of-type(2n){background:#f6d578}
+.social-heart{width:20px;height:20px;clip-path:polygon(50% 20%,65% 5%,85% 5%,100% 25%,100% 45%,50% 100%,0 45%,0 25%,15% 5%,35% 5%);border-radius:0}
+.social-bouquet{width:76px;height:76px;filter:drop-shadow(0 5px 4px #6c435333)}
+.social-bouquet img{width:100%;height:100%}
+.social-trail{width:9px;height:9px;border-radius:50%;background:#cebd94}
+.social-trail-brick{background:#d99b79}
+.social-trail-water{background:#8bddf5}
+.social-trail-flowers{background:#f4b8cd}
+@media(max-width:360px){.social-item-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(prefers-reduced-motion:reduce){.lobby-members .avatar{transition:none}}
+
+@media(max-width:600px){.social-avatar-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
+
+/* Give the supplied portrait artwork enough room to read. */
+.social-menu{width:min(720px,calc(100vw - 32px))}
+.social-avatar-grid{grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+.social-avatar-grid button{padding:4px;aspect-ratio:1}
+.social-avatar-grid button img{width:100%;height:100%;object-fit:contain}
+body.gi-gameplay .gi-area-players .person{grid-template-columns:56px minmax(0,1fr);align-items:center}
+body.gi-gameplay .gi-area-players .avatar{width:56px;height:56px;border:0;background:transparent}
+@media(max-width:480px){
+  body.gi-gameplay .gi-area-players .person{grid-template-columns:36px minmax(0,1fr)}
+  body.gi-gameplay .gi-area-players .avatar{width:36px;height:36px}
+}
+
+/* The waiting room uses the game's paper-and-forest palette. */
+.lobby .lobby-invite {
+  border: 1px solid #41624c;
+  border-radius: 18px;
+  background:
+    repeating-radial-gradient(ellipse at 98% 22%, transparent 0 24px, #e5d3a415 25px 26px, transparent 27px 42px),
+    linear-gradient(118deg, #173c2d 30%, #2f543a);
+  color: #fff8e7;
+  box-shadow: 0 8px 20px #233b2720;
+}
+
+.lobby-invite .eyebrow,
+.lobby-invite .code { color: #f9e3a8; }
+
+.lobby-invite .code {
+  justify-self: end;
+  width: fit-content;
+  padding: 8px 16px;
+  border: 1px solid #e7cf8880;
+  border-radius: 10px;
+  background: #102d24;
+  text-align: center;
+}
+
+.lobby .lobby-invite p,
+.lobby .lobby-invite .note { color: #e1eade; }
+
+.lobby .lobby-invite #copy {
+  border-color: #a7be9e;
+  background: #ffffff12;
+  color: #fff8e7;
+}
+
+.lobby .lobby-invite #copy:hover { background: #ffffff26; }
+.lobby .lobby-invite #start { border-color: #f0d99b; background: #f0d99b; color: #233b27; }
+.lobby .lobby-invite #start:hover { background: #ffebba; }
+
+.lobby .lobby-members {
+  padding: clamp(12px, 2vw, 24px);
+  border: 1px solid #ced4bb;
+  border-radius: 16px;
+  background: linear-gradient(155deg, #f7f6eb, #e8eddd);
+}
+
+.lobby-members h2 {
+  margin: 0;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #cbd1b8;
+  font-family: var(--font-editorial);
+}
+
+.lobby-members .people {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-auto-flow: row;
+  grid-auto-columns: auto;
+  overflow: visible;
+  gap: clamp(6px, 1.2vw, 12px);
+  margin-top: 14px;
+  padding: 4px 0 8px;
+  border: 0;
+}
+
+.lobby-members .person {
+  grid-template-columns: minmax(0, 1fr);
+  min-width: 0;
+  align-content: start;
+  justify-items: center;
+  gap: 5px;
+  padding: 9px 4px;
+  text-align: center;
+  border: 1px solid #d2c7aa;
+  border-radius: 14px;
+  background: radial-gradient(ellipse at 50% 0%, #fffdf6 28%, #f3ecd9);
+  box-shadow: 0 3px 6px #3d472417;
+}
+
+.lobby-members .avatar {
+  isolation: isolate;
+  --portrait-size: clamp(50px, 15vw, 64px);
+  width: var(--portrait-size);
+  height: var(--portrait-size);
+  border: 1px solid #a99765;
+  border-radius: 50%;
+  background: radial-gradient(circle, #fff7d9 33%, #dde6c7 73%);
+  box-shadow: 0 0 0 3px #faf2dc, 0 0 0 4px #b1a174, 0 5px 10px #304b382e;
+  color: #2d5238;
+  font: 650 32px/1 var(--font-editorial);
+}
+
+.lobby-members .avatar::after {
+  content: "";
+  position: absolute;
+  inset: 3px;
+  border: 1px dashed #82744d80;
+  border-radius: inherit;
+  pointer-events: none;
+  z-index: -1;
+}
+
+.lobby-members .person-info b { font-size: 14px; }
+.lobby-members .person:not(.is-kicked, .kick-animating) .person-info small { display: none; }
+
+.lobby-members .person > .pill {
+  grid-column: 1;
+  justify-self: center;
+  padding: 2px 5px;
+  border: 1px solid #c9d3b6;
+  border-radius: 999px;
+  background: #eaf0dd;
+  color: #2c5239;
+}
+
+.lobby .lobby-rules {
+  padding: clamp(16px, 2vw, 24px);
+  border: 1px solid #d1c8af;
+  border-top: 3px solid #9b8758;
+  border-radius: 14px;
+  background: #faf6e8;
+}
+
+.lobby-rules h2 { font-family: var(--font-editorial); }
+.lobby-rules #leave { display: block; }
+
+@media (max-width: 759px) {
+  .lobby-invite h1 {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+
+  .lobby-invite .eyebrow {
+    display: block;
+    margin-bottom: 10px;
+    font: 500 30px/1.2 var(--font-editorial);
+  }
+
+  .lobby-invite .code { margin: 14px 0 16px; }
+  .lobby .lobby-invite .note {
+    padding: 10px 12px;
+    border: 1px solid #a7be9e66;
+    border-radius: 8px;
+    background: #102d24;
+  }
+
+  .lobby-members .person .kick-confirm-actions button {
+    width: 36px;
+    min-width: 0;
+    max-width: 50%;
+  }
+}
+
+.lobby-members .kick-player {
+  grid-column: 1;
+  justify-self: center;
+  padding: 6px 10px;
+}
+
+@media (min-width: 760px) {
+  .lobby-members .people { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .lobby-members .person { padding: 12px 8px; gap: 6px; }
+  .lobby-members .avatar { --portrait-size: 86px; }
+  .lobby-members .person-info b { font-size: 16px; }
+  .lobby-members .kick-player { min-height: 32px; }
+  .lobby-members .lobby-table-art { min-height: 256px; margin-top: 6px; }
+}
+
+@media (min-width: 1200px) {
+  .lobby-members .people { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .lobby-members .avatar:hover,
+  .lobby-members .avatar:focus-visible { transform: none; }
+}
+
+@media(max-width:600px){
+ .social-menu{padding:18px}
+ .social-avatar-grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+}
+
+/* Frosted reaction palette; the avatar picker retains its paper surface. */
+.social-reaction-menu{width:min(570px,calc(100vw - 32px));background:linear-gradient(135deg,#fffef1d9,#edf3e1b3);backdrop-filter:blur(24px) saturate(1.35);-webkit-backdrop-filter:blur(24px) saturate(1.35);border:1px solid #ffffffd9;box-shadow:inset 0 1px 0 #fff,0 22px 65px #19382d38;border-radius:28px;padding:28px}
+.social-reaction-menu::backdrop{background:#18352d2e;backdrop-filter:blur(7px)}
+.social-reaction-menu .social-item-grid{gap:12px}
+.social-reaction-menu .social-item-grid button{position:relative;background:#ffffff66;border:1px solid #ffffffb3;padding:18px 8px 14px;box-shadow:inset 0 1px #fff9,0 5px 12px #334b2810;transition:transform .2s,background .2s,box-shadow .2s}
+.social-reaction-menu .social-item-grid button:hover,.social-reaction-menu .social-item-grid button:focus-visible{transform:translateY(-5px);background:#ffffffb3;box-shadow:0 9px 18px #334b2820}
+.social-reaction-menu .social-item-grid button:active{transform:scale(.93)}
+.social-reaction-menu .social-item-grid img{height:64px;max-height:64px;margin-bottom:14px;filter:drop-shadow(0 4px 3px #36503725);transition:transform .2s}
+.social-reaction-menu .social-item-grid button:hover img{transform:rotate(-9deg) scale(1.12)}
+.social-reaction-menu .social-close{background:#ffffff66;border-color:#ffffffb3}
+.social-menu-spark{position:absolute;left:50%;top:35%;width:8px;height:8px;border-radius:50%;background:#d2aa59;pointer-events:none}
+.social-menu-spark:nth-of-type(2n){background:#91af72;width:6px;height:6px}
+.social-projectile svg,.social-bouquet svg{display:block;width:100%;height:100%}
+.social-projectile-water{border-radius:55% 35% 45% 50%;background:linear-gradient(145deg,#e1fcffb3 8%,#8bdcecdd 35%,#40a8d4bb 80%);box-shadow:inset 3px 4px 0 #f2ffffaa;clip-path:polygon(0 45%,18% 22%,38% 29%,62% 5%,90% 20%,100% 47%,93% 81%,70% 95%,37% 75%,12% 87%);filter:drop-shadow(0 3px 3px #57b9d66b)}
+.social-trail-water{background:#7bd3edb3;border:1px solid #d7faffcc;box-shadow:0 0 4px #aceaff88}
+@media(max-width:480px){.social-reaction-menu{padding:22px 18px}.social-reaction-menu .social-item-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.social-reaction-menu .social-item-grid img{height:70px;max-height:70px}}
+@media(prefers-reduced-motion:reduce){.social-reaction-menu .social-item-grid button,.social-reaction-menu .social-item-grid img{transition:none}.social-reaction-menu .social-item-grid button:hover,.social-reaction-menu .social-item-grid button:hover img{transform:none}}
+
+.social-water-jet{position:fixed;z-index:1500;pointer-events:none;overflow:visible}
+.social-water-jet svg{display:block;width:100%;height:100%;overflow:visible}
+.social-water-bucket{position:fixed;width:68px;height:68px;z-index:1501;pointer-events:none;filter:drop-shadow(0 4px 3px #326a7b33)}
+.social-water-bucket svg{width:100%;height:100%}
+.social-water-drop{position:fixed;width:11px;height:19px;z-index:1501;pointer-events:none;border-radius:70% 30% 60% 40%;background:linear-gradient(130deg,#e1ffff,#6ec8e5);border:1px solid #a8e5f3}
+.social-water-cue{position:fixed;pointer-events:none;width:0;height:0}
+.social-item-art{display:block;width:72px;height:72px;margin:0 auto 12px;filter:drop-shadow(0 4px 3px #36503725);transition:transform .2s}
+.social-item-art svg{display:block;width:100%;height:100%}
+.social-reaction-menu{width:min(650px,calc(100vw - 32px))}
+.social-reaction-menu .social-item-grid{grid-template-columns:repeat(4,minmax(0,1fr))}
+.social-reaction-menu .social-item-grid button:hover .social-item-art{transform:rotate(-9deg) scale(1.12)}
+.social-particle-tomato{width:16px;height:12px;background:#e77861;border-radius:60% 30% 70% 40%;box-shadow:none}
+.social-particle-egg{width:19px;height:13px;background:#fff8db;border:1px solid #eedda7;border-radius:60% 40% 70% 30%;box-shadow:none}
+.social-particle-snow{width:13px;height:13px;background:#f0fcff;border:1px solid #b3deeb;border-radius:50%;box-shadow:0 0 5px #fff}
+.social-particle-confetti{width:9px;height:18px;background:#d999bb;border-radius:1px;box-shadow:none}
+.social-particle-confetti:nth-of-type(3n){background:#86b6a0}.social-particle-confetti:nth-of-type(3n+1){background:#e5c56b}
+.social-trail-tomato{background:#eb9576}.social-trail-egg{background:#f4deb3}.social-trail-snow{background:#daf2ff}.social-trail-confetti{background:#cda5d3}
+@media(max-width:480px){.social-reaction-menu .social-item-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.social-item-art{width:64px;height:64px}.social-reaction-menu .social-item-grid button{padding:12px 6px 10px}}
+@media(prefers-reduced-motion:reduce){.social-item-art{transition:none}.social-reaction-menu .social-item-grid button:hover .social-item-art{transform:none}}
+
+/* Recipient accents sit around the portrait; its expression remains readable. */
+.social-impact{position:fixed;z-index:1500;pointer-events:none;background:none;border:0;box-shadow:none;overflow:visible;filter:drop-shadow(0 2px 1px #48524312)}
+.social-impact svg{width:100%;height:100%;display:block;overflow:visible}
+.social-dizzy{position:fixed;z-index:1501;pointer-events:none;box-sizing:border-box}
+.social-dizzy::before{content:"";position:absolute;inset:0;border:1.5px solid #d9bc7b99;border-top-color:transparent;border-radius:50%}
+.social-dizzy-star{position:absolute;left:50%;top:50%;width:16px;height:16px;background:linear-gradient(135deg,#f6e9b1,#ddad56);clip-path:polygon(50% 0,62% 33%,98% 35%,70% 57%,79% 94%,50% 73%,21% 94%,30% 57%,2% 35%,38% 33%)}
+.social-wet{position:fixed;z-index:1500;pointer-events:none;background:none;border:0;box-shadow:none}
+.social-wet-drip{position:absolute;top:27%;width:5px;height:17px;border-radius:60% 60% 75% 75%;background:linear-gradient(#d5f6ff33,#85caddcc);box-shadow:inset 1px 0 #edffffbb}
+.social-particle-water{width:7px;height:12px;background:linear-gradient(135deg,#d9f6ff,#8fcbdc);border:1px solid #d7f5fa}
+.social-particle-flowers{width:9px;height:13px;background:#eab5c5}
+.social-heart{width:12px;height:12px}
+.social-particle-confetti{width:5px;height:11px;border-radius:1px}
+.social-particle-snow{background:#edfaff;box-shadow:none}
+
+/* Each incoming object breaks into its own material on contact. */
+.social-particle.social-material{background:none;border:0;box-shadow:none;border-radius:0;filter:drop-shadow(0 2px 1px #25392d22)}
+.social-material svg{display:block;width:100%;height:100%;overflow:visible}
+.social-dust{position:fixed;z-index:1499;pointer-events:none;border-radius:50%;background:radial-gradient(ellipse at 28% 55%,#a0a6a355,transparent 60%),radial-gradient(ellipse at 65% 40%,#b6b9b066,transparent 60%);filter:blur(2px)}
+.social-dust-brick{background:radial-gradient(ellipse at 30% 55%,#d6ad8d66,transparent 60%),radial-gradient(ellipse at 65% 40%,#caa18b44,transparent 60%)}
+.social-dust-snow{background:radial-gradient(ellipse at 25% 50%,#f2fcffcc,transparent 60%),radial-gradient(ellipse at 65% 40%,#dcf0fa99,transparent 65%);filter:blur(1px)}
+.social-wet{overflow:hidden;border-radius:50%}
+.social-water-sheet{position:absolute;left:18%;top:27%;width:64%;height:35%;background:linear-gradient(170deg,#b5edfa14,#9eddeb55 50%,#ceffff0a);clip-path:polygon(0 18%,17% 4%,32% 16%,51% 0,68% 12%,87% 5%,100% 25%,94% 75%,76% 58%,60% 100%,42% 70%,24% 86%,9% 59%);border:0;box-shadow:none}
+.social-wet-drip{width:3px;background:linear-gradient(#e8ffff18,#87cadd99);box-shadow:inset 1px 0 #f4ffff99;border-radius:40% 40% 65% 65%}
+
+/* Contact marks belong to the portrait so recoil never leaves them floating. */
+.lobby-members .avatar{position:relative}
+.lobby-members .avatar>.social-attached{position:absolute;pointer-events:none}
+.social-contact{z-index:1502;pointer-events:none;filter:drop-shadow(0 2px 1px #6d522b20)}
+.social-contact svg{display:block;width:100%;height:100%;overflow:visible}
+.social-impact-egg,.social-impact-tomato{filter:drop-shadow(0 2px 1px #613b2525)}
+.social-particle.social-material{filter:drop-shadow(0 2px 1px #25392d30)}

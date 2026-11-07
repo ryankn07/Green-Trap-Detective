@@ -30,7 +30,7 @@ class FileRoomStore {
     for(const [room,encoded] of pending)this.encodedRooms.set(room,encoded);
   }
 }
-function serializeRoom(room){return {code:room.code,hostId:room.hostId,admissionSource:room.admissionSource,players:room.players.map(({id,name,secret,admissionSource,removed})=>({id,name,secret,admissionSource,...(removed?{removed:true}:{})})),state:room.state,lastActivity:room.lastActivity,deadline:room.deadline,revision:room.revision};}
+function serializeRoom(room){return {code:room.code,hostId:room.hostId,admissionSource:room.admissionSource,social:room.social,players:room.players.map(({id,name,secret,admissionSource,removed,avatarId})=>({id,name,secret,avatarId,admissionSource,...(removed?{removed:true}:{})})),state:room.state,lastActivity:room.lastActivity,deadline:room.deadline,revision:room.revision};}
 function validateSnapshot(snapshot){
     if(snapshot.version!==1||!Array.isArray(snapshot.rooms))throw Error('Unsupported room snapshot');
     const codes=new Set();
@@ -40,6 +40,7 @@ function validateSnapshot(snapshot){
          !Number.isFinite(room.lastActivity)||!Number.isInteger(room.revision)||!(room.deadline===null||Number.isFinite(room.deadline))||
          !validSource(room.admissionSource)||!room.players.some(p=>p.id===room.hostId)||room.players.some(p=>typeof p.id!=='string'||typeof p.name!=='string'||!/^[a-f0-9]{64}$/.test(p.secret)||!validSource(p.admissionSource)||(p.removed!==undefined&&typeof p.removed!=='boolean'))||
          (room.state&&room.state.version!==1))throw Error('Invalid room snapshot');
+      if(room.social&&(!Array.isArray(room.social.events)||room.social.events.length>48||!room.social.last||typeof room.social.last!=='object'))throw Error('Invalid room social snapshot');
       codes.add(room.code);
     }
     return snapshot.rooms;

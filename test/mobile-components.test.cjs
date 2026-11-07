@@ -11,7 +11,14 @@ test('mobile components work across small phones, landscape, and every game phas
  const base='http://127.0.0.1:'+server.address().port;
  const fits=async(page,label)=>{
   assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),label+': no horizontal overflow');
-  assert.equal(await page.locator('input:visible,textarea:visible,select:visible,button:visible').evaluateAll(elements=>elements.filter(e=>{const r=e.getBoundingClientRect();return r.width<1||r.left< -1||r.right>innerWidth+1;}).map(e=>e.id||e.tagName)).then(items=>items.length),0,label+': controls fit page width');
+  assert.equal(await page.locator('input:visible,textarea:visible,select:visible,button:visible').evaluateAll(elements=>elements.filter(e=>{
+   const r=e.getBoundingClientRect(),people=e.closest('.lobby-members .people');
+   // Desktop/landscape lobby seats intentionally scroll horizontally; controls must fit their seat.
+   if(people&&getComputedStyle(people).overflowX==='auto'){
+    const seat=e.closest('.person').getBoundingClientRect();return r.width<1||r.left<seat.left-1||r.right>seat.right+1;
+   }
+   return r.width<1||r.left< -1||r.right>innerWidth+1;
+  }).map(e=>e.id||e.tagName)).then(items=>items.length),0,label+': controls fit page width or their scrolling seat');
   checks.push(label);
  };
  try{

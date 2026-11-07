@@ -1,0 +1,126 @@
+{
+  "source": "Owner-supplied composite codex-clipboard-f1228f99-4f4e-42b7-9923-bc72a5e1f6e6.png",
+  "processing": "Extracted 6x5 portraits along cream outer silhouette; background outside silhouette removed, padded and centered to 512x512. No generative redraw. Original ZIP retained outside worktree.",
+  "files": [
+    {
+      "id": "a01",
+      "sha256": "0e99629a35e0bdce9f3f24ffd21b061051a3b926266f6a1c53863dfb413597a4"
+    },
+    {
+      "id": "a02",
+      "sha256": "e8bc99672f57d7dcad72b9b162cd8cbc36643fec37f563793cbc6f7200a31997"
+    },
+    {
+      "id": "a03",
+      "sha256": "223abea8d0bd041dc5ab6e9e50345d49d77cc1b42c4ce697cfcdff96a25b4b0d"
+    },
+    {
+      "id": "a04",
+      "sha256": "21ad937a090cc188f7d94c79c933de3c7da78fd3a8e3544238e610b7c24b905f"
+    },
+    {
+      "id": "a05",
+      "sha256": "00d2cbc77168299ad669226b817a5fcbaedd93edb06d2bf96dab564d3aaa1e9f"
+    },
+    {
+      "id": "a06",
+      "sha256": "39066fe521eaa0fc1974338c40720e8e52f2ebfe67c5764117ac3462b704dbce"
+    },
+    {
+      "id": "a07",
+      "sha256": "3566ee45532fc184833a5ecd45c2c92b4af55988750cd6673744f50407c25cf5"
+    },
+    {
+      "id": "a08",
+      "sha256": "63be2545f5ce20c5ec510992e45bb9de5bde493bcb21f88866fb39bf657070bb"
+    },
+    {
+      "id": "a09",
+      "sha256": "0d80050fd4c5c1d91a4018fc990fa51b6a93741d25f1c620ea02e44829d51d63"
+    },
+    {
+      "id": "a10",
+      "sha256": "8bd067fa3d8304d2fc9200ce69a5dbfdb5aeb3dcc039039e61a4a3633fd47e67"
+    },
+    {
+      "id": "a11",
+      "sha256": "8818f6b3b95d288d3d28042adfe826a67273b99ad9bd8ac76cae3eb838145a7d"
+    },
+    {
+      "id": "a12",
+      "sha256": "482c31377172ef4f7d5e9db0a4658219e364dba4373c787a9880099cc69f9444"
+    },
+    {
+      "id": "a13",
+      "sha256": "09142e283235b7cef84e73890c822511ddb01176a138e7afa4c6971370594de7"
+    },
+    {
+      "id": "a14",
+      "sha256": "9c4a4d37e78fc402e3ca0d9a5f65099ff97c48551c285712c20eeae01df23dab"
+    },
+    {
+      "id": "a15",
+      "sha256": "a3502bf42cf2d954da91452fe7569773bd448377b2b6c0cb5f2c430e81a11136"
+    },
+    {
+      "id": "a16",
+      "sha256": "eb7fb007e072bce4d3237987c9e86c3e82aa74dc10248bf80593716114b52697"
+    },
+    {
+      "id": "a17",
+      "sha256": "d8da52fe610cbad2df3fc2d0b41228a7495b09d7342d765d9f47c6bf96b618ec"
+    },
+    {
+      "id": "a18",
+      "sha256": "7e6b3d06ca2c33fe068d373ed80ad25494dc5b426a6ca2329a237c986a9e67ad"
+    },
+    {
+      "id": "a19",
+      "sha256": "3cc47a222a76e2bdc80febefdd6620938ab08b9260f3cac37647bdded236f941"
+    },
+    {
+      "id": "a20",
+      "sha256": "36e0c0b90e4f40f0f136f12121d4bccefdb06e4229c114464273a499df441ca3"
+    },
+    {
+      "id": "a21",
+      "sha256": "0a444f9d54c9d2e7ec3dc8c5cfbaa63bf4cf87ee30dd36b86356cac944ce3698"
+    },
+    {
+      "id": "a22",
+      "sha256": "add89a8f8b9d99769137df50504bc6e42aafcaefbfe1fce5c372c5ccf081a232"
+    },
+    {
+      "id": "a23",
+      "sha256": "edfa501dfd06b7d79927a274423d424c953067bb8688b446d276ece3ce7444a4"
+    },
+    {
+      "id": "a24",
+      "sha256": "c07b883bbfa02ca7175a2a9a60c89c2d62b57e72c5b8867c3be7bc34dc650c2a"
+    },
+    {
+      "id": "a25",
+      "sha256": "f5ec71f1296ebad6f1dfa35be8302a75be8c7428dbaea225c9b196adc989ab6c"
+    },
+    {
+      "id": "a26",
+      "sha256": "56e93196e31b0bfbdc6b87746c6777876de5a25ce052808f2c34ea338d0927a4"
+    },
+    {
+      "id": "a27",
+      "sha256": "73c41f0e29f36f0ed10b0b00abc6307f2121d8268f06b24ab87c7bf54039b5e3"
+    },
+    {
+      "id": "a28",
+      "sha256": "9a5fa6a902e72499af270ba8f535963549e7fb5e030dbe0a312af070ca78190a"
+    },
+    {
+      "id": "a29",
+      "sha256": "7f1a572b906cf4d99914bfe4f9a461d1c198b32ca1fea1d95e208e1db2bdc392"
+    },
+    {
+      "id": "a30",
+      "sha256": "1dd3d82ce8b212e9b4105eb26bcac5c65fde134a411ece0bc9f4491016ec173c"
+    }
+  ]
+}

@@ -50,6 +50,25 @@ test('unchanged polling uses the combined read adapter once without redundant qu
  assert.equal(response.status,200);assert.equal(response.value.room.code,host.roomCode);assert.equal(combined,1);assert.equal(legacyLimits,0);
 });
 
+test('lobby avatar and reaction survive cold Functions and request replay',async t=>{
+ const {store,request}=await fixture(t);
+ const host=(await request('/api/create',{name:'Social host'})).value;
+ const guest=(await request('/api/join',{roomCode:host.roomCode,name:'Social guest'})).value;
+ assert.equal((await request('/api/action',{type:'avatar',avatarId:'a10'},host)).status,200);
+ const event={type:'react',targetId:guest.playerId,kind:'water',requestId:randomUUID()};
+ assert.equal((await request('/api/action',event,host)).status,200);
+ assert.equal((await request('/api/action',event,host)).status,200);
+ const state=(await request('/api/state?room='+host.roomCode,null,guest)).value;
+ assert.equal(state.room.players.find(p=>p.id===host.playerId).avatarId,'a10');
+ assert.equal(state.room.reactions.length,1);
+ assert.equal(Object.hasOwn(state.room,'social'),false);
+ assert.equal((await request('/api/action',{...event,requestId:randomUUID()},host)).value.error,'REACTION_COOLDOWN');
+ assert.equal((await request('/api/action',{...event,targetId:randomUUID(),requestId:randomUUID()},guest)).value.error,'INVALID_TARGET');
+ store.time+=16000;
+ assert.equal((await request('/api/state?room='+host.roomCode,null,host)).value.room.reactions.length,0);
+ for(const kind of ['tomato','egg','snow','confetti']){store.time+=1300;assert.equal((await request('/api/action',{type:'react',targetId:guest.playerId,kind,requestId:randomUUID()},host)).status,200);assert.equal((await request('/api/state?room='+host.roomCode,null,guest)).value.room.reactions.at(-1).kind,kind);}
+});
+
 test('discussion skip persists across cold Functions, retries once per voter and advances on unanimous consent',async t=>{
  const {store,request}=await fixture(t),host=(await request('/api/create',{name:'Skip host'})).value;
  const guests=[];for(const name of ['Skip A','Skip B'])guests.push((await request('/api/join',{roomCode:host.roomCode,name})).value);

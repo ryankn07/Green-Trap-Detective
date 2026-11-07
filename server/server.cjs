@@ -67,9 +67,9 @@ if(remote){
   });
 }
 const transaction=fn=>remote?coordinator.run(fn):Promise.resolve().then(fn);
-const MIME={'.html':'text/html; charset=utf-8','.js':'text/javascript; charset=utf-8','.css':'text/css; charset=utf-8','.svg':'image/svg+xml','.ico':'image/x-icon'};
+const MIME={'.html':'text/html; charset=utf-8','.js':'text/javascript; charset=utf-8','.css':'text/css; charset=utf-8','.png':'image/png','.svg':'image/svg+xml','.ico':'image/x-icon'};
 const HEADERS={'X-Content-Type-Options':'nosniff','Referrer-Policy':'no-referrer','X-Frame-Options':'DENY','Content-Security-Policy':"default-src 'self'; connect-src 'self'; img-src 'self' data:; style-src 'self'; script-src 'self'; object-src 'none'; base-uri 'none'; frame-ancestors 'none'"};
-const allowedPaths=new Set(['/','/index.html','/app.js','/style.css','/motion.css','/motion.js','/card-webp-manifest.js','/brand-ui.js','/ending.html','/ending.css','/ending-ui.js','/tutorial.css','/tutorial-ui.js','/rules.css','/rules-ui.js','/action-fx.css','/action-fx.js']);
+const allowedPaths=new Set(['/','/index.html','/app.js','/style.css','/motion.css','/motion.js','/card-webp-manifest.js','/brand-ui.js','/ending.html','/ending.css','/ending-ui.js','/tutorial.css','/tutorial-ui.js','/rules.css','/rules-ui.js','/action-fx.css','/action-fx.js','/lobby-social.js','/lobby-social.css']);
 const brandPaths=new Set(['/brand/green-trap-detective.png','/brand/green-coin.png','/brand/green-trap-detective.webp','/brand/green-coin.webp','/brand/favicon-32.png']);
 const staticAssetCache=new Map();
 function acceptsGzip(req){
@@ -193,6 +193,9 @@ const server=http.createServer(async(req,res)=>{
       return serveStatic(req,res,path.join(uiDir,'card-ui.js'));
     }
 
+    if(req.method==='GET' && /^\/social\/(?:avatars\/a(?:0[1-9]|[12][0-9]|30)\.png|items\/(?:rock|brick|flowers|water)\.svg)$/.test(url.pathname)){
+      return serveStatic(req,res,path.join(uiDir,url.pathname.slice(1)));
+    }
     if(req.method==='POST' && url.pathname==='/api/create') {
       rate(res,'create:'+address,30);
       const body=await readBody(req);const result=await transaction(()=>{const {room,player}=manager.create(body.name,createHash('sha256').update(address).digest('hex'));return {roomCode:room.code,playerId:player.id,token:player.secret};});
@@ -226,7 +229,7 @@ const server=http.createServer(async(req,res)=>{
     if(req.method==='POST' && url.pathname==='/api/action') {
       const body=await readBody(req);
       const effect=await transaction(()=>{const {room,player}=auth(req,url);rate(res,'action:'+player.id,60);
-      switch(body.type){case 'start':manager.start(room,player);break;case 'submit':validateSubmission(room,body);manager.submit(room,player,body.payload||{});break;case 'skip_discussion':validateContext(room,body);manager.skipDiscussion(room,player);break;case 'next':validateContext(room,body);manager.next(room,player);break;case 'kick':{const target=manager.kick(room,player,body.targetId);return {code:room.code,id:target.id,kicked:true};}case 'leave':manager.leaveLobby(room,player);return {code:room.code,id:player.id};default:throw new HttpError('INVALID_ACTION','Lệnh không được hỗ trợ.',400);}
+      switch(body.type){case 'avatar':manager.setAvatar(room,player,body.avatarId);break;case 'react':manager.react(room,player,body.targetId,body.kind,body.requestId);break;case 'start':manager.start(room,player);break;case 'submit':validateSubmission(room,body);manager.submit(room,player,body.payload||{});break;case 'skip_discussion':validateContext(room,body);manager.skipDiscussion(room,player);break;case 'next':validateContext(room,body);manager.next(room,player);break;case 'kick':{const target=manager.kick(room,player,body.targetId);return {code:room.code,id:target.id,kicked:true};}case 'leave':manager.leaveLobby(room,player);return {code:room.code,id:player.id};default:throw new HttpError('INVALID_ACTION','Lệnh không được hỗ trợ.',400);}
       return null;});
       if(effect)for(const [stream,who] of streams.get(effect.code)||[])if(who.id===effect.id)effect.kicked?stream.end('event: kicked\ndata: {}\n\n'):stream.end();
       return json(res,200,{ok:true});

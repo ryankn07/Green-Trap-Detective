@@ -121,6 +121,8 @@ function createServerlessHandler({ store } = {}) {
         if (path === '/api/action') {
           if(room.state?.phase==='GAME_OVER'&&body.type!=='finish_leave')throw new HttpError('GAME_OVER','Ván đã kết thúc.');
           switch (body.type) {
+            case 'avatar': manager.setAvatar(room,player,body.avatarId); break;
+            case 'react': manager.react(room,player,body.targetId,body.kind,body.requestId); break;
             case 'start': manager.start(room, player); break;
             case 'submit': validateSubmission(room, body); manager.submit(room, player, body.payload || {}); break;
             case 'skip_discussion': validateContext(room, body); manager.skipDiscussion(room, player); break;

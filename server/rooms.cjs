@@ -1,5 +1,6 @@
 'use strict';
 const crypto = require('node:crypto');
+const social=require('./lobby-social.cjs');
 const {MIN_PLAYERS,MAX_PLAYERS,MAX_ROOMS,MAX_STREAMS,SOURCE_ROOMS,SOURCE_SEATS}=require('./limits.cjs');
 const {assignBaseRoles,selectProjectDeck,createGame,submitStatement,skipDiscussion,openBlindPhase,lockAction,resolveRound,nextRound,removePlayer,activePlayers,projectForPlayer}=require('../engine/dist/index.js');
 const projects=require('../engine/dist/data/projects.json');
@@ -33,7 +34,9 @@ class RoomManager {
   getRoom(code){const room=this.findRoom(code);if(!room)fail('ROOM_NOT_FOUND','Không tìm thấy phòng.');return room;}
   join(code,name,source=null){this.checkAdmission(source);this.checkSlots();const room=this.getRoom(code);if(room.state)fail('GAME_STARTED','Ván đang diễn ra. Chỉ người chơi cũ được kết nối lại.');if(this.maxPlayers!==null&&room.players.length>=this.maxPlayers)fail('ROOM_FULL',`Phòng đã đủ ${this.maxPlayers} người.`);name=clampName(name);if(!name)fail('INVALID_NAME','Nhập tên người chơi.');const player={id:uid(),name,secret:token(),online:false,admissionSource:source};room.players.push(player);this.changed(room);return{room,player};}
   authenticate(code,rawToken){const room=this.getRoom(code);if(typeof rawToken!=='string'||!/^[a-f0-9]{64}$/.test(rawToken))fail('UNAUTHORIZED','Thiếu hoặc sai phiên chơi.');const digest=Buffer.from(rawToken,'hex');const player=room.players.find(p=>!p.removed&&crypto.timingSafeEqual(Buffer.from(p.secret,'hex'),digest));if(!player)fail('UNAUTHORIZED','Không có quyền điều khiển người chơi này.');return{room,player};}
-  view(room,player){return{room:{code:room.code,hostId:room.hostId,minPlayers:MIN_PLAYERS,maxPlayers:this.maxPlayers,players:room.players.map(p=>({id:p.id,name:p.name,online:p.online,...(p.removed?{removed:true}:{})})),status:room.state?'PLAYING':'LOBBY',revision:room.revision},game:room.state?projectForPlayer(room.state,player.id):null,serverTime:this.currentTime(),deadline:room.deadline};}
+  view(room,player){return{room:{code:room.code,hostId:room.hostId,minPlayers:MIN_PLAYERS,maxPlayers:this.maxPlayers,players:room.players.map(p=>({id:p.id,name:p.name,avatarId:social.avatarFor(p),online:p.online,...(p.removed?{removed:true}:{})})),reactions:room.state?[]:(room.social?.events||[]).filter(e=>this.currentTime()-e.at<15000),status:room.state?'PLAYING':'LOBBY',revision:room.revision},game:room.state?projectForPlayer(room.state,player.id):null,serverTime:this.currentTime(),deadline:room.deadline};}
+  setAvatar(room,player,avatarId){social.updateAvatar(this,room,player,avatarId);}
+  react(room,player,targetId,kind,requestId){social.react(this,room,player,targetId,kind,requestId);}
   changed(room){
     const previous=this.saved.get(room),wasActive=this.rooms.has(room.code);room.revision++;room.lastActivity=this.currentTime();
     if(room.state?.phase==='GAME_OVER')this.rooms.delete(room.code);
