@@ -87,6 +87,14 @@ test('two browsers share avatars and keep lobby reactions within the rendering b
    Number(frame.transform.match(/rotate\(([-\d.]+)deg\)/)[1])
   ));
   assert.ok(Math.min(...sway)<-10&&Math.max(...sway)>10,'bouquet should sway both ways');
+  const bloom=host.locator('.social-contact-flowers');
+  await bloom.waitFor({timeout:1600});
+  assert.ok(await bloom.evaluate(node=>{
+   const rect=node.getBoundingClientRect();
+   const avatar=node.closest('.avatar').getBoundingClientRect();
+   const animation=node.getAnimations()[0];
+   return rect.width>0&&node.offsetWidth>avatar.width&&animation?.effect.getTiming().duration>=500;
+  }),'flower contact should open into a wreath around the portrait');
   assert.ok(await guest.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));
 
   const peers=Array.from({length:10},(_,i)=>manager.join(room.code,'Guest '+i).player);

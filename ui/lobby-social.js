@@ -12,6 +12,30 @@
   egg:{lift:.91,bias:0,spin:205,sway:12,impact:1.3},
   snow:{lift:1.18,bias:.14,spin:145,sway:14,impact:1.25}
  };
+ const contactCues={
+  rock:{size:1.9,duration:360,rise:4,twist:-8,spread:16,art:`<path d="M16 70Q5 36 30 20M90 19Q115 34 104 68M38 103q22 13 45-1" fill="none" stroke="#877047" stroke-width="4" stroke-linecap="round"/>
+   <path d="M18 65Q12 42 24 32m68-10q21 14 16 37M44 102q15 7 33 2" fill="none" stroke="#f8d680" stroke-width="2.8" stroke-linecap="round"/>
+   <g data-scatter="-1"><path d="m18 19 6 13-14-5zm-4 35-9 1 4 8 9-4z" fill="#ebce89" stroke="#8e7147" stroke-width="1.5"/></g>
+   <g data-scatter="1"><path d="m91 11 3 8 8-3-4 8 6 6-9-1-5 7-1-8-9-2 8-4Z" fill="#ffefad" stroke="#b18642" stroke-width="1.7"/><path d="m108 72 8 8-12 1Z" fill="#d4ba79"/></g>`},
+  brick:{size:1.84,duration:470,rise:6,twist:8,spread:18,art:`<path d="m20 26 17 8-13 8 10 6-15 10m65-34-13 10 14 2-7 11 19 1-6 12" fill="none" stroke="#c97650" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+   <path d="M13 83q21-17 40 1 20-12 49-4" fill="none" stroke="#f0c09a" stroke-width="7" stroke-linecap="round" opacity=".84"/>
+   <g data-scatter="-1"><path d="m15 14 11 6-8 8-10-7zm4 56-9 2-4-9 9-4z" fill="#e99464" stroke="#ac503c" stroke-width="1.5"/></g>
+   <g data-scatter="1"><path d="m90 16 13-8 8 8-15 9zm12 46 9 5 4 11-12-4z" fill="#d77a51" stroke="#a74f3a" stroke-width="1.5"/></g>`},
+  flowers:{size:1.75,duration:720,rise:17,twist:-13,spread:14,art:`<path d="M19 75Q9 56 22 35Q35 13 59 18M100 43q15 26-9 45-17 12-38 7" fill="none" stroke="#e6a4b5" stroke-width="3" stroke-linecap="round"/>
+   <path d="M24 80q10 13 28 15m27-72q12 3 18 12" fill="none" stroke="#f0bd70" stroke-width="2.5" stroke-linecap="round"/>
+   <g data-scatter="-1"><path d="M23 40q-10-11-15-6-3 7 15 6Zm7-14q-8-5-3-12 8 1 3 12ZM15 62q-11-9-13-3 0 8 13 3Z" fill="#e98faf" stroke="#b25f80" stroke-width="1.4"/><path d="m47 13 3-6 3 6 6 3-6 3-3 6-3-6-6-3Z" fill="#f5cf76"/></g>
+   <g data-scatter="1"><path d="M99 43q-1-12 7-12 6 5-7 12ZM95 84q13-7 15 0 0 7-15 0ZM71 98q6 10 13 6 1-6-13-6Z" fill="#de91b0" stroke="#a86a89" stroke-width="1.4"/><path d="m100 65 3-5 3 5 5 2-5 3-3 5-3-5-5-3Z" fill="#eabe68"/></g>`},
+  tomato:{size:1.68,duration:410,rise:-1,twist:6,spread:18,art:`<path d="M13 55q11 0 23 7m53-22q11-13 19-13M23 31l11 12m58 27 17 6" fill="none" stroke="#fa9774" stroke-width="4" stroke-linecap="round"/>
+   <g data-scatter="-1"><path d="M23 23q-8-15-14-8-3 6 14 8ZM23 66q-21-9-21-1 2 8 21 1Z" fill="#ec765b" stroke="#b9483a" stroke-width="1.6"/><path d="M14 87q6 6 13-2-11-4-13 2Z" fill="#f8cf87"/></g>
+   <g data-scatter="1"><path d="M93 36q11-20 17-12 3 6-17 12ZM96 78q17 0 17 8-2 8-17-8Z" fill="#e66650" stroke="#a83f34" stroke-width="1.6"/><path d="M105 50q-11-1-9 5 3 4 9-5Z" fill="#f8cf87"/></g>`},
+  egg:{size:1.78,duration:530,rise:8,twist:-6,spread:19,art:`<path d="M22 52l-9-10m81 7 12-10M35 25l-2-9m46 11 7-10" fill="none" stroke="#edb14e" stroke-width="4" stroke-linecap="round"/>
+   <g data-scatter="-1"><path d="M30 45q-12 15-20 6-5-6-6-13l9 3 4-7 6 6 6-4Z" fill="#fff5d7" stroke="#bd9168" stroke-width="2" stroke-linejoin="round"/><path d="m12 60 8 3-4 7-7-4z" fill="#ffe5a7" stroke="#c19458" stroke-width="1.4"/></g>
+   <g data-scatter="1"><path d="M89 46q15 13 23 2 5-6 5-14l-8 6-5-6-5 7-7-5Z" fill="#fff7e0" stroke="#bd9168" stroke-width="2" stroke-linejoin="round"/><path d="m100 69 8-2 2 7-9 3Z" fill="#ffda84" stroke="#c19458" stroke-width="1.4"/></g>`},
+  snow:{size:1.87,duration:660,rise:12,twist:16,spread:13,art:`<path d="M16 64Q10 35 33 23M93 24q21 15 13 41M37 93q23 11 48 0" fill="none" stroke="#b5e4f2" stroke-width="3" stroke-linecap="round"/>
+   <path d="m59 9 4 7 7 4-7 4-4 7-4-7-7-4 7-4Zm1 77 4 6 7 3-7 4-4 7-4-7-7-4 7-3Z" fill="#e7faff" stroke="#70aac3" stroke-width="1.8"/>
+   <g data-scatter="-1" fill="none" stroke="#80bad3" stroke-width="2.3" stroke-linecap="round"><path d="M18 25v22M8 30l20 12m0-12L8 42m5-13 5 4 5-4M11 61l-6 5 6 6 6-6Z"/></g>
+   <g data-scatter="1" fill="none" stroke="#80bad3" stroke-width="2.3" stroke-linecap="round"><path d="M101 33v22M91 38l20 12m0-12L91 50m5-13 5 4 5-4m-10 29-6 5 6 6 6-6Z"/></g>`}
+ };
  const burstCounts={rock:17,brick:17,flowers:18,water:9,tomato:15,egg:15,snow:22,confetti:30};
  const confettiColors=['#cb5684','#32846c','#d79723','#438fba','#9b63ba','#e2854d'];
  // Covers the longest flight plus the attached impact animation.
@@ -117,11 +141,13 @@
    <path d="M12 68q0-13 15-10-1 10-15 10m86 1q12-10 20 1-11 7-20-1" fill="#85ad72"/>
    <path d="m43 17 3-6 3 6 6 3-6 3-3 6-3-6-6-3zm35 8 2-5 3 5 5 2-5 2-3 5-2-5-5-2Z" fill="#f4c968" stroke="#fff6e1" stroke-width="1.5"/>
    <path d="M32 84Q60 98 87 80" fill="none" stroke="#e8a8b6" stroke-width="3" stroke-linecap="round"/>`,
-   tomato:`<path d="M44 49Q26 42 34 35q6-4 16 5 3-20 12-14 6 3 3 15 17-12 24-5 5 6-10 16 22 5 17 12-4 5-20 2 6 18-2 20-8 3-14-16-9 19-18 12-3-5 1-15-22 8-23-1 0-7 24-17Z" fill="#db5441" stroke="#ac3f36" stroke-width="2"/>
+   tomato:`<path d="M46 62Q53 62 53 70V90Q52 99 47 95L47 75Q47 69 43 69Zm21 0q7-2 8 5l1 31q-2 9-7 4l-1-24q0-5-4-6Z" fill="#d9604b" stroke="#b44a3b" stroke-width="1.6"/>
+   <path d="M44 49Q26 42 34 35q6-4 16 5 3-20 12-14 6 3 3 15 17-12 24-5 5 6-10 16 22 5 17 12-4 5-20 2 6 18-2 20-8 3-14-16-9 19-18 12-3-5 1-15-22 8-23-1 0-7 24-17Z" fill="#db5441" stroke="#ac3f36" stroke-width="2"/>
    <path d="M46 53q11-14 22-5m-13 12q8-4 16-2" fill="none" stroke="#ffab82" stroke-width="3.5" stroke-linecap="round"/>
    <g fill="#ffd392"><ellipse cx="53" cy="55" rx="2.5" ry="1.6"/><ellipse cx="70" cy="62" rx="3" ry="1.8" transform="rotate(-22 70 62)"/></g>
    <path d="M29 24q-8-9-12-3-4 6 12 9m66-7q10-10 13-4 2 6-13 9m5 49q13 1 11 8-3 6-11-3" fill="#ea7961" stroke="#b8473d" stroke-width="1.3"/>`,
-   egg:`<path d="M27 57q-11-10 3-16 7-5 17 0 14-13 28-4 16-3 21 9 14 7 3 17 5 13-11 15-10 11-25 4-11 8-20 0-17 1-19-11-9-6 3-14Z" fill="#fff5dc" stroke="#cfb487" stroke-width="2"/>
+   egg:`<path d="M43 68Q50 64 52 72L51 94Q48 102 45 94L45 80Q44 77 41 77Zm28 3q7-5 10 3v18q-3 8-6 3l-2-12q0-3-4-3Z" fill="#fff1ce" stroke="#d9bb88" stroke-width="1.6"/>
+   <path d="M27 57q-11-10 3-16 7-5 17 0 14-13 28-4 16-3 21 9 14 7 3 17 5 13-11 15-10 11-25 4-11 8-20 0-17 1-19-11-9-6 3-14Z" fill="#fff5dc" stroke="#cfb487" stroke-width="2"/>
    <ellipse cx="63" cy="59" rx="18" ry="15" fill="#f5bd4d" stroke="#d49330" stroke-width="1.6"/>
    <path d="M51 58q6-11 16-8m-13 18q9 5 18-2" fill="none" stroke="#ffe79e" stroke-width="3.4" stroke-linecap="round"/>
    <path d="m15 36 5-10 5 4 5-4-3 13Zm77-12 4-11 5 5 8-1-5 12Zm13 54 6 1 4 8-11-2Z" fill="#fff9e5" stroke="#bd9c74" stroke-width="1.7" stroke-linejoin="round"/>`,
@@ -238,11 +264,32 @@
   }));
   paintParticles('confetti',rect.x+rect.width/2,rect.y+rect.height*.78,pieces);
  }
+
+ function animateContact(target,kind,rect,direction){
+  const cue=contactCues[kind];
+  const stamp=attachedEffect(target,'social-contact social-contact-'+kind);
+  stamp.style.width=stamp.style.height=rect.width*cue.size+'px';
+  stamp.innerHTML='<svg viewBox="0 0 120 120" aria-hidden="true">'+cue.art+'</svg>';
+  const pose=(rise,turn,scale)=>'translate(-50%,'+(-50-rise)+'%) rotate('+turn+'deg) scale('+scale+')';
+  finish(stamp,[
+   {transform:pose(0,-cue.twist*direction,.42),opacity:.85},
+   {transform:pose(cue.rise*.45,0,1),opacity:1,offset:.22},
+   {transform:pose(cue.rise,cue.twist*direction,1.16),opacity:0}
+  ],{duration:cue.duration,easing:'cubic-bezier(.15,.7,.25,1)'});
+  for(const part of stamp.querySelectorAll('[data-scatter]')){
+   const side=Number(part.dataset.scatter);
+   part.style.transformBox='fill-box';part.style.transformOrigin='center';
+   part.animate([
+    {transform:'none'},
+    {transform:'translate('+side*cue.spread+'px,'+(-cue.rise/2)+'px) rotate('+side*11+'deg)'}
+   ],{duration:cue.duration,fill:'both',easing:'ease-out'});
+  }
+ }
  function burst(target,kind,direction=1){
   const rect=target.getBoundingClientRect(),x=rect.x+rect.width/2,y=rect.y+rect.height/2;
   const gentle=kind==='flowers',cold=kind==='snow',hard=kind==='rock'||kind==='brick';
   // Recoil follows the incoming object; attached residue moves with the portrait.
-  const kick=direction*(hard?9:4);
+  const kick=direction*(hard?14:5);
   if(kind==='rock'||kind==='brick')dizzy(target);
   const reaction=gentle?[
    {transform:'translateY(0) scale(1)'},{transform:'translateY(-7px) scale(1.035)',offset:.3},{transform:'translateY(2px) scale(.99)',offset:.65},{transform:'none'}
@@ -254,24 +301,20 @@
   target.animate(reaction,{duration:gentle?720:cold?650:540,easing:'cubic-bezier(.2,.7,.25,1)'});
   const accent=attachedEffect(target,'social-impact social-impact-'+kind);accent.innerHTML=impactArt(kind);accent.style.width=accent.style.height=rect.width*throwMotion[kind].impact+'px';
   const duration=['tomato','egg','snow'].includes(kind)?1700:gentle?1250:680;
-  finish(accent,[{transform:'translate(-50%,-50%) scale(.45)',opacity:0},{transform:'translate(-50%,-50%) scale(1.08)',opacity:1,offset:.08},{transform:'translate(-50%,-50%) scale(1)',opacity:1,offset:.2},{transform:'translate(-50%,-50%) scale(1)',opacity:1,offset:.72},{transform:'translate(-50%,-46%) scale(.98)',opacity:0}],{duration,easing:'ease-out'});
-  if(hard){
-   const snap=attachedEffect(target,'social-contact social-contact-'+kind);
-   snap.style.width=snap.style.height=rect.width*.72+'px';
-   snap.innerHTML='<svg viewBox="0 0 100 100" aria-hidden="true"><path d="m50 8 7 26 20-14-11 23 27 6-28 7 13 24-23-16-7 29-7-28-22 13 13-23-26-8 28-5-14-24 25 16Z" fill="#fff5d5" stroke="'+(kind==='brick'?'#ca8e68':'#c1ad7c')+'" stroke-width="2"/></svg>';
-   finish(snap,[{transform:'translate(-50%,-50%) scale(.25)',opacity:1},{transform:'translate(-50%,-50%) scale(1)',opacity:.9,offset:.35},{transform:'translate(-50%,-50%) scale(1.15)',opacity:0}],{duration:240,easing:'ease-out'});
-  }
+  const fall=kind==='tomato'||kind==='egg',drift=cold?-68:gentle?-60:fall?-34:-46;
+  finish(accent,[{transform:'translate(-50%,-50%) scale(.45)',opacity:0},{transform:'translate(-50%,-50%) scale(1.08)',opacity:1,offset:.08},{transform:'translate(-50%,-50%) scale(1)',opacity:1,offset:.2},{transform:'translate(-50%,'+(fall?-43:-50)+'%) scale(1)',opacity:1,offset:.65},{transform:'translate(-50%,'+drift+'%) scale(.98)',opacity:0}],{duration,easing:'ease-out'});
+  animateContact(target,kind,rect,direction);
   if(kind==='rock'||kind==='brick'||kind==='snow'){
    const dust=effect('social-dust social-dust-'+kind,x,y);dust.style.width=rect.width*.8+'px';dust.style.height=rect.height*.45+'px';
    finish(dust,[{transform:'translate(-50%,-50%) scale(.25)',opacity:0},{transform:'translate(-50%,-55%) scale(1)',opacity:.86,offset:.2},{transform:'translate(-50%,-75%) scale(1.25)',opacity:0}],{duration:520,easing:'ease-out'});
   }
   const particles=Array.from({length:burstCounts[kind]},(_,i)=>{
-   const angle=i*2.39996,reach=rect.width*(.28+(i%5)*.13)+10;
+   const angle=i*2.39996,reach=rect.width*(.38+(i%5)*.17)+12;
    const width=Math.max(5,rect.width/110*(gentle?14+i%4*5:cold?7+i%5*4:hard?7+i%5*5:10+i%4*4));
    return {
     index:i,angle:0,spin:(i%2?1:-1)*(95+i*23)*Math.PI/180,
-    vx:Math.cos(angle)*reach+(hard?direction*rect.width*.2:0),
-    vy:Math.sin(angle)*reach*.6-(gentle?40:cold?25:hard?45:22),
+    vx:Math.cos(angle)*reach+(hard?direction*rect.width*.33:0),
+    vy:Math.sin(angle)*reach*.68-(gentle?55:cold?34:hard?53:26),
     gravity:gentle?75:cold?110:hard?rect.height*1.8:130,
     width,height:width,
     duration:gentle?1350+i%3*90:cold?1200:hard?650+i%4*70:1000,
