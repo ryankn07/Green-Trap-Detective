@@ -42,7 +42,7 @@ jobs:
         run: npx playwright install --with-deps chrome
 
       - name: Set up Python for brand pixel verification
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v7
         with:
           python-version: '3.12'
 
