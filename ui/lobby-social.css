@@ -291,3 +291,20 @@ body.gi-gameplay .gi-area-players .avatar{width:56px;height:56px;border:0;backgr
 .social-contact{z-index:1502;pointer-events:none;filter:drop-shadow(0 2px 1px #6d522b20)}
 .social-contact svg{display:block;width:100%;height:100%;overflow:visible}
 .social-impact-egg,.social-impact-tomato{filter:drop-shadow(0 2px 1px #613b2525)}
+
+.social-garden{position:fixed;z-index:1502;pointer-events:none;transform:translate(-50%,-50%)}
+.social-garden svg{display:block;width:100%;height:100%;overflow:visible}
+.social-garden .leafstorm-core{transform-box:view-box;transform-origin:50% 88%}
+.social-garden [data-landing]{transform-box:fill-box;transform-origin:center}
+.social-garden [data-bubble-pop]{transform-box:view-box;transform-origin:center}
+.social-bubble-shell{
+ position:absolute;inset:15%;box-sizing:border-box;border:2px solid #80c2d8;border-radius:50%;opacity:0;
+ background:radial-gradient(ellipse at 24% 21%,#fff9 0,transparent 18%),
+  radial-gradient(circle at 48% 44%,transparent 47%,#9cdef530 66%,#d9aff36b 84%,#7cdac079 100%);
+ box-shadow:inset 3px 2px 7px #ffffffc4,inset -3px -3px 8px #9e77cf59,0 2px 6px #5e95b83b;
+}
+.social-bubble-shell::before,.social-bubble-shell::after{
+ content:"";position:absolute;width:34%;height:20%;border-radius:50%;transform:rotate(-36deg);
+}
+.social-bubble-shell::before{top:11%;left:10%;border-top:4px solid #fffffff0}
+.social-bubble-shell::after{right:10%;bottom:11%;border-bottom:3px solid #eafdfbd9}

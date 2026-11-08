@@ -1,8 +1,24 @@
 (function(){
  'use strict';
- const names={rock:'Ném đá',brick:'Ném gạch',flowers:'Tặng hoa',water:'Tạt nước',tomato:'Ném cà chua',egg:'Ném trứng',snow:'Ném tuyết',confetti:'Tung pháo giấy'};
+
+ const gardenReactions={
+  leafstorm:{
+   label:'Lốc lá',play:leafstorm,
+   icon:'<path d="M7 15Q9 6 31 6q27 0 27 10-2 11-16 18-14 8-7 16l5 7q-15 0-16-11-1-10-12-18-6-6-5-13Z" fill="#d3edaa" stroke="#48865b" stroke-width="2"/><path d="M11 15q10 8 34 4m-29 8q13 7 29 1M23 38q7 5 15 1m-12 9q4 3 9 1" fill="none" stroke="#6aa969" stroke-width="2.6" stroke-linecap="round"/><path d="M47 8q6-9 14-4-1 8-11 9ZM6 26q-8-6-2-11 7 1 8 8Z" fill="#9fc765" stroke="#4b855c" stroke-width="1.4"/>'
+  },
+  vine:{
+   label:'Dây leo',play:vine,
+   icon:'<path d="M15 56Q31 49 18 39T23 17Q29 7 41 9M27 54q19 1 24-15t-6-12" fill="none" stroke="#4a8050" stroke-width="3.4" stroke-linecap="round"/><path d="M20 43Q8 45 6 36q10-5 17 5m2-10q2-11 15-11 1 10-15 11m14 18q-4-11 8-14 8 7-8 14" fill="#83b86a" stroke="#4f8552" stroke-width="1.5"/><path d="M43 7q5-5 9 0 6 1 4 7 3 6-4 8-4 5-9 0-6 0-5-6-3-6 5-9Z" fill="#f196ac" stroke="#b35b7c" stroke-width="1.5"/><circle cx="47" cy="15" r="4" fill="#ffdd80"/>'
+  },
+  bubbles:{
+   label:'Bong bóng',play:bubbles,
+   icon:'<circle cx="24" cy="33" r="16" fill="#a8deec" fill-opacity=".55" stroke="#579db7" stroke-width="2"/><circle cx="45" cy="17" r="11" fill="#d5b9e9" fill-opacity=".55" stroke="#9b72af" stroke-width="2"/><circle cx="46" cy="45" r="9" fill="#aadfc9" fill-opacity=".55" stroke="#579f90" stroke-width="2"/><path d="M14 29q2-6 8-7m16-8q2-4 6-4m-3 33q1-3 4-3M13 47l-3 4m8 1-1 5" fill="none" stroke="#fff" stroke-width="2.8" stroke-linecap="round"/>'
+  }
+ };
+ const names={rock:'Ném đá',brick:'Ném gạch',flowers:'Tặng hoa',water:'Tạt nước',tomato:'Ném cà chua',egg:'Ném trứng',snow:'Ném tuyết',confetti:'Tung pháo giấy',...Object.fromEntries(Object.entries(gardenReactions).map(([kind,item])=>[kind,item.label]))};
  let bridge,roomCode=null,seen=new Set(),hold=null,origin=null,suppressClick=false,dialog=null,pending=false;
  const flying=new Set(),activeTargets=new Map(),particleSprites=new Map();
+ const gardenRecipientMotions=new Set();
  const maxConcurrentReactions=2;
  const throwMotion={
   rock:{lift:.57,bias:-.24,spin:260,sway:0,impact:1.18},
@@ -58,7 +74,11 @@
  const reactionWindowMs=2700;
  const avatars=Array.from({length:30},(_,i)=>'a'+String(i+1).padStart(2,'0'));
  function close(){dialog?.close();dialog?.remove();dialog=null;}
- function clearEffects(){for(const node of flying)node.remove();flying.clear();activeTargets.clear();}
+ function clearEffects(){
+  for(const node of flying)node.remove();
+  for(const motion of gardenRecipientMotions)motion.cancel();
+  flying.clear();gardenRecipientMotions.clear();activeTargets.clear();
+ }
  function clear(){clearEffects();close();clearTimeout(hold);}
  function avatarElement(id){
   return [...document.querySelectorAll('.lobby-members .person')].find(p=>p.dataset.playerId===id)?.querySelector('.avatar');
@@ -122,7 +142,7 @@
    <path d="M34 47q-7-6-7 0 1 5 10 2-2 7 6 5 5-3-3-7l5-3-3-4Z" fill="#ce657f" stroke="#974b64" stroke-width="1.3"/>`
   };
   const node=document.createElement('span');node.className='social-projectile social-projectile-'+kind;node.setAttribute('aria-hidden','true');
-  node.innerHTML='<svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">'+shapes[kind]+'</svg>';
+  node.innerHTML='<svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">'+(gardenReactions[kind]?.icon||shapes[kind])+'</svg>';
   return node;
  }
  function dizzy(target){
@@ -439,6 +459,178 @@
   paintParticles('water',x,y,drops);
   wet(target);
  }
+
+ function gardenStage(kind,rect,art){
+  const stage=effect('social-garden social-garden-'+kind,rect.x+rect.width/2,rect.y+rect.height/2);
+  stage.style.width=stage.style.height=Math.min(rect.width*1.9,innerWidth*.68)+'px';
+  stage.innerHTML='<svg viewBox="0 0 120 120" aria-hidden="true">'+art+'</svg>';
+  return stage;
+ }
+ function moveGardenRecipient(target,frames,timing){
+  const motion=target.animate(frames,timing);
+  gardenRecipientMotions.add(motion);
+  motion.finished.catch(()=>{}).finally(()=>gardenRecipientMotions.delete(motion));
+ }
+
+ function leafstorm(rect,target){
+  const foliage=Array.from({length:18},(_,i)=>
+   '<g data-leaf opacity="0"><path d="M-8 3Q-2-8 11-5Q9 7-8 3Z" fill="'+['#d4eb73','#6bb768','#ebb76a'][i%3]+'" stroke="#346f4c" stroke-width="1.1"/><path d="M-5 2 7-3" stroke="#f2f6c5" stroke-width="1.2" stroke-linecap="round"/></g>'
+  ).join('');
+  const cone=`<g class="leafstorm-core">
+   <path d="M9 27C7 13 29 7 48 10C71 13 96 14 113 22C118 39 102 59 86 76C68 96 54 119 66 134C49 132 44 122 47 110C52 94 37 80 25 63C16 50 11 38 9 27Z" fill="#b3da8e" opacity=".48"/>
+   <path d="M18 35C45 54 77 48 109 28C95 55 68 59 45 58C25 57 19 49 18 35ZM32 66C48 76 69 74 88 60C77 82 54 90 41 86ZM45 93Q60 104 71 91Q62 115 50 116Z" fill="#3b8d67" opacity=".45"/>
+   <path d="M72 134C50 132 44 120 58 112C75 102 78 97 63 96C38 95 31 89 46 82C57 77 91 73 91 65C90 58 64 63 49 61C25 58 15 52 19 46C23 38 55 41 78 36C111 29 118 21 100 15C84 9 63 7 42 10" fill="none" stroke="#367e57" stroke-opacity=".76" stroke-width="4.6" stroke-linecap="round"/>
+   <g data-wind-bands fill="none" stroke-linecap="round" stroke-dasharray=".29 .12 .13 .46">
+    <path pathLength="1" d="M69 132C43 131 50 117 67 108C81 101 71 94 53 93C34 91 40 83 61 78C93 70 102 59 75 58C45 59 20 56 17 47C13 40 33 39 56 37C86 34 123 23 105 15C93 10 65 5 39 10" stroke="#f5ffcf" stroke-width="3.6"/>
+    <path pathLength="1" d="M41 126Q27 117 49 103C65 92 47 87 40 82Q16 71 46 64C80 57 106 53 110 44Q114 37 82 39C39 44 3 36 10 25Q18 13 60 16" stroke="#7fd399" stroke-width="3.3"/>
+   </g>
+   <path d="M11 24Q24 13 47 16M84 42q21-5 26-13M16 53q9 7 24 8m31 17q12-3 19-9M43 101l7 3" fill="none" stroke="#e7f8b6" stroke-width="2.3" stroke-linecap="round"/>
+  </g>`;
+  const landing='<ellipse data-landing cx="60" cy="132" rx="29" ry="6" fill="none" stroke="#7eaa59" stroke-width="2.4" opacity="0"/>';
+  const stage=gardenStage('leafstorm',rect,landing+cone+foliage);
+  const width=Math.min(rect.width*2.28,innerWidth*.69);
+  stage.style.width=width+'px';stage.style.height=width*1.25+'px';
+  stage.style.top=(rect.y+rect.height*.29)+'px';
+  stage.querySelector('svg').setAttribute('viewBox','0 0 120 150');
+  stage.querySelector('.leafstorm-core').animate([
+   {transform:'translateY(4px) rotate(-8deg) scale(.22,.2)',opacity:0},
+   {transform:'rotate(5deg) scale(.94,.89)',opacity:1,offset:.19},
+   {transform:'rotate(-5deg) scale(.94,1.04)',opacity:1,offset:.36},
+   {transform:'rotate(4deg) scale(1.03,1.08)',opacity:1,offset:.55},
+   {transform:'rotate(-4deg) scale(.87,1.01)',opacity:.91,offset:.72},
+   {transform:'translateY(-23px) rotate(8deg) scale(1.36,1.13)',opacity:0}
+  ],{duration:1660,fill:'both'});
+  stage.querySelector('[data-wind-bands]').animate([{strokeDashoffset:0},{strokeDashoffset:-1}],
+   {duration:750,iterations:3});
+  [...stage.querySelectorAll('[data-leaf]')].forEach((leaf,i)=>{
+   const frames=Array.from({length:27},(_,j)=>{
+    const t=j/26,lift=Math.min(1,t/.78),release=Math.max(0,(t-.78)/.22);
+    const angle=i*2.4+lift*Math.PI*5.6+release*.3;
+    const depth=Math.cos(angle),radius=5+38*lift+34*release;
+    const x=59+Math.sin(angle)*radius+6*(1-lift);
+    const y=134-111*lift-26*release+depth*(2+5*lift);
+    const scale=(.43+.31*lift+.17*depth)*(i%3===0?1.24:1);
+    return {
+     transform:'translate('+x.toFixed(2)+'px,'+y.toFixed(2)+'px) rotate('+((angle*180/Math.PI)+25).toFixed(2)+'deg) scale('+scale.toFixed(2)+')',
+     opacity:Math.min(1,t*16,(1-t)*8)*(.75+.25*depth)
+    };
+   });
+   leaf.animate(frames,{duration:1120+(i%3)*115,delay:i*33,easing:'linear',fill:'both'});
+  });
+  const lift=Math.round(Math.max(17,Math.min(rect.height*.28,42)));
+  moveGardenRecipient(target,[
+   {transform:'none'},
+   {transform:'translate(-4px, 3px) rotate(-7deg) scale(.96)',offset:.13},
+   {transform:'translate(9px, -'+Math.round(lift*.6)+'px) rotate(14deg) scale(1.04)',offset:.28},
+   {transform:'translate(-10px, -'+lift+'px) rotate(-16deg) scale(1.06)',offset:.45},
+   {transform:'translate(9px, -'+Math.round(lift*.76)+'px) rotate(12deg)',offset:.61},
+   {transform:'translate(-4px, 3px) rotate(-5deg) scale(1.06,.93)',offset:.79},
+   {transform:'translate(2px, -4px) rotate(3deg)',offset:.89},
+   {transform:'none'}
+  ],{duration:1740,delay:135});
+  stage.querySelector('[data-landing]').animate([
+   {transform:'scale(.45)',opacity:.8},{transform:'scale(1.45,1.15)',opacity:0}
+  ],{duration:370,delay:1505,easing:'ease-out'});
+  finish(stage,[{opacity:1},{opacity:1,offset:.88},{opacity:0}],{duration:2040});
+ }
+ function vine(rect,target){
+  const coils=[
+   'M49 112C39 105 24 99 28 89C32 78 58 89 79 81C100 73 94 61 82 61Q73 61 76 68',
+   'M69 112C87 108 98 93 88 84C76 73 42 79 31 68C21 57 32 39 43 39Q50 39 47 46'
+  ];
+  const stems=coils.map((path,i)=>`<g data-vine-stem fill="none" stroke-dasharray="1" stroke-dashoffset="1" stroke-linecap="round">
+   <path pathLength="1" d="${path}" stroke="#28553a" stroke-width="6.4"/>
+   <path pathLength="1" d="${path}" stroke="${i===0?'#80b852':'#5c9f52'}" stroke-width="3.8"/>
+  </g>`).join('');
+  const sprouts=[[43,105,158],[78,106,-30],[29,91,164],[91,92,-35],[54,84,-122],
+   [80,81,25],[36,72,170],[90,65,-50],[31,54,198],[42,39,-115]];
+  const leaves=sprouts.map(([x,y,angle],i)=>`<g transform="translate(${x} ${y})"><g data-vine-leaf opacity="0">
+   <g transform="rotate(${angle})">
+    <path d="M0 0Q4-10 15-7Q13 2 0 0Z" fill="${i%2===0?'#b9da6d':'#83bc62'}" stroke="#386a45" stroke-width="1.2"/>
+    <path d="M2 0 11-5" stroke="#ebf3ad" stroke-width="1.1" stroke-linecap="round"/>
+   </g>
+  </g></g>`).join('');
+  const stage=attachedEffect(target,'social-garden social-garden-vine');
+  stage.style.width=stage.style.height=Math.min(rect.width*1.88,innerWidth*.67)+'px';
+  stage.innerHTML='<svg viewBox="0 0 120 120" aria-hidden="true">'+stems+leaves+'</svg>';
+  stage.querySelectorAll('[data-vine-stem]').forEach((stem,i)=>stem.animate([
+   {strokeDashoffset:1},{strokeDashoffset:0,offset:.35,easing:'linear'},
+   {strokeDashoffset:0,offset:.76,easing:'cubic-bezier(.5,0,.8,.35)'},{strokeDashoffset:1}
+  ],{duration:1800,delay:i*90,easing:'ease-out',fill:'both'}));
+  stage.querySelectorAll('[data-vine-leaf]').forEach((leaf,i)=>{
+   const [x]=sprouts[i],drift=x<60?-1:1;
+   const delay=210+i*47;
+   leaf.animate([
+    {transform:'scale(.12)',opacity:0},
+    {transform:'scale(1.08)',opacity:1,offset:160/(1810-delay)},
+    {transform:'scale(1)',opacity:1,offset:(1420-delay)/(1810-delay)},
+    {transform:'translate('+drift*(13+i%3*5)+'px, -15px) rotate('+drift*42+'deg) scale(.65)',opacity:0}
+   ],{duration:1810-delay,delay,fill:'both',easing:'ease-out'});
+  });
+  moveGardenRecipient(target,[
+   {transform:'none'},
+   {transform:'translate(4px, -3px) rotate(5deg)',offset:.12},
+   {transform:'translate(-6px, 10px) rotate(-12deg) scale(.96,.91)',offset:.26},
+   {transform:'translate(4px, 7px) rotate(7deg) scale(.98,.95)',offset:.41},
+   {transform:'translate(-4px, 8px) rotate(-7deg) scale(.98,.94)',offset:.55},
+   {transform:'translate(-2px, 6px) rotate(-4deg) scale(.98,.95)',offset:.71},
+   {transform:'translate(2px, -4px) rotate(4deg)',offset:.85},
+   {transform:'none'}
+  ],{duration:1560,delay:340});
+  finish(stage,[{opacity:1},{opacity:1,offset:.84},{opacity:0}],{duration:1990});
+ }
+ function bubbles(rect,target){
+  const colors=['#63b9d1','#a98acb','#69bca9'];
+  const droplets=Array.from({length:12},(_,i)=>`<g data-bubble-droplet opacity="0">
+   <circle r="${i%3+2.8}" fill="${colors[i%3]}" fill-opacity=".32" stroke="${colors[i%3]}" stroke-width="1.3"/>
+   <path d="M-1.8-1q.4-1 1.6-1.3" fill="none" stroke="#fff" stroke-width="1" stroke-linecap="round"/>
+  </g>`).join('');
+  const stage=attachedEffect(target,'social-garden social-garden-bubbles');
+  stage.style.width=stage.style.height=Math.min(rect.width*1.85,innerWidth*.67)+'px';
+  stage.innerHTML=`<span class="social-bubble-shell"></span><svg viewBox="0 0 120 120" aria-hidden="true">
+   <g data-bubble-pop opacity="0" fill="none" stroke-linecap="round">
+    <circle cx="60" cy="60" r="39" stroke="#6dc9db" stroke-width="2.8" stroke-dasharray="26 9 8 11 23 13"/>
+    <path d="M27 23l-6-8m75 12 8-7m-86 40-9 1m94 4 9 1M38 94l-5 8m53-8 5 8" stroke="#e9fbff" stroke-width="3"/>
+   </g>${droplets}</svg>`;
+  const popAt=1170;
+  stage.querySelector('.social-bubble-shell').animate([
+   {transform:'translateY(8%) scale(.22,.13)',opacity:0},
+   {transform:'scale(1.06,.92)',opacity:1,offset:.18},
+   {transform:'scale(.98,1.04)',opacity:1,offset:.32},
+   {transform:'scale(1.025,.98)',opacity:1,offset:.6},
+   {transform:'scale(.98,1.035)',opacity:1,offset:.86},
+   {transform:'scale(1.13)',opacity:1,offset:.93},
+   {transform:'scale(1.24)',opacity:0}
+  ],{duration:popAt+90,fill:'both'});
+  stage.querySelector('[data-bubble-pop]').animate([
+   {transform:'scale(.92)',opacity:0},
+   {transform:'scale(1.12)',opacity:1,offset:.24},
+   {transform:'translateY(-12px) scale(1.52)',opacity:0}
+  ],{duration:345,delay:popAt,fill:'both',easing:'ease-out'});
+  stage.querySelectorAll('[data-bubble-droplet]').forEach((drop,i)=>{
+   const angle=(i+.25)*Math.PI/6;
+   const dx=Math.cos(angle),dy=Math.sin(angle),distance=57+i%4*5;
+   const position=(radius,rise,scale)=>'translate('+Math.round(60+dx*radius)+'px,'+Math.round(60+dy*radius-rise)+'px) scale('+scale+')';
+   drop.animate([
+    {transform:position(37,0,.5),opacity:0},
+    {transform:position(48,6,1.2),opacity:1,offset:.23},
+    {transform:position(distance,20,.72),opacity:.88,offset:.71},
+    {transform:position(distance+8,29,.3),opacity:0}
+   ],{duration:560+i%3*60,delay:popAt+i%3*32,fill:'both',easing:'ease-out'});
+  });
+  const lift=Math.round(Math.max(18,Math.min(24,rect.height*.24)));
+  moveGardenRecipient(target,[
+   {transform:'none'},
+   {transform:'translate(0px, 2px) scale(1.03,.97)',offset:.13},
+   {transform:'translate(-5px, -'+Math.round(lift*.72)+'px) rotate(-6deg)',offset:.33},
+   {transform:'translate(5px, -'+lift+'px) rotate(6deg)',offset:.54},
+   {transform:'translate(-3px, -'+lift+'px) rotate(-3deg)',offset:.71,easing:'cubic-bezier(.6,0,1,.7)'},
+   {transform:'translate(0px, 4px) scale(1.07,.92)',offset:.84},
+   {transform:'translate(0px, -4px) scale(.98,1.03)',offset:.92},
+   {transform:'none'}
+  ],{duration:1780});
+  finish(stage,[{opacity:1},{opacity:1,offset:.9},{opacity:0}],{duration:1940});
+ }
  function play(event,prioritize=false){
   if(document.hidden)return;
   const now=performance.now();
@@ -456,6 +648,8 @@
   }
   if(event.kind==='water'){waterJet(event,a,b);return;}
   if(event.kind==='confetti'){popConfetti(to);return;}
+  const garden=gardenReactions[event.kind];
+  if(garden){garden.play(b,to);return;}
   from.animate([{transform:'scale(1)'},{transform:'rotate(-7deg) scale(.92)'},{transform:'scale(1)'}],{duration:280});
   const startX=a.x+a.width/2,startY=a.y+a.height/2,endX=b.x+b.width/2,endY=b.y+b.height/2;
   const motion=throwMotion[event.kind],direction=endX>=startX?1:-1;

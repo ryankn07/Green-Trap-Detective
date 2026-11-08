@@ -66,7 +66,7 @@ test('lobby avatar and reaction survive cold Functions and request replay',async
  assert.equal((await request('/api/action',{...event,targetId:randomUUID(),requestId:randomUUID()},guest)).value.error,'INVALID_TARGET');
  store.time+=16000;
  assert.equal((await request('/api/state?room='+host.roomCode,null,host)).value.room.reactions.length,0);
- for(const kind of ['tomato','egg','snow','confetti']){store.time+=1300;assert.equal((await request('/api/action',{type:'react',targetId:guest.playerId,kind,requestId:randomUUID()},host)).status,200);assert.equal((await request('/api/state?room='+host.roomCode,null,guest)).value.room.reactions.at(-1).kind,kind);}
+ for(const kind of ['tomato','egg','snow','confetti','leafstorm','vine','bubbles']){store.time+=1300;assert.equal((await request('/api/action',{type:'react',targetId:guest.playerId,kind,requestId:randomUUID()},host)).status,200);assert.equal((await request('/api/state?room='+host.roomCode,null,guest)).value.room.reactions.at(-1).kind,kind);}
 });
 
 test('discussion skip persists across cold Functions, retries once per voter and advances on unanimous consent',async t=>{
