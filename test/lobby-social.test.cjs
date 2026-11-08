@@ -77,6 +77,9 @@ test('two browsers share avatars and keep lobby reactions within the rendering b
    for(let i=0;i<pixels.length;i+=4)if(pixels[i+3]>160&&pixels[i+2]>pixels[i]+40)return true;
    return false;
   },null,{timeout:3000});
+  const splashRing=guest.locator('.social-contact-water [data-pulse]');
+  await splashRing.waitFor({timeout:1600});
+  assert.ok(await splashRing.evaluate(path=>path.getAnimations().length===1),'water should expand a splash ring');
   await guest.waitForFunction(()=>!document.querySelector('.social-water-jet'),null,{timeout:3000});
   const box=await avatar(guest,hostId).boundingBox();
   await guest.mouse.move(box.x+box.width/2,box.y+box.height/2);await guest.mouse.down();await guest.waitForTimeout(470);await guest.mouse.up();
@@ -89,12 +92,12 @@ test('two browsers share avatars and keep lobby reactions within the rendering b
   assert.ok(Math.min(...sway)<-10&&Math.max(...sway)>10,'bouquet should sway both ways');
   const bloom=host.locator('.social-contact-flowers');
   await bloom.waitFor({timeout:1600});
-  assert.ok(await bloom.evaluate(node=>{
+  const portrait=await avatar(host,hostId).boundingBox();
+  assert.ok(await bloom.evaluate((node,portraitWidth)=>{
    const rect=node.getBoundingClientRect();
-   const avatar=node.closest('.avatar').getBoundingClientRect();
    const animation=node.getAnimations()[0];
-   return rect.width>0&&node.offsetWidth>avatar.width&&animation?.effect.getTiming().duration>=500;
-  }),'flower contact should open into a wreath around the portrait');
+   return rect.width>0&&node.offsetWidth>portraitWidth&&animation?.effect.getTiming().duration>=500;
+  },portrait.width),'flower contact should open into a wreath around the portrait');
   assert.ok(await guest.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));
 
   const peers=Array.from({length:10},(_,i)=>manager.join(room.code,'Guest '+i).player);
@@ -103,13 +106,14 @@ test('two browsers share avatars and keep lobby reactions within the rendering b
   await host.waitForTimeout(2700);
   await host.evaluate(()=>{
    window.reactionSample=new Promise(resolve=>{
-    let flights=0,layers=0,particleNodes=0,firstPop=null;
+    let flights=0,layers=0,rings=0,particleNodes=0,firstPop=null;
     const started=performance.now(),end=started+540;
     function sample(){
      flights=Math.max(flights,document.querySelectorAll('.social-projectile-confetti').length);
      const bursts=document.querySelectorAll('canvas.social-burst-confetti').length;
      if(bursts&&firstPop===null)firstPop=performance.now()-started;
      layers=Math.max(layers,bursts);
+     rings=Math.max(rings,document.querySelectorAll('.social-contact-confetti [data-pulse]').length);
      particleNodes=Math.max(particleNodes,document.querySelectorAll('.social-particle-confetti').length);
      if(performance.now()<end)requestAnimationFrame(sample);
      else{
@@ -122,7 +126,7 @@ test('two browsers share avatars and keep lobby reactions within the rendering b
        for(let i=3;i<rows*canvas.width*4;i+=4)if(pixels[i]>160)opaque++;
        return opaque;
       });
-      resolve({flights,layers,particleNodes,firstPop,opaquePixels});
+      resolve({flights,layers,rings,particleNodes,firstPop,opaquePixels});
      }
     }
     requestAnimationFrame(sample);
@@ -133,6 +137,7 @@ test('two browsers share avatars and keep lobby reactions within the rendering b
   assert.equal(burst.flights,0);
   assert.ok(burst.firstPop!==null&&burst.firstPop<400,JSON.stringify(burst));
   assert.equal(burst.layers,2);
+  assert.equal(burst.rings,2);
   assert.equal(burst.particleNodes,0);
   assert.equal(burst.opaquePixels.length,2);
   assert.ok(burst.opaquePixels.every(pixels=>pixels>100),JSON.stringify(burst));
