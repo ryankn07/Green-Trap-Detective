@@ -1,7 +1,7 @@
 'use strict';
 const {randomUUID}=require('node:crypto');
 const AVATARS=Array.from({length:30},(_,i)=>'a'+String(i+1).padStart(2,'0'));
-const ITEMS=['rock','brick','flowers','water','tomato','egg','snow','confetti'];
+const ITEMS=['rock','brick','flowers','water','tomato','egg','snow','confetti','leafstorm','vine','bubbles'];
 function avatarFor(player){
   return AVATARS.includes(player.avatarId)?player.avatarId:AVATARS[parseInt(player.id.replace(/-/g,'').slice(-4),16)%AVATARS.length||0];
 }
@@ -24,7 +24,7 @@ function react(manager,room,player,targetId,kind,requestId){
     if(previous.targetId!==targetId||previous.kind!==kind)managerError('INVALID_REQUEST','Mã tương tác đã được sử dụng.');
     return;
   }
-  if(previous&&now-previous.at<1200)managerError('REACTION_COOLDOWN','Chờ một chút rồi ném tiếp nhé.');
+  if(previous&&now-previous.at<1200)managerError('REACTION_COOLDOWN','Chờ một chút rồi tương tác tiếp nhé.');
   const event={id:randomUUID(),from:player.id,to:targetId,kind,at:now};
   const members=new Set(room.players.filter(p=>!p.removed).map(p=>p.id));
   const last=Object.fromEntries(Object.entries(social.last).filter(([id])=>members.has(id)));

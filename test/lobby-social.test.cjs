@@ -27,7 +27,7 @@ test('lobby avatars and reactions persist, deduplicate and enforce membership',(
  for(let i=0;i<60;i++){now+=1300;manager.react(room,player,guest.id,'rock','request-'+(100+i));}
  assert.ok(room.social.events.length<=48);
  now+=16000;assert.equal(manager.view(room,guest).room.reactions.length,0);
- for(const kind of ['tomato','egg','snow','confetti']){now+=1300;manager.react(room,player,guest.id,kind,'new-'+kind);assert.equal(manager.view(room,guest).room.reactions.at(-1).kind,kind);}
+ for(const kind of ['tomato','egg','snow','confetti','leafstorm','vine','bubbles']){now+=1300;manager.react(room,player,guest.id,kind,'new-'+kind);assert.equal(manager.view(room,guest).room.reactions.at(-1).kind,kind);}
  assert.throws(()=>manager.react(room,player,guest.id,'unknown','new-unknown'),{code:'INVALID_TARGET'});
 });
 
@@ -77,6 +77,9 @@ test('two browsers share avatars and keep lobby reactions within the rendering b
    for(let i=0;i<pixels.length;i+=4)if(pixels[i+3]>160&&pixels[i+2]>pixels[i]+40)return true;
    return false;
   },null,{timeout:3000});
+  const splashRing=guest.locator('.social-contact-water [data-pulse]');
+  await splashRing.waitFor({timeout:1600});
+  assert.ok(await splashRing.evaluate(path=>path.getAnimations().length===1),'water should expand a splash ring');
   await guest.waitForFunction(()=>!document.querySelector('.social-water-jet'),null,{timeout:3000});
   const box=await avatar(guest,hostId).boundingBox();
   await guest.mouse.move(box.x+box.width/2,box.y+box.height/2);await guest.mouse.down();await guest.waitForTimeout(470);await guest.mouse.up();
@@ -89,12 +92,12 @@ test('two browsers share avatars and keep lobby reactions within the rendering b
   assert.ok(Math.min(...sway)<-10&&Math.max(...sway)>10,'bouquet should sway both ways');
   const bloom=host.locator('.social-contact-flowers');
   await bloom.waitFor({timeout:1600});
-  assert.ok(await bloom.evaluate(node=>{
+  const portrait=await avatar(host,hostId).boundingBox();
+  assert.ok(await bloom.evaluate((node,portraitWidth)=>{
    const rect=node.getBoundingClientRect();
-   const avatar=node.closest('.avatar').getBoundingClientRect();
    const animation=node.getAnimations()[0];
-   return rect.width>0&&node.offsetWidth>avatar.width&&animation?.effect.getTiming().duration>=500;
-  }),'flower contact should open into a wreath around the portrait');
+   return rect.width>0&&node.offsetWidth>portraitWidth&&animation?.effect.getTiming().duration>=500;
+  },portrait.width),'flower contact should open into a wreath around the portrait');
   assert.ok(await guest.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));
 
   const peers=Array.from({length:10},(_,i)=>manager.join(room.code,'Guest '+i).player);
@@ -103,13 +106,14 @@ test('two browsers share avatars and keep lobby reactions within the rendering b
   await host.waitForTimeout(2700);
   await host.evaluate(()=>{
    window.reactionSample=new Promise(resolve=>{
-    let flights=0,layers=0,particleNodes=0,firstPop=null;
+    let flights=0,layers=0,rings=0,particleNodes=0,firstPop=null;
     const started=performance.now(),end=started+540;
     function sample(){
      flights=Math.max(flights,document.querySelectorAll('.social-projectile-confetti').length);
      const bursts=document.querySelectorAll('canvas.social-burst-confetti').length;
      if(bursts&&firstPop===null)firstPop=performance.now()-started;
      layers=Math.max(layers,bursts);
+     rings=Math.max(rings,document.querySelectorAll('.social-contact-confetti [data-pulse]').length);
      particleNodes=Math.max(particleNodes,document.querySelectorAll('.social-particle-confetti').length);
      if(performance.now()<end)requestAnimationFrame(sample);
      else{
@@ -122,7 +126,7 @@ test('two browsers share avatars and keep lobby reactions within the rendering b
        for(let i=3;i<rows*canvas.width*4;i+=4)if(pixels[i]>160)opaque++;
        return opaque;
       });
-      resolve({flights,layers,particleNodes,firstPop,opaquePixels});
+      resolve({flights,layers,rings,particleNodes,firstPop,opaquePixels});
      }
     }
     requestAnimationFrame(sample);
@@ -133,6 +137,7 @@ test('two browsers share avatars and keep lobby reactions within the rendering b
   assert.equal(burst.flights,0);
   assert.ok(burst.firstPop!==null&&burst.firstPop<400,JSON.stringify(burst));
   assert.equal(burst.layers,2);
+  assert.equal(burst.rings,2);
   assert.equal(burst.particleNodes,0);
   assert.equal(burst.opaquePixels.length,2);
   assert.ok(burst.opaquePixels.every(pixels=>pixels>100),JSON.stringify(burst));
@@ -169,6 +174,60 @@ test('two browsers share avatars and keep lobby reactions within the rendering b
   await host.waitForTimeout(250);
   assert.equal(await host.evaluate(()=>window.rockFlights.length),1,'sender must not replay the confirmed throw');
   t.diagnostic('Rock launch after click with network held: '+Math.round(rockDelay)+'ms');
+  for(const [kind,label,sender,targetId] of [
+   ['leafstorm','Lốc lá',guest,hostId],['vine','Dây leo',host,guestId],['bubbles','Bong bóng',guest,hostId]
+  ]){
+   await avatar(sender,targetId).click();
+   await sender.getByRole('button',{name:label,exact:true}).click({timeout:5000});
+   const effects=[host,guest].map(page=>page.locator('.social-garden-'+kind));
+   await Promise.all(effects.map(effect=>effect.waitFor({timeout:3000})));
+   assert.equal(manager.view(room,room.players[1]).room.reactions.at(-1).kind,kind);
+   assert.ok(await sender.locator('.social-garden-'+kind+' svg').evaluate(svg=>svg.getAnimations({subtree:true}).length>0));
+   if(kind==='leafstorm')assert.ok(await sender.locator('.social-garden-leafstorm').evaluate(stage=>{
+    const leaf=stage.querySelector('[data-leaf]');
+    const frames=leaf.getAnimations()[0]?.effect.getKeyframes()||[];
+    const y=frame=>Number(frame?.transform.match(/translate\([^,]+,\s*([-\d.]+)px\)/)?.[1]);
+    return stage.offsetHeight>stage.offsetWidth&&y(frames[0])-y(frames.at(-1))>80;
+   }),'the funnel should stand upright and lift leaves from its base');
+   if(kind==='leafstorm'){
+    for(const page of [host,guest]){
+     const recipient=avatar(page,targetId);
+     assert.ok(await recipient.evaluate(node=>node.getAnimations().some(animation=>{
+      const frames=animation.effect.getKeyframes();
+      const lift=frame=>Number(frame.transform?.match(/translate\([^,]+,\s*([-\d.]+)px\)/)?.[1]);
+      return frames.some(frame=>lift(frame)<-12&&frame.transform.includes('rotate'))
+       &&frames.at(-1).transform==='none';
+     })),'both players should see the recipient lift, tilt and land');
+    }
+   }
+   if(kind==='vine')await Promise.all([host,guest].map(page=>page.waitForFunction(id=>{
+    const recipient=[...document.querySelectorAll('.lobby-members .person')]
+     .find(person=>person.dataset.playerId===id)?.querySelector('.avatar');
+    if(!recipient)return false;
+    const transform=new DOMMatrixReadOnly(getComputedStyle(recipient).transform);
+    return transform.m42>=5&&Math.abs(transform.m12)>.1;
+   },targetId,{timeout:1500})));
+   if(kind==='bubbles')await Promise.all([host,guest].map(async page=>{
+    await page.waitForFunction(id=>{
+     const target=[...document.querySelectorAll('.lobby-members .person')]
+      .find(person=>person.dataset.playerId===id)?.querySelector('.avatar');
+     return target&&new DOMMatrixReadOnly(getComputedStyle(target).transform).m42<-12;
+    },targetId,{timeout:1600});
+    await page.waitForFunction(()=>{
+     const shell=document.querySelector('.social-bubble-shell');
+     const ring=document.querySelector('.social-garden-bubbles [data-bubble-pop]');
+     return shell&&ring&&Number(getComputedStyle(shell).opacity)<.1&&Number(getComputedStyle(ring).opacity)>.3;
+    },null,{timeout:1600});
+   }));
+   await Promise.all(effects.map(effect=>effect.waitFor({state:'detached',timeout:3000})));
+   if(kind==='vine'||kind==='bubbles'){
+    for(const page of [host,guest]){
+     assert.equal(await avatar(page,targetId).evaluate(node=>new DOMMatrixReadOnly(getComputedStyle(node).transform).m42),0,
+      'recipient returns to position after the effect releases');
+    }
+   }
+   if(kind==='leafstorm')await host.waitForTimeout(1050);
+  }
   assert.deepEqual(errors,[]);
   const budgets={optimizedAvatar:firstAvatar.src.endsWith('.webp')&&firstAvatar.width<=192,avatarRetained,
    pickerUnder500KB:pickerBytes>0&&pickerBytes<500000,menuEffectsUnderFour:menuEffects<4};
